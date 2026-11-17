@@ -13,7 +13,7 @@ import re
 from dataclasses import replace
 from hashlib import sha256
 from pathlib import Path
-from typing import Any
+from typing import Any, SupportsFloat, SupportsInt, cast
 
 from ....app.core.error_codes import InferenceFailureError, ModelUnreadyError
 from ....app.core.schemas import MaskSpan
@@ -33,6 +33,16 @@ _MAX_FIELD_CHARS = 2000
 # sits well inside the neighbouring slice.
 _SLICE_CHARS = 256 * 1024
 _SLICE_OVERLAP_CHARS = 4096
+
+
+def _as_int(value: object) -> int:
+    """Read an integer entity field; the pipeline hands back ints or numpy ints."""
+    return int(cast(SupportsInt, value))
+
+
+def _as_float(value: object) -> float:
+    """Read a numeric entity field; the pipeline hands back floats or numpy floats."""
+    return float(cast(SupportsFloat, value))
 
 
 def _document_slices(text: str) -> list[tuple[int, str]]:
@@ -306,7 +316,7 @@ class OnnxTokenClassificationPipeline:
             if entity["entity_group"] == "O":
                 continue
             start, end = self._whole_words(
-                text, int(entity["start"]), int(entity["end"])
+                text, _as_int(entity["start"]), _as_int(entity["end"])
             )
             entity["start"], entity["end"] = start, end
             grouped.append(entity)
@@ -331,7 +341,8 @@ class OnnxTokenClassificationPipeline:
     def _group(self, entities: list[dict[str, object]]) -> dict[str, object]:
         return {
             "entity_group": str(entities[0]["entity"]).split("-", 1)[-1],
-            "score": sum(float(entity["score"]) for entity in entities) / len(entities),
+            "score": sum(_as_float(entity["score"]) for entity in entities)
+            / len(entities),
             "word": self.tokenizer.convert_tokens_to_string(
                 [str(entity["word"]) for entity in entities]
             ),
@@ -405,7 +416,7 @@ class OnnxTokenClassifierEngine:
         self.model_sha256 = ""
         self.max_model_tokens = max_model_tokens
         self.model_stride_tokens = model_stride_tokens
-        self._pipe = None
+        self._pipe: OnnxTokenClassificationPipeline | None = None
         try:
             self.model_sha256 = onnx_model_checksum(model_path)
             if model_sha256 and self.model_sha256 != model_sha256.lower():
@@ -454,15 +465,15 @@ class OnnxTokenClassifierEngine:
                 ):
                     offset = slice_start + window_start
                     for ent in entities or []:
-                        score = float(ent.get("score", 0.0))
+                        score = _as_float(ent.get("score", 0.0))
                         label = str(ent.get("entity_group", ent.get("entity", "")))
                         threshold = self.entity_confidence_thresholds.get(
                             label.upper(), self.confidence_threshold
                         )
                         if score < threshold:
                             continue
-                        start = offset + int(ent["start"])
-                        end = offset + int(ent["end"])
+                        start = offset + _as_int(ent["start"])
+                        end = offset + _as_int(ent["end"])
                         if end > start:
                             spans.append(
                                 MaskSpan(
@@ -506,12 +517,12 @@ class OnnxTokenClassifierEngine:
                 fields, self._pipe([text[s:e] for s, e in fields]), strict=True
             ):
                 for ent in entities or []:
-                    score = float(ent.get("score", 0.0))
+                    score = _as_float(ent.get("score", 0.0))
                     if score < threshold:
                         continue
                     label = str(ent.get("entity_group", ent.get("entity", "")))
-                    span_start = start + int(ent["start"])
-                    span_end = min(start + int(ent["end"]), end)
+                    span_start = start + _as_int(ent["start"])
+                    span_end = min(start + _as_int(ent["end"]), end)
                     if span_end > span_start:
                         spans.append(
                             MaskSpan(

@@ -35,6 +35,12 @@ from masking_engine.app.services import pdf_redaction_styles as styles
 _RIGHT = 1000.0
 
 
+def _required[T](value: T | None) -> T:
+    """Narrow an Optional the test knows is present, failing loudly if it is not."""
+    assert value is not None
+    return value
+
+
 def slot(key: int, x0: float, x1: float, wanted: float) -> reflow.Slot:
     return reflow.Slot(key, x0, x1, 100.0, 112.0, wanted)
 
@@ -275,7 +281,7 @@ def test_a_reflowed_line_is_redrawn_to_its_end() -> None:
     shift = {first_after: 6.0}
     masking._extend_to_line_end(glyphs, covered, shift)
 
-    baseline = glyphs[first_after].origin[1]
+    baseline = _required(glyphs[first_after]).origin[1]
     unredrawn = [
         index
         for index, glyph in enumerate(glyphs)
@@ -283,10 +289,10 @@ def test_a_reflowed_line_is_redrawn_to_its_end() -> None:
         and glyph.text.strip()
         and index not in covered
         and glyph.origin[1] == baseline
-        and glyph.bbox[0] >= glyphs[first_after].bbox[2]
+        and glyph.bbox[0] >= _required(glyphs[first_after]).bbox[2]
         and index not in shift
     ]
-    assert not unredrawn, "".join(glyphs[i].text for i in unredrawn)
+    assert not unredrawn, "".join(_required(glyphs[i]).text for i in unredrawn)
     assert all(value == 0.0 for index, value in shift.items() if index != first_after)
 
 

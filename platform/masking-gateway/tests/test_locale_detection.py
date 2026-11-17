@@ -236,7 +236,7 @@ def test_one_document_is_detected_exactly_once() -> None:
         calls.append("x")
         return real()
 
-    locale_detection._detector = counting
+    setattr(locale_detection, "_detector", counting)
     try:
         verdict = document_verdict(document)
         redact_document(document, [], locale=verdict)

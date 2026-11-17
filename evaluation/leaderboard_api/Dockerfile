@@ -12,6 +12,10 @@ COPY leaderboard_api/requirements.txt ./requirements.txt
 # (CVE-2026-41992, CVE-2026-86145/89161, CVE-2026-11822/11824, and the
 # perl-base CVEs fixed in 5.40.1-6+deb13u1) changes that text, forcing a
 # real re-run.
+# Not pinned on purpose: apt and `pip install --upgrade pip setuptools` exist to
+# pull the newest patched build of what the base image already ships, so an
+# exact version would defeat them and break the build once the index drops it.
+# hadolint ignore=DL3008,DL3013
 RUN apt-get update \
  && apt-get upgrade -y --no-install-recommends \
  && apt-get install -y --only-upgrade gzip libpcre2-8-0 libsqlite3-0 perl-base \
@@ -34,5 +38,5 @@ COPY leaderboard_api ./leaderboard_api
 COPY samples ./samples
 USER arena
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=3s CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')" || exit 1
+HEALTHCHECK --interval=30s --timeout=3s CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')"]
 CMD ["uvicorn", "leaderboard_api.main:app", "--host", "0.0.0.0", "--port", "8080"]

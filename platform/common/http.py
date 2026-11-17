@@ -10,7 +10,7 @@ their status-code tables once did.
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import IO, Any, cast
 
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 SUPPORTED_MODEL_FORMATS = frozenset({"onnx"})
@@ -133,7 +133,8 @@ def read_body(environ: dict[str, object], limit: int = MAX_UPLOAD_BYTES) -> byte
         raise ValueError("Payload is empty.")
     if size > limit:
         raise PayloadTooLargeError(f"Payload exceeds {limit} bytes.")
-    content = environ["wsgi.input"].read(size)  # type: ignore[index,union-attr]
+    stream = cast(IO[bytes], environ["wsgi.input"])
+    content = stream.read(size)
     if len(content) != size:
         raise ValueError("Payload length does not match Content-Length.")
     return content

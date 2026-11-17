@@ -13,6 +13,9 @@ import logging
 import random
 import re
 import sys
+from typing import cast
+
+from faker import Faker
 from datetime import date
 from pathlib import Path
 
@@ -234,7 +237,7 @@ def test_a_locale_with_no_register_falls_back_to_a_seeded_company_name() -> None
         locale=LOCALE,
         organization_pool=(),
         random=lambda: random.Random(1),
-        faker=lambda: _Faker(),
+        faker=lambda: cast(Faker, _Faker()),
         date_of=lambda text: parse_date(text, LOCALE),
     )
     assert surrogate_organization(ctx) == "Acme NV"

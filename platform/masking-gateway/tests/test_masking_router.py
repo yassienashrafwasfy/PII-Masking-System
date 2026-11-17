@@ -48,11 +48,17 @@ _ORGANIZATION_POOL = organization_pool_for("nl_BE", "general")
 _MEDICAL_ORGANIZATION_POOL = organization_pool_for("nl_BE", "medical")
 
 
+def _required[T](value: T | None) -> T:
+    """Narrow an Optional the test knows is present, failing loudly if it is not."""
+    assert value is not None
+    return value
+
+
 def test_date_surrogate_stays_within_four_years_of_the_source() -> None:
     original = "2000-02-29"
     replacement = (
         MaskingRouter(b"test document")
-        .replacement(MaskSpan(0, len(original), "DATE", "test"), original)
+        .replacement(MaskSpan(0, len(original), "DATE", "regex"), original)
         .text
     )
     moved = datetime.strptime(replacement, "%Y-%m-%d").date()
@@ -76,7 +82,7 @@ def test_a_bare_year_is_replaced_by_a_bare_year() -> None:
     router = MaskingRouter(b"bare year document")
     for original in ("2020", "2003"):
         replacement = router.replacement(
-            MaskSpan(0, len(original), "DATE", "test"), original
+            MaskSpan(0, len(original), "DATE", "regex"), original
         ).text
         assert replacement.isdigit() and len(replacement) == 4, replacement
         assert replacement != original
@@ -100,7 +106,7 @@ def test_datetime_surrogate_preserves_time_and_shifts_only_the_date() -> None:
     original = "15-01-2024 14:21"
     router = MaskingRouter(b"test document")
     replacement = router.replacement(
-        MaskSpan(0, len(original), "DATE", "test"), original
+        MaskSpan(0, len(original), "DATE", "regex"), original
     ).text
     moved = datetime.strptime(replacement, "%d-%m-%Y %H:%M")
     assert moved.strftime("%H:%M") == "14:21"
@@ -124,7 +130,7 @@ def test_a_timestamp_keeps_its_clock_in_every_spelling_the_detector_emits() -> N
         ("15-03-2026 14:30:00", "%d-%m-%Y %H:%M:%S", "%H:%M:%S", "14:30:00"),
     ):
         replacement = router.replacement(
-            MaskSpan(0, len(original), "DATE", "test"), original
+            MaskSpan(0, len(original), "DATE", "regex"), original
         ).text
         moved = datetime.strptime(replacement, pattern)
         assert moved.strftime(clock_format) == clock, replacement
@@ -144,7 +150,7 @@ def test_a_date_moves_in_both_directions() -> None:
         years.add(
             int(
                 MaskingRouter(b"document %d" % document)
-                .replacement(MaskSpan(0, 10, "DATE", "test"), "15-03-2026")
+                .replacement(MaskSpan(0, 10, "DATE", "regex"), "15-03-2026")
                 .text[6:]
             )
         )
@@ -164,7 +170,7 @@ def test_a_two_digit_year_keeps_the_century_its_source_was_written_in() -> None:
     router = MaskingRouter(b"two digit document")
     for original, source_year in (("12/03/94", 1994), ("15/03/26", 2026)):
         replacement = router.replacement(
-            MaskSpan(0, len(original), "DATE", "test"), original
+            MaskSpan(0, len(original), "DATE", "regex"), original
         ).text
         moved = datetime.strptime(replacement, "%d/%m/%y").date()
         assert abs(moved.year - source_year) <= DATE_MAX_YEARS, replacement
@@ -186,7 +192,7 @@ def test_a_space_separated_date_keeps_its_shape_and_its_era() -> None:
         ("02 07 2024", "%d %m %Y", 2024),
     ):
         replacement = router.replacement(
-            MaskSpan(0, len(original), "DATE", "test"), original
+            MaskSpan(0, len(original), "DATE", "regex"), original
         ).text
         moved = datetime.strptime(replacement, pattern).date()
         assert abs(moved.year - source_year) <= DATE_MAX_YEARS, replacement
@@ -211,7 +217,7 @@ def test_a_mixed_separator_date_keeps_its_shape_and_its_era() -> None:
         ("2.7 2024", 2024),
     ):
         replacement = router.replacement(
-            MaskSpan(0, len(original), "DATE", "test"), original
+            MaskSpan(0, len(original), "DATE", "regex"), original
         ).text
         # The separators and the field widths are the shape the field has to
         # keep; only the numbers inside them may move.
@@ -226,7 +232,7 @@ def test_date_surrogate_handles_year_bounds_and_two_digit_years() -> None:
     router = MaskingRouter(b"boundary document")
     for original, expected_year in (("01-01-0001", 1), ("01-01-9999", 9999)):
         replacement = router.replacement(
-            MaskSpan(0, len(original), "DATE", "test"), original
+            MaskSpan(0, len(original), "DATE", "regex"), original
         ).text
         moved = datetime.strptime(replacement, "%d-%m-%Y").date()
         assert DATE_MIN_YEARS <= abs(moved.year - expected_year) <= DATE_MAX_YEARS
@@ -240,7 +246,7 @@ def test_age_surrogate_preserves_the_original_unit() -> None:
     original = "29-jarige"
     router = MaskingRouter(b"test document")
     replacement = router.replacement(
-        MaskSpan(0, len(original), "AGE", "test"), original
+        MaskSpan(0, len(original), "AGE", "regex"), original
     ).text
     assert replacement.endswith("-jarige")
     assert 10 <= int(replacement.removesuffix("-jarige")) <= 99
@@ -255,7 +261,7 @@ def test_age_surrogate_never_returns_the_original() -> None:
     """
     originals = ("7", "8", "47", "7 jaar", "1-2-3", "40-50", "1-05921-70-004")
     for original in originals:
-        span = MaskSpan(0, len(original), "AGE", "test")
+        span = MaskSpan(0, len(original), "AGE", "regex")
         for seed in range(200):
             router = MaskingRouter(f"document {seed}".encode())
             replacement = router.replacement(span, original).text
@@ -295,7 +301,7 @@ def test_digit_keyed_surrogate_keeps_each_spelling_of_one_number() -> None:
         digits = set()
         for original in spellings:
             replacement = router.replacement(
-                MaskSpan(0, len(original), "AGE", "test"), original
+                MaskSpan(0, len(original), "AGE", "regex"), original
             ).text
             assert re.sub(r"\d", "", replacement) == re.sub(r"\d", "", original), (
                 original,
@@ -307,7 +313,7 @@ def test_digit_keyed_surrogate_keeps_each_spelling_of_one_number() -> None:
     router = MaskingRouter(b"test document")
     phones = {
         original: router.replacement(
-            MaskSpan(0, len(original), "PHONE_NUMBER", "test"), original
+            MaskSpan(0, len(original), "PHONE_NUMBER", "regex"), original
         ).text
         for original in ("0476033164", "0476 03 31 64", "04/76.03.31.64")
     }
@@ -328,8 +334,8 @@ def test_replacement_canonicalizes_a_native_label_first() -> None:
     """
     router = MaskingRouter(b"test document")
     original = "0476 03 31 64"
-    native = MaskSpan(0, len(original), "PHONE", "test")
-    canonical = MaskSpan(0, len(original), "PHONE_NUMBER", "test")
+    native = MaskSpan(0, len(original), "PHONE", "regex")
+    canonical = MaskSpan(0, len(original), "PHONE_NUMBER", "regex")
     assert (
         router.replacement(native, original).text
         == router.replacement(canonical, original).text
@@ -356,7 +362,7 @@ def test_gender_replacement_stays_in_the_vocabulary() -> None:
         ("V", DUTCH_GENDER_LETTERS),
         ("Vrouw", tuple(word.capitalize() for word in DUTCH_GENDER_WORDS)),
     ):
-        span = MaskSpan(0, len(original), "GENDER", "test")
+        span = MaskSpan(0, len(original), "GENDER", "regex")
         replacement = router.replacement(span, original).text
         assert replacement in vocabulary, (original, replacement)
 
@@ -365,7 +371,7 @@ def test_phone_surrogate_preserves_the_source_format() -> None:
     original = "07/204.21.58"
     router = MaskingRouter(b"test document")
     replacement = router.replacement(
-        MaskSpan(0, len(original), "PHONE_NUMBER", "test"), original
+        MaskSpan(0, len(original), "PHONE_NUMBER", "regex"), original
     ).text
     assert re.fullmatch(r"07/\d{3}\.\d{2}\.\d{2}", replacement)
     assert replacement[:2] == "07"
@@ -383,7 +389,7 @@ def test_phone_surrogate_keeps_no_head_from_a_value_that_is_not_a_phone() -> Non
     original = "78.07.03-456.12"
     replacement = (
         MaskingRouter(b"test document")
-        .replacement(MaskSpan(0, len(original), "PHONE_NUMBER", "test"), original)
+        .replacement(MaskSpan(0, len(original), "PHONE_NUMBER", "regex"), original)
         .text
     )
     assert re.sub(r"\d", "", replacement) == re.sub(r"\d", "", original)
@@ -394,7 +400,7 @@ def test_url_surrogate_is_deterministic_and_drops_source_host_and_path() -> None
     original = "https://www.azorg.be/patients/marie?token=secret"
     router = MaskingRouter(b"test document")
     replacement = router.replacement(
-        MaskSpan(0, len(original), "URL", "test"), original
+        MaskSpan(0, len(original), "URL", "regex"), original
     ).text
     assert re.fullmatch(r"https://www\.masked-[0-9a-f]{8}\.be", replacement)
     assert "azorg" not in replacement and "marie" not in replacement
@@ -406,7 +412,7 @@ def test_organization_surrogate_can_use_medical_or_general_pool() -> None:
     # floor is 9,500 rather than the 10,000 the builder targets.
     assert 9_500 <= len(_ORGANIZATION_POOL) <= 50_000
     assert 9_500 <= len(_MEDICAL_ORGANIZATION_POOL) <= 50_000
-    span = MaskSpan(0, len(original), "ORGANIZATION_NAME", "test")
+    span = MaskSpan(0, len(original), "ORGANIZATION_NAME", "regex")
     for pool in ("medical", "general"):
         router = MaskingRouter(b"test document", organization_pool=pool)
         replacement = router.replacement(span, original).text
@@ -451,7 +457,7 @@ def test_organization_pool_follows_the_document_locale() -> None:
         assert not set(dutch) & set(french) or len(set(dutch) & set(french)) < 200
 
         original = "Centre Hospitalier Régional"
-        span = MaskSpan(0, len(original), "ORGANIZATION_NAME", "test")
+        span = MaskSpan(0, len(original), "ORGANIZATION_NAME", "regex")
         for locale, pool in (("nl_BE", dutch), ("fr_FR", french)):
             router = MaskingRouter(
                 b"test document", organization_pool=kind, locale=locale
@@ -482,7 +488,7 @@ def test_locale_decides_every_language_dependent_surrogate() -> None:
 
     def replace(router: MaskingRouter, label: str, original: str) -> str:
         return router.replacement(
-            MaskSpan(0, len(original), label, "test"), original
+            MaskSpan(0, len(original), label, "regex"), original
         ).text
 
     # A one-letter sex field stays one letter, but Dutch writes V for "vrouw"
@@ -534,10 +540,10 @@ def test_french_month_names_parse_in_either_locale() -> None:
     # form: "5 fevrier 2019" used to fail to parse and came back as an ISO
     # date, changing the shape of the field.
     accented = MaskingRouter(b"test document", locale="fr_FR").replacement(
-        MaskSpan(0, 14, "DATE", "test"), "5 février 2019"
+        MaskSpan(0, 14, "DATE", "regex"), "5 février 2019"
     )
     folded = MaskingRouter(b"test document", locale="fr_FR").replacement(
-        MaskSpan(0, 14, "DATE", "test"), "5 fevrier 2019"
+        MaskSpan(0, 14, "DATE", "regex"), "5 fevrier 2019"
     )
     assert accented.text == folded.text, (accented.text, folded.text)
 
@@ -553,7 +559,7 @@ def test_french_month_names_parse_in_either_locale() -> None:
         for locale in ("nl_BE", "fr_FR"):
             router = MaskingRouter(b"test document", locale=locale)
             replacement = router.replacement(
-                MaskSpan(0, len(original), "DATE", "test"), original
+                MaskSpan(0, len(original), "DATE", "regex"), original
             ).text
             day, month, year = replacement.split()
             assert day.isdigit() and year.isdigit(), replacement
@@ -571,7 +577,7 @@ def test_nir_surrogate_is_a_valid_french_national_number() -> None:
     original = "2 19 07 85 191 050 27"
     replacement = (
         MaskingRouter(b"french document", locale="fr_FR")
-        .replacement(MaskSpan(0, len(original), "NIR", "test"), original)
+        .replacement(MaskSpan(0, len(original), "NIR", "regex"), original)
         .text
     )
     digits = re.sub(r"\D", "", replacement)
@@ -590,7 +596,7 @@ def test_rpps_surrogate_redraws_digits_and_keeps_separators() -> None:
 
     def replace(original: str) -> str:
         return router.replacement(
-            MaskSpan(0, len(original), "RPPS", "test"), original
+            MaskSpan(0, len(original), "RPPS", "regex"), original
         ).text
 
     compact = replace("10003411442")
@@ -619,7 +625,7 @@ def test_written_month_keeps_the_form_the_source_used() -> None:
         for month in months:
             original = f"14 {month} 1962"
             replaced = router.replacement(
-                MaskSpan(0, len(original), "DATE", "test"), original
+                MaskSpan(0, len(original), "DATE", "regex"), original
             ).text
             written = replaced.split()[1]
             assert written in months, f"{locale} {original!r} -> {replaced!r}"
@@ -630,7 +636,7 @@ def test_written_month_keeps_an_abbreviation_abbreviated() -> None:
     router = MaskingRouter(b"document", locale="fr_FR")
     for original, dotted in (("14 sept. 2025", True), ("14 sept 2025", False)):
         replaced = router.replacement(
-            MaskSpan(0, len(original), "DATE", "test"), original
+            MaskSpan(0, len(original), "DATE", "regex"), original
         ).text
         written = replaced.split()[1]
         # Abbreviated to three letters, and a month that short already ("mai")
@@ -652,7 +658,7 @@ def test_written_month_keeps_the_case_the_source_used() -> None:
         ("14 mars 1962", str.islower),
     ):
         replaced = router.replacement(
-            MaskSpan(0, len(original), "DATE", "test"), original
+            MaskSpan(0, len(original), "DATE", "regex"), original
         ).text
         assert expected(replaced.split()[1]), replaced
 
@@ -666,7 +672,7 @@ def test_french_ordinal_date_parses_and_renders() -> None:
     original = "1er janvier 2025"
     router = MaskingRouter(b"document", locale="fr_FR")
     replaced = router.replacement(
-        MaskSpan(0, len(original), "DATE", "test"), original
+        MaskSpan(0, len(original), "DATE", "regex"), original
     ).text
     assert re.fullmatch(r"\d{1,2}(er)? [^\W\d_]+ \d{4}", replaced), replaced
     assert replaced != original
@@ -679,7 +685,7 @@ def test_french_ordinal_date_parses_and_renders() -> None:
             router = MaskingRouter(f"document {seed}".encode(), locale=locale)
             days.add(
                 router.replacement(
-                    MaskSpan(0, len(original), "DATE", "test"), original
+                    MaskSpan(0, len(original), "DATE", "regex"), original
                 ).text.split()[0]
             )
         assert expected in days, (locale, sorted(days))
@@ -695,7 +701,7 @@ def _replace_unparsed_date() -> str:
     ), "sample must exercise the fallback"
     return (
         MaskingRouter(b"document", locale="fr_FR")
-        .replacement(MaskSpan(0, len(original), "DATE", "test"), original)
+        .replacement(MaskSpan(0, len(original), "DATE", "regex"), original)
         .text
     )
 
@@ -716,7 +722,7 @@ class _ClockForwardOneYear:
         return self
 
     def __exit__(self, *_exc) -> None:
-        surrogate_dates.date = self._real
+        setattr(surrogate_dates, "date", self._real)
 
 
 def test_unparsed_date_lands_beside_the_dates_it_stands_in_for() -> None:
@@ -771,7 +777,7 @@ def test_month_and_year_without_a_day_keeps_that_shape() -> None:
 
     def replace(original: str) -> str:
         return router.replacement(
-            MaskSpan(0, len(original), "DATE", "test"), original
+            MaskSpan(0, len(original), "DATE", "regex"), original
         ).text
 
     for original, pattern in (
@@ -821,7 +827,7 @@ def test_organization_surrogate_keeps_the_register_capitalisation() -> None:
     for locale in ("fr_FR", "nl_BE"):
         router = MaskingRouter(b"document", locale=locale, organization_pool="medical")
         replaced = router.replacement(
-            MaskSpan(0, len(sentence), "ORGANIZATION_NAME", "test"), sentence
+            MaskSpan(0, len(sentence), "ORGANIZATION_NAME", "regex"), sentence
         ).text
         stored = {
             name.casefold(): name for name in organization_pool_for(locale, "medical")
@@ -865,7 +871,7 @@ def test_a_numeric_date_is_read_in_either_order() -> None:
 
     def replace(original: str) -> str:
         return router.replacement(
-            MaskSpan(0, len(original), "DATE", "test"), original
+            MaskSpan(0, len(original), "DATE", "regex"), original
         ).text
 
     for original, pattern in (
@@ -882,7 +888,7 @@ def test_a_numeric_date_is_read_in_either_order() -> None:
     # Dutch note can quote an American date, and the order that parses is
     # decided by the value rather than by the document.
     dutch = MaskingRouter(b"test document", locale="nl_BE").replacement(
-        MaskSpan(0, 10, "DATE", "test"), "02/17/2026"
+        MaskSpan(0, 10, "DATE", "regex"), "02/17/2026"
     )
     assert re.fullmatch(r"^\d{2}/\d{2}/\d{4}$", dutch.text), dutch.text
 
@@ -893,7 +899,7 @@ def test_an_english_written_date_keeps_its_layout_and_its_ordinal() -> None:
 
     def replace(original: str) -> str:
         return router.replacement(
-            MaskSpan(0, len(original), "DATE", "test"), original
+            MaskSpan(0, len(original), "DATE", "regex"), original
         ).text
 
     # The comma the source wrote is matched but not written back: `_sanitize`
@@ -915,7 +921,7 @@ def test_an_english_written_date_keeps_its_layout_and_its_ordinal() -> None:
     # own day: "17th" can become "3rd" but never "3th".
     ordinal = replace("17th February 2026")
     assert re.fullmatch(r"\d{1,2}(?:st|nd|rd|th) [A-Z][a-z]+ \d{4}", ordinal), ordinal
-    day = int(re.match(r"\d+", ordinal)[0])
+    day = int(_required(re.match(r"\d+", ordinal))[0])
     assert ordinal.split()[0] == f"{day}{locales._english_ordinal(day)}", ordinal
 
     # None in the source, none in the surrogate.
@@ -930,13 +936,13 @@ def test_french_still_writes_its_mandatory_ordinal() -> None:
     whether or not the source did. Every other day writes a bare number, and
     Dutch writes a bare number always.
     """
-    landed = {"fr_FR": [], "nl_BE": []}
+    landed: dict[str, list[str]] = {"fr_FR": [], "nl_BE": []}
     for locale in landed:
         for seed in range(400):
             router = MaskingRouter(f"document {seed}".encode(), locale=locale)
             for original in ("1 janvier 2019", "1er janvier 2019"):
                 masked = router.replacement(
-                    MaskSpan(0, len(original), "DATE", "test"), original
+                    MaskSpan(0, len(original), "DATE", "regex"), original
                 ).text
                 day = masked.split()[0]
                 if locale == "nl_BE":
@@ -979,7 +985,7 @@ def test_a_locale_without_a_general_pool_falls_back_to_faker() -> None:
     assert len(organization_pool_for("en", "medical")) > 1000
 
     original = "Riverside Regional Medical Center"
-    span = MaskSpan(0, len(original), "ORGANIZATION_NAME", "test")
+    span = MaskSpan(0, len(original), "ORGANIZATION_NAME", "regex")
     masked = {
         MaskingRouter(b"test document", locale="en", organization_pool="general")
         .replacement(span, original)
@@ -1029,7 +1035,7 @@ def test_the_checked_identifiers_mask_to_values_that_still_validate() -> None:
 
         def replace(label: str, original: str) -> str:
             return router.replacement(
-                MaskSpan(0, len(original), label, "test"), original
+                MaskSpan(0, len(original), label, "regex"), original
             ).text
 
         ssn = replace("SSN", "123-45-6789")
@@ -1060,7 +1066,7 @@ def test_the_checked_identifiers_mask_to_values_that_still_validate() -> None:
 def test_a_belgian_number_keeps_its_scheme_in_every_locale() -> None:
     """An INSZ is replaced by an INSZ-shaped number, not the document's own."""
     original = "81.09.22-237.91"
-    span = MaskSpan(0, len(original), "INSZ_NISS", "test")
+    span = MaskSpan(0, len(original), "INSZ_NISS", "regex")
     for locale in locales.SUPPORTED_LOCALES:
         masked = (
             MaskingRouter(b"test document", locale=locale)
@@ -1087,7 +1093,7 @@ def test_masking_an_english_document_twice_gives_the_same_bytes() -> None:
     def run() -> list[str]:
         router = MaskingRouter(b"one english letter", locale="en")
         return [
-            router.replacement(MaskSpan(0, len(text), label, "test"), text).text
+            router.replacement(MaskSpan(0, len(text), label, "regex"), text).text
             for label, text in values
         ]
 

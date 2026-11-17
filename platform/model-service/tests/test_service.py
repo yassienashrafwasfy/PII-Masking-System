@@ -54,7 +54,7 @@ def invoke(
         environ,
         lambda status, headers: captured.update(status=status, headers=dict(headers)),
     )
-    return captured["status"], captured["headers"], b"".join(response)  # type: ignore[return-value,arg-type]
+    return captured["status"], captured["headers"], b"".join(response)  # type: ignore[return-value]
 
 
 def pdf_bytes(text: str) -> bytes:
@@ -161,7 +161,7 @@ def test_a_pdf_is_masked_through_the_shared_pipeline() -> None:
 
 def test_a_geometry_failure_is_reported_as_unprocessable() -> None:
     original = service._detect_and_redact
-    service._detect_and_redact = lambda *_: (  # type: ignore[method-assign]
+    service._detect_and_redact = lambda *_: (
         (_ for _ in ()).throw(CorruptInputError("synthetic geometry failure"))
     )
     try:

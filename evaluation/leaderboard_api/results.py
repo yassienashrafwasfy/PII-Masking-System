@@ -206,6 +206,38 @@ def _per_label_from_flat_metrics(metrics: dict) -> dict:
     return collected
 
 
+def _gate_decisions(document: dict) -> list[dict]:
+    return [
+        {
+            "metric": gate.get("metric"),
+            "enforce": bool(gate.get("enforce")),
+            "passed": bool(gate.get("passed")),
+            "actual": gate.get("actual"),
+            "minimum": gate.get("minimum"),
+            "maximum": gate.get("maximum"),
+            "reason": gate.get("reason"),
+            "rationale": gate.get("rationale"),
+        }
+        for gate in document.get("gate_decisions") or []
+        if isinstance(gate, dict)
+    ]
+
+
+def _version_label(model_version: str, model_digest: Any) -> str:
+    """What the board shows after the `v`.
+
+    A report with no MODEL_VERSION env set at deploy time reports the literal
+    string "unknown" here, which used to render as "vunknown" on the board --
+    indistinguishable from every other undated run. Fall back to a shortened
+    digest so the board always shows which build actually ran, even when the
+    version tag is missing.
+    """
+    if model_version in ("unknown", "?") and model_digest:
+        digest_value = str(model_digest).split(":", 1)[-1]
+        return f"sha256:{digest_value[:12]}"
+    return model_version
+
+
 def parse_document(document: dict, source_key: str, observed_at: Any) -> dict | None:
     """Map one QA result document onto a leaderboard row."""
     if not isinstance(document, dict):
@@ -225,20 +257,7 @@ def parse_document(document: dict, source_key: str, observed_at: Any) -> dict | 
     metrics = {name: Metric.parse(raw) for name, raw in raw_metrics.items()}
     eligible, ineligible_reasons = eligibility(metrics)
 
-    gate_decisions = [
-        {
-            "metric": gate.get("metric"),
-            "enforce": bool(gate.get("enforce")),
-            "passed": bool(gate.get("passed")),
-            "actual": gate.get("actual"),
-            "minimum": gate.get("minimum"),
-            "maximum": gate.get("maximum"),
-            "reason": gate.get("reason"),
-            "rationale": gate.get("rationale"),
-        }
-        for gate in document.get("gate_decisions") or []
-        if isinstance(gate, dict)
-    ]
+    gate_decisions = _gate_decisions(document)
 
     documents = document.get("documents") or []
     per_label = _per_label_from_flat_metrics(metrics)
@@ -248,15 +267,7 @@ def parse_document(document: dict, source_key: str, observed_at: Any) -> dict | 
     model_version = str(source.get("model_version") or "?")
     model_digest = source.get("model_digest")
 
-    # A report with no MODEL_VERSION env set at deploy time reports the
-    # literal string "unknown" here, which used to render as "vunknown" on
-    # the board -- indistinguishable from every other undated run. Fall back
-    # to a shortened digest so the board always shows which build actually
-    # ran, even when the version tag is missing.
-    version_label = model_version
-    if model_version in ("unknown", "?") and model_digest:
-        digest_value = str(model_digest).split(":", 1)[-1]
-        version_label = f"sha256:{digest_value[:12]}"
+    version_label = _version_label(model_version, model_digest)
 
     return {
         "team": team_id,
@@ -410,9 +421,9 @@ def compute_awards(rows: list[dict]) -> list[dict]:
             continue
         metric_name = _resolve_metric(contenders, metric_names)
         scored = [
-            (row, _value(row, metric_name))
+            (row, value)
             for row in contenders
-            if _value(row, metric_name) is not None
+            if (value := _value(row, metric_name)) is not None
         ]
         if not scored:
             awards.append(

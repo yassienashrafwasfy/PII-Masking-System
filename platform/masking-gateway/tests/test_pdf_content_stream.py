@@ -33,6 +33,12 @@ from masking_engine.app.services.pdf_content_order import (
 )
 
 
+def _required[T](value: T | None) -> T:
+    """Narrow an Optional the test knows is present, failing loudly if it is not."""
+    assert value is not None
+    return value
+
+
 def refused(data: bytes) -> str:
     try:
         scan(data)
@@ -258,7 +264,7 @@ def test_an_object_redaction_never_opened_has_no_gaps() -> None:
 
 def test_a_kern_only_array_marks_where_a_value_was_taken_out() -> None:
     chunk = b"BT /F1 12 Tf 100 700 Td (Hello ) Tj [ -500 ] TJ ( world) Tj ET"
-    font, size, y, seams, trailing = object_seams(chunk)
+    font, size, y, seams, trailing = _required(object_seams(chunk))
     assert (font, size, y) == ("/F1", 12.0, 700.0)
     # The seam is the start of the operands *after* the kern, so the kern
     # stays with the text before it, and nothing has to be rewritten there.
@@ -272,7 +278,7 @@ def test_a_kern_inside_one_array_is_offered_with_the_width_it_displaced() -> Non
     # redaction had no operator boundary to leave the kern at and it landed
     # inside the array. Cutting there needs the array closed and reopened.
     chunk = b"BT /F1 12 Tf 100 700 Td [(Hello )-1000( world)] TJ ET"
-    _font, _size, _y, seams, _trailing = object_seams(chunk)
+    _font, _size, _y, seams, _trailing = _required(object_seams(chunk))
     assert len(seams) == 1
     seam = seams[0]
     assert chunk[seam.start : seam.end] == b"-1000"
@@ -282,17 +288,17 @@ def test_a_kern_inside_one_array_is_offered_with_the_width_it_displaced() -> Non
 
 def test_a_kern_that_pulls_a_line_together_is_not_a_removal() -> None:
     # Only a positive displacement opened a hole; a positive kern closes one.
-    assert object_seams(b"BT /F1 12 Tf 1 2 Td [(a)50(b)] TJ ET")[3] == []
+    assert _required(object_seams(b"BT /F1 12 Tf 1 2 Td [(a)50(b)] TJ ET"))[3] == []
 
 
 def test_an_array_holding_anything_but_strings_and_numbers_is_not_read() -> None:
-    assert object_seams(b"BT /F1 12 Tf 1 2 Td [(a)/N(b)] TJ ET")[3] == []
+    assert _required(object_seams(b"BT /F1 12 Tf 1 2 Td [(a)/N(b)] TJ ET"))[3] == []
 
 
 def test_two_show_operators_with_no_kern_between_them_are_not_a_gap() -> None:
     # A producer may split a line for its own reasons; only the kern-only
     # array is evidence that redaction removed something.
-    assert object_seams(b"BT /F1 12 Tf 1 2 Td (a) Tj (b) Tj ET")[3] == []
+    assert _required(object_seams(b"BT /F1 12 Tf 1 2 Td (a) Tj (b) Tj ET"))[3] == []
 
 
 def test_an_object_that_would_have_to_carry_state_across_a_reopen_is_left_whole() -> (
@@ -406,17 +412,17 @@ from masking_engine.app.services.pdf_content_order import (  # noqa: E402
 
 
 def test_a_replacement_snaps_back_to_the_last_seam_before_its_target() -> None:
-    assert _outer_splice([0, 10, 20], [], 15, 3, b"X", 99) == (10, 3, b"X")
-    assert _outer_splice([0, 10, 20], [], 25, 3, b"X", 99) == (20, 3, b"X")
+    assert _outer_splice([0, 10, 20], {}, 15, 3, b"X", 99) == (10, 3, b"X")
+    assert _outer_splice([0, 10, 20], {}, 25, 3, b"X", 99) == (20, 3, b"X")
     # A seam exactly at the target is the one taken.
-    assert _outer_splice([10], [], 10, 3, b"X", 99) == (10, 3, b"X")
+    assert _outer_splice([10], {}, 10, 3, b"X", 99) == (10, 3, b"X")
 
 
 def test_with_no_seam_before_it_a_replacement_stays_at_the_end() -> None:
     # Offset zero would bury it under whatever the page paints first, a
     # full-page scan included.
-    assert _outer_splice([10, 20], [], 5, 3, b"X", 99) == (99, 3, b"X")
-    assert _outer_splice([], [], 5, 3, b"X", 99) == (99, 3, b"X")
+    assert _outer_splice([10, 20], {}, 5, 3, b"X", 99) == (99, 3, b"X")
+    assert _outer_splice([], {}, 5, 3, b"X", 99) == (99, 3, b"X")
 
 
 def test_a_seam_inside_a_text_object_wins_when_it_is_the_nearer_one() -> None:
@@ -476,7 +482,7 @@ UNIT = (700.0, 150.0, 12.0, 180.0, b"q BT /F1 12 Tf 150 700 Td (X) Tj ET Q")
 
 
 def test_a_replacement_is_spliced_into_the_gap_redaction_left() -> None:
-    rewritten, inside = _rewrite_object_in_place(CHUNK, 100.0, [0], [UNIT])
+    rewritten, inside = _required(_rewrite_object_in_place(CHUNK, 100.0, [0], [UNIT]))
     assert inside == [0]
     # The object is closed, the blob drawn, and the object reopened at the x
     # where the text resumes.
@@ -491,7 +497,7 @@ def test_a_replacement_is_spliced_into_the_gap_redaction_left() -> None:
 def test_a_value_that_ended_the_line_takes_the_close_of_the_object() -> None:
     # Redaction left no operator after it, so the extra slot is the `ET`.
     plain = b"BT /F1 12 Tf 100 700 Td (Hello) Tj ET"
-    rewritten, inside = _rewrite_object_in_place(plain, 100.0, [0], [UNIT])
+    rewritten, inside = _required(_rewrite_object_in_place(plain, 100.0, [0], [UNIT]))
     assert inside == [0]
     assert rewritten.endswith(b"TD ET")
     assert b"(Hello) Tj" in rewritten
@@ -523,7 +529,9 @@ def test_more_replacements_than_gaps_all_take_the_close_of_the_object() -> None:
     units = [UNIT, second, third]
     # One gap, three replacements: the two with nothing after them share the
     # close of the object rather than sending all three to the end of the page.
-    rewritten, inside = _rewrite_object_in_place(CHUNK, 100.0, [0, 1, 2], units)
+    rewritten, inside = _required(
+        _rewrite_object_in_place(CHUNK, 100.0, [0, 1, 2], units)
+    )
     assert inside == [0, 1, 2]
     for drawn in (b"(X) Tj", b"(Y) Tj", b"(Z) Tj"):
         assert rewritten.count(drawn) == 1

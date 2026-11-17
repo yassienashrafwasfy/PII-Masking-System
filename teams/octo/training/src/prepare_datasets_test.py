@@ -126,8 +126,10 @@ def test_nemotron_budget_spreads_evenly_across_splits() -> None:
     spec = DATASETS["nemotron"]
     allocations = _sample_allocations("nemotron", spec, 2000)
 
-    assert sum(allocations.values()) == 2000
-    assert max(allocations.values()) - min(allocations.values()) <= 1
+    counts = [count for count in allocations.values() if count is not None]
+    assert len(counts) == len(allocations)
+    assert sum(counts) == 2000
+    assert max(counts) - min(counts) <= 1
 
 
 def test_a_zero_budget_reads_every_nemotron_row() -> None:

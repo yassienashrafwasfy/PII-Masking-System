@@ -78,7 +78,7 @@ def invoke(
         environ,
         lambda status, headers: captured.update(status=status, headers=dict(headers)),
     )
-    return captured["status"], captured["headers"], b"".join(response)  # type: ignore[return-value,arg-type]
+    return captured["status"], captured["headers"], b"".join(response)  # type: ignore[return-value]
 
 
 def first_record(path: Path) -> dict:

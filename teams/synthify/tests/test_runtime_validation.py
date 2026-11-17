@@ -34,7 +34,7 @@ class FragmentingModel:
 
 def main() -> None:
     original_model = runtime._model
-    runtime._model = lambda model_format: FragmentingModel()
+    setattr(runtime, "_model", lambda model_format: FragmentingModel())
     try:
         url = "https://www.gezondheidenwetenschap.be/nl/contact"
         text = f"Dr Jan Van den Berg: T 07/204.21.58. Visit {url}."
@@ -42,7 +42,7 @@ def main() -> None:
             text, {"content_type": "text/plain", "model_format": "onnx"}
         )
     finally:
-        runtime._model = original_model
+        setattr(runtime, "_model", original_model)
     assert any(
         span.label == "URL" and text[span.start : span.end] == url for span in spans
     )

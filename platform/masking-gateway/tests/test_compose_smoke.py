@@ -76,7 +76,7 @@ def main() -> None:
     if not TOKEN:
         raise SystemExit("Set SERVICE_TOKEN before running this smoke test.")
     payload = b"Contact Alice Example at alice@example.org."
-    teams = (
+    teams: tuple[tuple[str, str], ...] = (
         ("octo", "octo-pii-masker"),
         ("synthify", "synthify-gliner-belgian-pii-ner"),
         ("berts", "berts-pii-medroberta-nl-int8"),

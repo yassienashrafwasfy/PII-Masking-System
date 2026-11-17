@@ -12,6 +12,7 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
+from typing import cast
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "platform/masking-gateway/src"))
@@ -31,6 +32,13 @@ from masking_engine.app.engines.regex_rules import (
 )
 from masking_engine.app.engines.regex_shared import _digit_run
 
+
+def _required[T](value: T | None) -> T:
+    """Narrow an Optional the test knows is present, failing loudly if it is not."""
+    assert value is not None
+    return value
+
+
 DIGITS = re.compile(r"\d+")
 
 
@@ -45,7 +53,7 @@ def found(rules, text: str) -> list[tuple[str, str]]:
 
 def test_a_candidate_exposes_the_text_it_covers() -> None:
     text = "abc 123 def"
-    match = DIGITS.search(text)
+    match = _required(DIGITS.search(text))
     candidate = Candidate(text, match, match.start(), match.end())
     assert candidate.value == "123"
     assert candidate.text is text
@@ -55,7 +63,7 @@ def test_a_candidate_exposes_the_text_it_covers() -> None:
 
 def test_guards_combine_the_way_their_names_say() -> None:
     yes, no = (lambda c: True), (lambda c: False)
-    candidate = Candidate("x", DIGITS.search("1"), 0, 1)
+    candidate = Candidate("x", _required(DIGITS.search("1")), 0, 1)
     assert every(yes, yes)(candidate)
     assert not every(yes, no)(candidate)
     assert not either(no, no)(candidate)
@@ -186,8 +194,8 @@ def test_a_hint_is_scanned_once_however_many_rules_share_it() -> None:
 
     cache = _HintCache("no cue here")
     counting = Counting()
-    assert cache.permits(counting)
-    assert cache.permits(counting)
+    assert cache.permits(cast("re.Pattern[str]", counting))
+    assert cache.permits(cast("re.Pattern[str]", counting))
     assert scans == 1
     # No hint at all is always permitted, and costs no scan.
     assert cache.permits(None)
@@ -218,7 +226,7 @@ def test_a_checksum_guard_asks_the_scheme_about_the_matched_value_only() -> None
         return value == "12"
 
     text = "x 12 y"
-    match = DIGITS.search(text)
+    match = _required(DIGITS.search(text))
     guard = _checksum(ok)
     assert guard(Candidate(text, match, match.start(), match.end()))
     assert asked == ["12"]
@@ -229,7 +237,7 @@ def test_a_checksum_guard_asks_the_scheme_about_the_matched_value_only() -> None
 
 def test_a_digit_count_guard_counts_digits_and_ignores_the_separators() -> None:
     text = "80.01.01-001.07"
-    match = re.compile(re.escape(text)).search(text)
+    match = _required(re.compile(re.escape(text)).search(text))
     candidate = Candidate(text, match, 0, len(text))
     assert _digit_count(11)(candidate)
     assert _digit_count(9, 11, 13)(candidate)

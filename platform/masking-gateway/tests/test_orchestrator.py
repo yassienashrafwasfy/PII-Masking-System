@@ -202,7 +202,7 @@ def test_an_earlier_long_claim_is_still_found_behind_later_short_ones() -> None:
 def test_a_mode_the_contract_does_not_name_is_refused() -> None:
     for mode in ("hybrid", "", "MODEL", "model_only"):
         try:
-            Orchestrator(mode)
+            Orchestrator(mode)  # type: ignore[arg-type]  # invalid on purpose
         except ValueError as error:
             assert f"Unknown detection mode: {mode}" == str(error)
         else:
@@ -234,17 +234,17 @@ def test_spans_come_back_ordered_by_page_then_position() -> None:
 
 
 def test_the_shape_gate_drops_a_detection_of_the_wrong_length() -> None:
-    text = {None: "RIZIV 535581078 vermeld"}
+    text: dict[int | None, str] = {None: "RIZIV 535581078 vermeld"}
     impossible = MaskSpan(6, 15, "RIZIV_INAMI", "model")
     assert Orchestrator("model").execute([impossible], [], text) == []
     # ...and keeps one the grammar admits.
-    admitted = {None: "1-23456-78-901"}
+    admitted: dict[int | None, str] = {None: "1-23456-78-901"}
     real = MaskSpan(0, 14, "RIZIV_INAMI", "model")
     assert Orchestrator("model").execute([real], [], admitted) == [real]
 
 
 def test_the_shape_gate_is_skipped_without_a_rule_or_without_text() -> None:
-    text = {None: "RIZIV 535581078 vermeld"}
+    text: dict[int | None, str] = {None: "RIZIV 535581078 vermeld"}
     impossible = MaskSpan(6, 15, "RIZIV_INAMI", "model")
     # `MODEL_ID_SHAPE_GATE=off` injects None here.
     assert Orchestrator("model", shape_rule=None).execute([impossible], [], text) == [

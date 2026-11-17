@@ -9,6 +9,7 @@ just lint      # black --check + ruff check       # just format to fix
 just launch octo                                   # SERVICE_TOKEN=... docker compose up gateway + <team>-model
 ```
 
+- Static analysis is three pre-commit hooks (`mypy`, `radon-complexity`, `hadolint`), mirrored by `.github/workflows/static-analysis.yml`. mypy goes through `scripts/check_types.py` (one run per source group; fails on any tracked `.py` file no group covers). Complexity is capped at rank C (20 per function). Waive a hadolint rule inline with a reason, not in `.hadolint.yaml`.
 - Run a single test directly, not via bare `pytest`: `uv run python platform/masking-gateway/tests/test_gateway.py` or `uv run python teams/octo/tests/test_model_inference.py`.
 - Only `evaluation/` uses pytest: `PYTHONPATH=evaluation uv run python -m pytest -q evaluation/tests`.
 - Never run bare `black`/`ruff` on the repo: both exclude `teams/berts/training/tamerbert_generalization_trial.py` (see `justfile`); `ruff.toml` per-file-ignores `E402` for gateway/model-service tests (sys.path bootstrap before imports is intentional).

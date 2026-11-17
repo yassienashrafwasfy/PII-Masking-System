@@ -23,7 +23,12 @@ from dataclasses import dataclass
 from faker import Faker
 
 from ..core.locales import LocaleProfile
-from .surrogate_dates import _redraw_date, _year_offsets, unparsed_date_anchor
+from .surrogate_dates import (
+    ParsedDate,
+    _redraw_date,
+    _year_offsets,
+    unparsed_date_anchor,
+)
 from .surrogate_numbers import (
     _DIGIT_RUN_RE,
     _insz_digits,
@@ -108,7 +113,7 @@ class SurrogateContext:
     organization_pool: tuple[str, ...]
     random: Callable[[], random.Random]
     faker: Callable[[], Faker]
-    date_of: Callable[[str], object]
+    date_of: Callable[[str], ParsedDate | None]
 
 
 def redraw(ctx: SurrogateContext, *, letters: bool) -> str:

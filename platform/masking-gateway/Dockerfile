@@ -14,6 +14,10 @@ WORKDIR /app
 # CVE-2026-41992, CVE-2026-86145/89161, CVE-2026-11822/11824, and the
 # perl-base CVEs fixed in 5.40.1-6+deb13u1) changes that text, forcing a real
 # re-run instead of silently dropping packages from the upgrade set.
+# Not pinned on purpose: this only upgrades packages the base image already
+# ships to the newest patched build, so an exact version would defeat it and
+# break the build the day the mirror drops that version.
+# hadolint ignore=DL3008
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install --only-upgrade --yes util-linux openssl gzip libpcre2-8-0 libsqlite3-0 perl-base \
     && rm -rf /var/lib/apt/lists/* \

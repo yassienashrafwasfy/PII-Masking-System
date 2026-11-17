@@ -68,7 +68,9 @@ class ArenaComposeTests(unittest.TestCase):
         together in production, so a stale one is invisible until Traefik
         routes to a closed port.
         """
-        port = re.search(r"(?m)^\s*listen\s+(\d+)", UI_NGINX_CONF.read_text()).group(1)
+        listen = re.search(r"(?m)^\s*listen\s+(\d+)", UI_NGINX_CONF.read_text())
+        assert listen is not None
+        port = listen.group(1)
 
         labels = "\n".join(self.config["services"]["arena-ui"]["labels"])
         self.assertIn(

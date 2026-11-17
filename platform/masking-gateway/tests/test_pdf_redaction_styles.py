@@ -26,6 +26,12 @@ _BADGE_ENTRIES = (
 )
 
 
+def _required[T](value: T | None) -> T:
+    """Narrow an Optional the test knows is present, failing loudly if it is not."""
+    assert value is not None
+    return value
+
+
 def _width_at(size: float) -> float:
     return pymupdf.get_text_length(_LONG_NAME, fontname=_FONT, fontsize=size)
 
@@ -68,7 +74,9 @@ def test_an_ample_box_fits_at_the_maximum_size() -> None:
     # --- fit_text -----------------------------------------------------
     # Ample box: fits at the max size, unchanged text, no growth needed.
     ample = pymupdf.Rect(0, 0, 400, 14)
-    fitted_rect, size, text = styles.fit_text(ample, _LONG_NAME, safe_expand=0)
+    fitted_rect, size, text = _required(
+        styles.fit_text(ample, _LONG_NAME, safe_expand=0)
+    )
     assert text == _LONG_NAME
     assert size == _MAX_SIZE
     assert fitted_rect.width <= ample.width  # safe_expand=0 never grows the box
@@ -81,7 +89,9 @@ def test_a_tight_box_shrinks_the_type_rather_than_cutting_the_text() -> None:
     width_at_max = _width_at(_MAX_SIZE)
     shrink_box = pymupdf.Rect(0, 0, width_at_floor + 8 + 2, 14)
     assert shrink_box.width < width_at_max + 8  # doesn't fit at max size...
-    fitted_rect, size, text = styles.fit_text(shrink_box, _LONG_NAME, safe_expand=0)
+    fitted_rect, size, text = _required(
+        styles.fit_text(shrink_box, _LONG_NAME, safe_expand=0)
+    )
     assert text == _LONG_NAME  # ...but still renders in full, just shrunk
     assert _MIN_SIZE <= size < _MAX_SIZE
     assert fitted_rect.width <= shrink_box.width
@@ -103,7 +113,9 @@ def test_a_last_resort_truncation_marks_the_text_and_stays_in_the_box() -> None:
     # The same box truncates with an ellipsis as a last resort, and never
     # grows past `rect.width + safe_expand`.
     too_narrow = _too_narrow_box()
-    fitted_rect, size, text = styles.fit_text(too_narrow, _LONG_NAME, safe_expand=0)
+    fitted_rect, size, text = _required(
+        styles.fit_text(too_narrow, _LONG_NAME, safe_expand=0)
+    )
     assert text.endswith(styles._ELLIPSIS)
     assert text != _LONG_NAME
     assert size == _MIN_SIZE
@@ -129,7 +141,9 @@ def test_the_truncation_mark_survives_the_chip_fonts() -> None:
 def test_enough_room_grows_the_box_instead_of_truncating() -> None:
     # Given enough safe_expand, it grows instead of truncating.
     too_narrow = _too_narrow_box()
-    fitted_rect, size, text = styles.fit_text(too_narrow, _LONG_NAME, safe_expand=500)
+    fitted_rect, size, text = _required(
+        styles.fit_text(too_narrow, _LONG_NAME, safe_expand=500)
+    )
     assert text == _LONG_NAME
     assert fitted_rect.width > too_narrow.width
 
@@ -144,7 +158,9 @@ def test_both_variants_draw_a_filled_box_in_both_modes() -> None:
             page = document.new_page()
             style = styles.resolve_style("NAME")
             box = pymupdf.Rect(40, 100, 120, 114)
-            fitted_rect, size, text = styles.fit_text(box, "NAME", safe_expand=0)
+            fitted_rect, size, text = _required(
+                styles.fit_text(box, "NAME", safe_expand=0)
+            )
             styles.draw_box(
                 page, fitted_rect, style, mode, text, size, style_variant=variant
             )
@@ -210,7 +226,7 @@ def test_a_chip_never_sets_type_taller_than_the_box_it_sits_in() -> None:
     # the chip ran into the lines above and below it.
     for height in (5.0, 6.0, 6.9, 8.2, 10.0, 12.4, 20.0):
         rect = pymupdf.Rect(0, 0, 200, height)
-        fitted_rect, size, text = styles.fit_text(rect, "Jean Moreau", 40.0)
+        fitted_rect, size, text = _required(styles.fit_text(rect, "Jean Moreau", 40.0))
         assert size * styles._line_height("helv") <= rect.height + 0.01, (
             height,
             size,

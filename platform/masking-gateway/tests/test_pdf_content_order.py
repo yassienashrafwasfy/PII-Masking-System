@@ -167,7 +167,7 @@ def _render(data: bytes) -> list[np.ndarray]:
     document = pymupdf.open(stream=data, filetype="pdf")
     try:
         pages = []
-        for page in document:
+        for page in document.pages():
             pixmap = page.get_pixmap(colorspace=pymupdf.csGRAY, alpha=False)
             pages.append(
                 np.frombuffer(pixmap.samples, np.uint8)
@@ -190,7 +190,7 @@ def _chip_boxes(data: bytes) -> list[list[pymupdf.Rect]]:
     try:
         return [
             [drawing["rect"] for drawing in page.get_drawings() if drawing.get("fill")]
-            for page in document
+            for page in document.pages()
         ]
     finally:
         document.close()
@@ -557,8 +557,8 @@ def test_columns_of_one_row_are_ordered_across_not_by_a_hair_of_height() -> None
     masked = redact_document(prepared, spans, redaction_style="invisible")
 
     lines = _lines(masked)
-    labels = {"Naam:": None, "Arts:": None, "Datum:": None}
-    for name in labels:
+    labels: dict[str, int] = {}
+    for name in ("Naam:", "Arts:", "Datum:"):
         matches = [index for index, line in enumerate(lines) if line.strip() == name]
         assert matches, (name, lines)
         labels[name] = matches[0]

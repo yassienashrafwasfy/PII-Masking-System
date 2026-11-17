@@ -1,0 +1,47 @@
+# Static analysis: mypy, radon cyclomatic complexity and hadolint.
+#
+# Each step runs the pre-commit hook of the same id, so the definition of
+# "clean" lives in one place (.pre-commit-config.yaml, scripts/check_types.py,
+# .hadolint.yaml and pyproject.toml) and a green local commit means a green run
+# here. Nothing is re-spelled in this file.
+name: static-analysis
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: static-analysis-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static_analysis:
+    name: static analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      # hadolint and radon read source text only, so they need the dev tools and
+      # not the model runtimes. Running them first fails fast, in seconds,
+      # before the large install mypy needs.
+      - run: uv sync --locked --only-group dev
+      - name: hadolint
+        run: uv run --no-sync pre-commit run hadolint --all-files --show-diff-on-failure
+      - name: radon cyclomatic complexity
+        run: uv run --no-sync pre-commit run radon-complexity --all-files --show-diff-on-failure
+
+      # mypy resolves imports against the installed packages, so it has to run
+      # in the same fully locked environment as a developer's checkout. A thinner
+      # one would report "missing import" for libraries that are fine.
+      - run: uv sync --locked
+      - name: mypy
+        run: uv run --no-sync pre-commit run mypy --all-files --show-diff-on-failure

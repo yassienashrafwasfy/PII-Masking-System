@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from collections.abc import Callable
 from functools import cache
 from pathlib import Path
 
@@ -133,6 +134,47 @@ def supported_model_formats() -> frozenset[str]:
     return SUPPORTED_MODEL_FORMATS
 
 
+def _valid_name(value: str, folded: str) -> bool:
+    if folded in BLOCKED_SINGLE_NAME_TERMS:
+        return False
+    if re.fullmatch(r"[A-Z]+_[A-Z0-9]+", value):
+        return True
+    tokens = value.split()
+    return (
+        bool(tokens)
+        and any(NAME_TOKEN_PATTERN.fullmatch(token) for token in tokens)
+        and all(
+            NAME_TOKEN_PATTERN.fullmatch(token) or token.casefold() in NAME_PARTICLES
+            for token in tokens
+        )
+    )
+
+
+def _digit_count(value: str) -> int:
+    return len(re.sub(r"\D", "", value))
+
+
+# One predicate per label, given the stripped value and its casefolded form. A
+# label with no entry is rejected: only the categories listed here are accepted.
+_ENTITY_VALIDATORS: dict[str, Callable[[str, str], bool]] = {
+    "Name": _valid_name,
+    "Date": lambda value, folded: bool(DATE_PATTERN.fullmatch(value)),
+    "Email": lambda value, folded: bool(EMAIL_PATTERN.fullmatch(value)),
+    "Address": lambda value, folded: bool(ADDRESS_PATTERN.fullmatch(value)),
+    "TELEFOON": lambda value, folded: bool(PHONE_PATTERN.fullmatch(value)),
+    "Age": lambda value, folded: bool(re.fullmatch(r"\d{1,3}(?:-jarige)?", value)),
+    "Gender": lambda value, folded: folded
+    in {"man", "vrouw", "m", "v", "x", "non-binair"},
+    "RVIZ": lambda value, folded: _digit_count(value) >= 7,
+    "INSZ": lambda value, folded: _digit_count(value) == 11,
+    "CREDITCARDNUMBER": lambda value, folded: 13 <= _digit_count(value) <= 19,
+    "URL": lambda value, folded: bool(URL_PATTERN.fullmatch(value)),
+    "Hospital_Name": lambda value, folded: any(
+        term in folded for term in ("ziekenhuis", "hospital", "kliniek", "azorg")
+    ),
+}
+
+
 def _valid_entity(label: str, value: str) -> bool:
     """Reject high-confidence category errors before they reach redaction.
 
@@ -150,47 +192,8 @@ def _valid_entity(label: str, value: str) -> bool:
     land on exact boundaries, and the near-misses are fed here as raw strings.
     """
     value = value.strip()
-    folded = value.casefold()
-    if label == "Name":
-        if folded in BLOCKED_SINGLE_NAME_TERMS:
-            return False
-        if re.fullmatch(r"[A-Z]+_[A-Z0-9]+", value):
-            return True
-        tokens = value.split()
-        return (
-            bool(tokens)
-            and any(NAME_TOKEN_PATTERN.fullmatch(token) for token in tokens)
-            and all(
-                NAME_TOKEN_PATTERN.fullmatch(token)
-                or token.casefold() in NAME_PARTICLES
-                for token in tokens
-            )
-        )
-    if label == "Date":
-        return bool(DATE_PATTERN.fullmatch(value))
-    if label == "Email":
-        return bool(EMAIL_PATTERN.fullmatch(value))
-    if label == "Address":
-        return bool(ADDRESS_PATTERN.fullmatch(value))
-    if label == "TELEFOON":
-        return bool(PHONE_PATTERN.fullmatch(value))
-    if label == "Age":
-        return bool(re.fullmatch(r"\d{1,3}(?:-jarige)?", value))
-    if label == "Gender":
-        return folded in {"man", "vrouw", "m", "v", "x", "non-binair"}
-    if label == "RVIZ":
-        return len(re.sub(r"\D", "", value)) >= 7
-    if label == "INSZ":
-        return len(re.sub(r"\D", "", value)) == 11
-    if label == "CREDITCARDNUMBER":
-        return 13 <= len(re.sub(r"\D", "", value)) <= 19
-    if label == "URL":
-        return bool(URL_PATTERN.fullmatch(value))
-    if label == "Hospital_Name":
-        return any(
-            term in folded for term in ("ziekenhuis", "hospital", "kliniek", "azorg")
-        )
-    return False
+    validator = _ENTITY_VALIDATORS.get(label)
+    return validator(value, value.casefold()) if validator else False
 
 
 def _merge_regex_spans(text: str, spans: list[MaskSpan]) -> list[MaskSpan]:

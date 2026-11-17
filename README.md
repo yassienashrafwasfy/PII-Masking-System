@@ -134,6 +134,24 @@ PYTHONPATH=evaluation uv run python -m pytest -q evaluation/tests
 uv run pre-commit run --all-files --show-diff-on-failure
 ```
 
+### Static analysis
+
+Three checks run as pre-commit hooks and again in GitHub Actions ([`static-analysis.yml`](.github/workflows/static-analysis.yml)), which calls the hooks by id so there is one definition of "clean":
+
+| Hook | Checks | Policy |
+| --- | --- | --- |
+| `mypy` | Types across the whole repository, including `teams/`, `tests/` and `scripts/` | `[tool.mypy]` in `pyproject.toml`; groups in `scripts/check_types.py` (about 40 s) |
+| `radon-complexity` | Cyclomatic complexity per function | Rank C ceiling: complexity above 20 fails (`xenon --max-absolute C`); tests are not measured |
+| `hadolint` | Every Dockerfile | `.hadolint.yaml`: warnings and errors fail; a rule is waived with an inline `# hadolint ignore=DLxxxx` and a reason, never globally |
+
+```sh
+uv run pre-commit run mypy --all-files
+uv run pre-commit run radon-complexity --all-files
+uv run pre-commit run hadolint --all-files
+```
+
+A new top-level directory of Python must be added to a group in `scripts/check_types.py`; the script fails if any tracked `.py` file is not covered.
+
 ## Test tiers
 
 | Tier / stage | CI behavior | Checks |

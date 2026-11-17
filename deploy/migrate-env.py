@@ -20,7 +20,7 @@ from pathlib import Path
 # "dir"     -> <releases-root>/<release-sha>/<team>
 # "prefix"  -> sha256:<hex> taken from the named manifest field
 # "bare"    -> <hex> taken from the named manifest field
-MODEL_IDENTITY = {
+MODEL_IDENTITY: dict[str, dict[str, tuple[str | None, ...]]] = {
     # Every key names the exported graph, because the graph is what a service
     # loads. The manifest's `source_model_sha256` still records the checkpoint
     # the graph was exported from, but that checkpoint is not in the repository
@@ -189,7 +189,7 @@ def update_model_identity(args: argparse.Namespace) -> int:
     return 0
 
 
-def main() -> int:
+def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--legacy", type=Path)
     parser.add_argument("--values-file", type=Path)
@@ -199,42 +199,14 @@ def main() -> int:
     parser.add_argument("--release-sha")
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--releases-root")
-    args = parser.parse_args()
+    return parser.parse_args()
 
-    if bool(args.legacy) == bool(args.current):
-        raise SystemExit("Pass exactly one of --legacy or --current.")
-    if args.current:
-        return update_model_identity(args)
 
-    schema_path = Path(__file__).with_name(".env.example")
-    if args.output.exists():
-        raise SystemExit(
-            "Output already exists; legacy and prepared environments are never overwritten."
-        )
-    if args.output.resolve() == args.legacy.resolve():
-        raise SystemExit("Output must differ from the legacy environment file.")
-    secure_input(args.legacy)
-    legacy = read_env(args.legacy)
-    supplied: dict[str, str] = {}
-    if args.values_file:
-        secure_input(args.values_file)
-        supplied = read_env(args.values_file)
+def _is_unresolved(value: str) -> bool:
+    return not value or "replace-with" in value or value == "__UNRESOLVED__"
 
-    schema = read_env(schema_path)
-    unknown = sorted(set(supplied) - set(schema))
-    if unknown:
-        print("Unknown environment keys: " + ", ".join(unknown), file=sys.stderr)
-        return 2
 
-    values = dict(schema)
-    for key in SAFE_LEGACY_KEYS:
-        if key in legacy:
-            values[key] = legacy[key]
-    values.update(supplied)
-
-    unresolved: set[str] = {key for key in EXPLICIT_KEYS if key not in supplied}
-
-    teams = values.get("ENABLED_TEAMS", "") if "ENABLED_TEAMS" not in unresolved else ""
+def _required_by_team(values: dict[str, str]) -> dict[str, set[str]]:
     required_by_team = {
         "octo": {
             "OCTO_MODEL_DIR",
@@ -264,12 +236,20 @@ def main() -> int:
             "BERTS_MODEL_VERSION_FR",
             "BERTS_ONNX_MODEL_SHA256_FR",
         }
+    return required_by_team
+
+
+def _unresolved_keys(values: dict[str, str], supplied: dict[str, str]) -> set[str]:
+    """Every required key that still holds no real value."""
+    unresolved: set[str] = {key for key in EXPLICIT_KEYS if key not in supplied}
+
+    teams = values.get("ENABLED_TEAMS", "") if "ENABLED_TEAMS" not in unresolved else ""
+    required_by_team = _required_by_team(values)
     for team in filter(None, teams.split(",")):
         if team not in required_by_team:
             unresolved.add("ENABLED_TEAMS")
         for key in required_by_team.get(team, set()):
-            value = values.get(key, "")
-            if not value or "replace-with" in value or value == "__UNRESOLVED__":
+            if _is_unresolved(values.get(key, "")):
                 unresolved.add(key)
     if "berts" in teams.split(","):
         warm_rss = values.get("BERTS_WARM_RSS_MIB", "")
@@ -285,8 +265,7 @@ def main() -> int:
             "OCR_REC_SHA256",
             "OCR_CHARSET_SHA256",
         ):
-            value = values.get(key, "")
-            if not value or "replace-with" in value or value == "__UNRESOLVED__":
+            if _is_unresolved(values.get(key, "")):
                 unresolved.add(key)
     for key in (
         "SERVICE_TOKEN",
@@ -294,10 +273,39 @@ def main() -> int:
         "NIFI_DOCKER_BRIDGE_IP",
         "NGINX_UPSTREAM_FILE",
     ):
-        value = values.get(key, "")
-        if not value or "replace-with" in value or value == "__UNRESOLVED__":
+        if _is_unresolved(values.get(key, "")):
             unresolved.add(key)
+    return unresolved
 
+
+def migrate_legacy(args: argparse.Namespace) -> int:
+    schema_path = Path(__file__).with_name(".env.example")
+    if args.output.exists():
+        raise SystemExit(
+            "Output already exists; legacy and prepared environments are never overwritten."
+        )
+    if args.output.resolve() == args.legacy.resolve():
+        raise SystemExit("Output must differ from the legacy environment file.")
+    secure_input(args.legacy)
+    legacy = read_env(args.legacy)
+    supplied: dict[str, str] = {}
+    if args.values_file:
+        secure_input(args.values_file)
+        supplied = read_env(args.values_file)
+
+    schema = read_env(schema_path)
+    unknown = sorted(set(supplied) - set(schema))
+    if unknown:
+        print("Unknown environment keys: " + ", ".join(unknown), file=sys.stderr)
+        return 2
+
+    values = dict(schema)
+    for key in SAFE_LEGACY_KEYS:
+        if key in legacy:
+            values[key] = legacy[key]
+    values.update(supplied)
+
+    unresolved = _unresolved_keys(values, supplied)
     if unresolved:
         print(
             "Unresolved required keys: " + ", ".join(sorted(unresolved)),
@@ -320,6 +328,15 @@ def main() -> int:
     os.chmod(args.output, 0o600)
     print(f"Prepared {args.output.name}; validate it with deploy-gateway.sh preflight.")
     return 0
+
+
+def main() -> int:
+    args = _parse_args()
+    if bool(args.legacy) == bool(args.current):
+        raise SystemExit("Pass exactly one of --legacy or --current.")
+    if args.current:
+        return update_model_identity(args)
+    return migrate_legacy(args)
 
 
 if __name__ == "__main__":

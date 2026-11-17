@@ -311,7 +311,7 @@ def parse_spans(value: Any) -> list[dict[str, Any]]:
 def _validate_row_spans(
     source_text: str, spans: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
-    normalized = []
+    normalized: list[dict[str, Any]] = []
     for span in spans:
         label = span.get("label")
         start = span.get("start")
@@ -403,7 +403,7 @@ def split_train_dev(
     group_keys = list(groups)
     random.Random(seed).shuffle(group_keys)
     target_size = max(1, round(len(frame) * dev_fraction))
-    dev_indices = []
+    dev_indices: list[int] = []
     for key in group_keys:
         if len(dev_indices) >= target_size:
             break
@@ -451,8 +451,7 @@ def label_names(*frames: pd.DataFrame) -> list[str]:
     ]
 
 
-def load_taxonomy_labels(path: Path, *frames: pd.DataFrame) -> list[str]:
-    """Load the taxonomy's authoritative BIO order and validate observed entities."""
+def _read_bio_labels(path: Path) -> list[str]:
     taxonomy = json.loads(path.read_text(encoding="utf-8"))
     labels = taxonomy.get("bio_labels")
     if (
@@ -465,6 +464,11 @@ def load_taxonomy_labels(path: Path, *frames: pd.DataFrame) -> list[str]:
         )
     if len(labels) != len(set(labels)) or labels[0] != "O":
         raise ValueError(f"Taxonomy {path} bio_labels must be unique and start with O")
+    return list(labels)
+
+
+def _declared_entities(path: Path, labels: list[str]) -> set[str]:
+    """The entity names the BIO labels declare, after checking the pairing."""
     declared_entities = {
         label[2:]
         for label in labels
@@ -484,6 +488,13 @@ def load_taxonomy_labels(path: Path, *frames: pd.DataFrame) -> list[str]:
     )
     if missing_pairs:
         raise ValueError(f"Taxonomy {path} is missing B/I pairs for: {missing_pairs}")
+    return declared_entities
+
+
+def load_taxonomy_labels(path: Path, *frames: pd.DataFrame) -> list[str]:
+    """Load the taxonomy's authoritative BIO order and validate observed entities."""
+    labels = _read_bio_labels(path)
+    declared_entities = _declared_entities(path, labels)
     observed = {
         str(span["label"])
         for frame in frames
@@ -495,7 +506,7 @@ def load_taxonomy_labels(path: Path, *frames: pd.DataFrame) -> list[str]:
         raise ValueError(
             f"Observed span labels are not declared by taxonomy {path}: {undeclared}"
         )
-    return list(labels)
+    return labels
 
 
 def _configured_label_names(model) -> list[str]:
@@ -886,9 +897,9 @@ def _apply_lora(model: torch.nn.Module, config: TrainConfig) -> torch.nn.Module:
         target_modules=lora_target_modules(config),
         modules_to_save=["classifier"],
     )
-    model = get_peft_model(model, lora_config)
-    model.print_trainable_parameters()
-    return model
+    peft_model = get_peft_model(model, lora_config)
+    peft_model.print_trainable_parameters()
+    return peft_model
 
 
 def _trainable_parameter_count(model: torch.nn.Module) -> int:
@@ -1069,7 +1080,11 @@ def assert_checkpoint_resumable(
     tokenizer, and one RNG state per rank. Resuming from a partial checkpoint
     would change the run without saying so, so this refuses instead.
     """
-    required_files = ("optimizer.pt", "scheduler.pt", "trainer_state.json")
+    required_files: tuple[str, ...] = (
+        "optimizer.pt",
+        "scheduler.pt",
+        "trainer_state.json",
+    )
     if lora_enabled:
         required_files += ("adapter_config.json",)
     else:
@@ -1369,7 +1384,7 @@ def decode_predictions(
                 raw_indices[cursor : cursor + batch_size_actual],
                 strict=False,
             ):
-                active = None
+                active: dict[str, Any] | None = None
                 for probabilities_at_token, (start, end) in zip(
                     row_probs, row_offsets, strict=False
                 ):
@@ -1414,9 +1429,9 @@ def deduplicate_predictions(predictions: list[dict[str, Any]]) -> list[dict[str,
     grouped: dict[tuple[int, str], list[dict[str, Any]]] = defaultdict(list)
     for prediction in predictions:
         grouped[(prediction["sample_index"], prediction["label"])].append(prediction)
-    selected = []
+    selected: list[dict[str, Any]] = []
     for group in grouped.values():
-        kept = []
+        kept: list[dict[str, Any]] = []
         for candidate in sorted(
             group,
             key=lambda item: (item["end"] - item["start"], item["confidence"]),
@@ -2057,6 +2072,7 @@ def run_training(
         if already_finished:
             from transformers.trainer_callback import TrainerState
 
+            assert last_checkpoint is not None, "a finished run has a checkpoint"
             trainer.state = TrainerState.load_from_json(
                 str(Path(last_checkpoint) / "trainer_state.json")
             )
@@ -2166,6 +2182,79 @@ def build_trainer(
     return WeightedTrainer(**kwargs)
 
 
+def _load_tokenizer(
+    config: TrainConfig,
+    last_checkpoint: str | None,
+    loading_from_ckpt: bool,
+    local_files_only: bool,
+    revision: str | None,
+) -> Any:
+    try:
+        return AutoTokenizer.from_pretrained(
+            (
+                config.model_id
+                if config.lora_enabled
+                else str(last_checkpoint or config.model_id)
+            ),
+            cache_dir=config.cache_dir,
+            use_fast=True,
+            local_files_only=local_files_only,
+            revision=revision,
+        )
+    except (OSError, ValueError):
+        if not loading_from_ckpt:
+            raise
+        # An interrupted save can leave a checkpoint without its tokenizer. The
+        # base tokenizer matches the one this checkpoint trained with.
+        print(
+            f"TOKENIZER FALLBACK | checkpoint tokenizer unavailable. Loading {config.model_id}",
+            flush=True,
+        )
+        return AutoTokenizer.from_pretrained(
+            config.model_id,
+            cache_dir=config.cache_dir,
+            use_fast=True,
+            local_files_only=not config.allow_online,
+            revision=(
+                None
+                if Path(config.model_id).exists()
+                else (config.model_revision or None)
+            ),
+        )
+
+
+def _load_token_classifier(
+    config: TrainConfig,
+    names: list[str],
+    label_to_id: dict[str, int],
+    id_to_label: dict[int, str],
+    last_checkpoint: str | None,
+    loading_from_ckpt: bool,
+    local_files_only: bool,
+    revision: str | None,
+) -> torch.nn.Module:
+    load_kwargs = {
+        "cache_dir": config.cache_dir,
+        "local_files_only": local_files_only,
+        "revision": revision,
+    }
+    if loading_from_ckpt or config.taxonomy_path is None:
+        return AutoModelForTokenClassification.from_pretrained(
+            str(last_checkpoint or config.model_id),
+            num_labels=len(names),
+            id2label=id_to_label,
+            label2id=label_to_id,
+            ignore_mismatched_sizes=not loading_from_ckpt,
+            **load_kwargs,
+        )
+    model = AutoModelForTokenClassification.from_pretrained(
+        config.model_id, **load_kwargs
+    )
+    if _configured_label_names(model) != names:
+        resize_token_classifier(model, names)
+    return model
+
+
 def load_tokenizer_and_model(
     config: TrainConfig,
     names: list[str],
@@ -2189,59 +2278,19 @@ def load_tokenizer_and_model(
         f"MODEL LOAD | source={'checkpoint' if loading_from_ckpt else 'base'} | {config.model_id}",
         flush=True,
     )
-    try:
-        tokenizer = AutoTokenizer.from_pretrained(
-            (
-                config.model_id
-                if config.lora_enabled
-                else str(last_checkpoint or config.model_id)
-            ),
-            cache_dir=config.cache_dir,
-            use_fast=True,
-            local_files_only=local_files_only,
-            revision=revision,
-        )
-    except (OSError, ValueError):
-        if not loading_from_ckpt:
-            raise
-        # An interrupted save can leave a checkpoint without its tokenizer. The
-        # base tokenizer matches the one this checkpoint trained with.
-        print(
-            f"TOKENIZER FALLBACK | checkpoint tokenizer unavailable. Loading {config.model_id}",
-            flush=True,
-        )
-        tokenizer = AutoTokenizer.from_pretrained(
-            config.model_id,
-            cache_dir=config.cache_dir,
-            use_fast=True,
-            local_files_only=not config.allow_online,
-            revision=(
-                None
-                if Path(config.model_id).exists()
-                else (config.model_revision or None)
-            ),
-        )
-
-    load_kwargs = {
-        "cache_dir": config.cache_dir,
-        "local_files_only": local_files_only,
-        "revision": revision,
-    }
-    if loading_from_ckpt or config.taxonomy_path is None:
-        model = AutoModelForTokenClassification.from_pretrained(
-            str(last_checkpoint or config.model_id),
-            num_labels=len(names),
-            id2label=id_to_label,
-            label2id=label_to_id,
-            ignore_mismatched_sizes=not loading_from_ckpt,
-            **load_kwargs,
-        )
-    else:
-        model = AutoModelForTokenClassification.from_pretrained(
-            config.model_id, **load_kwargs
-        )
-        if _configured_label_names(model) != names:
-            resize_token_classifier(model, names)
+    tokenizer = _load_tokenizer(
+        config, last_checkpoint, loading_from_ckpt, local_files_only, revision
+    )
+    model = _load_token_classifier(
+        config,
+        names,
+        label_to_id,
+        id_to_label,
+        last_checkpoint,
+        loading_from_ckpt,
+        local_files_only,
+        revision,
+    )
 
     model.float()
     if config.lora_enabled:
@@ -2262,6 +2311,52 @@ def load_tokenizer_and_model(
             f"Trainable model parameters must be FP32 before AMP setup. Found {trainable_dtypes}."
         )
     return tokenizer, model
+
+
+def _log_resume(
+    last_ckpt: str | None, last_state: dict[str, Any], is_main_process: bool
+) -> None:
+    if not is_main_process:
+        return
+    if last_ckpt:
+        _ep, _step = last_state.get("epoch"), last_state.get("global_step")
+        print(
+            f"RESUME | FOUND {last_ckpt} | epoch={_ep} global_step={_step} -> CONTINUING",
+            flush=True,
+        )
+    else:
+        print("RESUME | no checkpoint found. TRAINING FROM SCRATCH", flush=True)
+
+
+def _completed_run(
+    last_ckpt: str | None, last_state: dict[str, Any], args: TrainConfig
+) -> tuple[bool, Path | None]:
+    """Whether the checkpoint already finished the schedule, and what to export."""
+    completed_training = bool(last_ckpt) and training_reached_endpoint(last_state, args)
+    selected_checkpoint: Path | None = (
+        select_completed_checkpoint(last_ckpt, last_state, args)
+        if completed_training and last_ckpt
+        else None
+    )
+    return completed_training, selected_checkpoint
+
+
+def _label_names_for(
+    args: TrainConfig, train_frame: pd.DataFrame, dev_frame: pd.DataFrame
+) -> list[str]:
+    if args.taxonomy_path:
+        return load_taxonomy_labels(args.taxonomy_path, train_frame, dev_frame)
+    return label_names(train_frame)
+
+
+def _log_class_weights(weights: torch.Tensor | None) -> None:
+    if weights is None:
+        return
+    print(
+        f"CLASS WEIGHTS | min={weights.min().item():.3f} "
+        f"| max={weights.max().item():.3f} | mean={weights.mean().item():.3f}",
+        flush=True,
+    )
 
 
 def train_one(config: TrainConfig | dict[str, Any]) -> dict[str, Any]:
@@ -2285,21 +2380,9 @@ def train_one(config: TrainConfig | dict[str, Any]) -> dict[str, Any]:
     last_ckpt, last_state = find_resumable_checkpoint(
         checkpoints_dir, args.lora_enabled, world_size, is_main_process
     )
-    if is_main_process:
-        if last_ckpt:
-            _ep, _step = last_state.get("epoch"), last_state.get("global_step")
-            print(
-                f"RESUME | FOUND {last_ckpt} | epoch={_ep} global_step={_step} -> CONTINUING",
-                flush=True,
-            )
-        else:
-            print("RESUME | no checkpoint found. TRAINING FROM SCRATCH", flush=True)
-
-    completed_training = bool(last_ckpt) and training_reached_endpoint(last_state, args)
-    selected_checkpoint: Path | None = (
-        select_completed_checkpoint(last_ckpt, last_state, args)
-        if completed_training
-        else None
+    _log_resume(last_ckpt, last_state, is_main_process)
+    completed_training, selected_checkpoint = _completed_run(
+        last_ckpt, last_state, args
     )
     print(
         "CONFIG | " + json.dumps(config_log_payload(args, world_size), sort_keys=True),
@@ -2307,11 +2390,7 @@ def train_one(config: TrainConfig | dict[str, Any]) -> dict[str, Any]:
     )
 
     train_frame, dev_frame = load_train_dev_frames(args)
-    names = (
-        load_taxonomy_labels(args.taxonomy_path, train_frame, dev_frame)
-        if args.taxonomy_path
-        else label_names(train_frame)
-    )
+    names = _label_names_for(args, train_frame, dev_frame)
     label_to_id = {name: index for index, name in enumerate(names)}
     id_to_label = {index: name for name, index in label_to_id.items()}
     if last_ckpt and not args.lora_enabled:
@@ -2364,12 +2443,7 @@ def train_one(config: TrainConfig | dict[str, Any]) -> dict[str, Any]:
     label_weight_tensor = class_weights(
         train_features, len(names), args.class_weighting
     )
-    if label_weight_tensor is not None:
-        print(
-            f"CLASS WEIGHTS | min={label_weight_tensor.min().item():.3f} "
-            f"| max={label_weight_tensor.max().item():.3f} | mean={label_weight_tensor.mean().item():.3f}",
-            flush=True,
-        )
+    _log_class_weights(label_weight_tensor)
     print(
         f"TRAIN PLAN | train_chunks={len(train_features):,} | dev_chunks={len(dev_features):,} "
         f"| batches/epoch={plan.batches_per_epoch:,} | optimizer_steps={plan.optimizer_steps:,} "

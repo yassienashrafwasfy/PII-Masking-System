@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 import re
 import unittest
+from typing import Any, cast
 
 import yaml
 
@@ -16,13 +17,13 @@ class GitLabLoader(yaml.SafeLoader):
 
 
 def _reference(loader: yaml.SafeLoader, node: yaml.Node) -> list[object]:
-    return loader.construct_sequence(node)
+    return loader.construct_sequence(cast(yaml.SequenceNode, node))
 
 
 GitLabLoader.add_constructor("!reference", _reference)
 
 
-def load_ci(relative_path: str) -> dict[str, object]:
+def load_ci(relative_path: str) -> dict[str, Any]:
     return yaml.load((ROOT / relative_path).read_text(), Loader=GitLabLoader)
 
 
@@ -117,16 +118,16 @@ def _evaluate_if(expression: str, context: dict[str, str]) -> bool:
     return True
 
 
-def load_merged_config() -> dict[str, object]:
+def load_merged_config() -> dict[str, Any]:
     """Every top-level key across .gitlab-ci.yml and its includes."""
     root = load_ci(".gitlab-ci.yml")
-    merged: dict[str, object] = dict(root)
+    merged: dict[str, Any] = dict(root)
     for entry in root["include"]:
         merged.update(load_ci(entry["local"]))
     return merged
 
 
-def resolve_job(name: str, merged: dict[str, object]) -> dict[str, object]:
+def resolve_job(name: str, merged: dict[str, Any]) -> dict[str, Any]:
     """Flatten a job's `extends:` chain the way GitLab does.
 
     Later parents override earlier ones and the job overrides them all. A
@@ -139,14 +140,14 @@ def resolve_job(name: str, merged: dict[str, object]) -> dict[str, object]:
     parents = node.get("extends", [])
     if isinstance(parents, str):
         parents = [parents]
-    resolved: dict[str, object] = {}
+    resolved: dict[str, Any] = {}
     for parent in parents:
         resolved.update(resolve_job(parent, merged))
     resolved.update({k: v for k, v in node.items() if k != "extends"})
     return resolved
 
 
-def job_names(merged: dict[str, object]) -> list[str]:
+def job_names(merged: dict[str, Any]) -> list[str]:
     return [
         name
         for name, value in merged.items()
@@ -157,7 +158,7 @@ def job_names(merged: dict[str, object]) -> list[str]:
 
 
 def _rules_select(
-    rules: list[dict[str, object]] | None,
+    rules: list[dict[str, Any]] | None,
     context: dict[str, str],
     changed_paths: list[str],
 ) -> bool:
@@ -177,13 +178,13 @@ def _rules_select(
 
 
 def pipeline_is_created(
-    merged: dict[str, object], context: dict[str, str], changed_paths: list[str]
+    merged: dict[str, Any], context: dict[str, str], changed_paths: list[str]
 ) -> bool:
     return _rules_select(merged["workflow"]["rules"], context, changed_paths)
 
 
 def select_jobs(
-    merged: dict[str, object], context: dict[str, str], changed_paths: list[str]
+    merged: dict[str, Any], context: dict[str, str], changed_paths: list[str]
 ) -> set[str]:
     """The jobs GitLab would put in this pipeline."""
     if not pipeline_is_created(merged, context, changed_paths):
@@ -195,7 +196,7 @@ def select_jobs(
     }
 
 
-def needs_of(name: str, merged: dict[str, object]) -> set[str]:
+def needs_of(name: str, merged: dict[str, Any]) -> set[str]:
     needs = resolve_job(name, merged).get("needs", [])
     return {
         need["job"] if isinstance(need, dict) else need

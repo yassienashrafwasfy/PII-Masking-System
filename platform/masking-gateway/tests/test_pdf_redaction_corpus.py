@@ -274,7 +274,7 @@ def test_every_reading_order_exemption_is_still_needed(name: str) -> None:
         else [one for one in SETTINGS if f"{one[0]}/{one[1]}/{one[2]}" == setting]
     )
     assert combinations, f"{name}: the exemption names no setting the sweep runs"
-    breaks = []
+    breaks: list[str | None] = []
     for style, mode, reflow in combinations:
         masked = redact_document(
             document,

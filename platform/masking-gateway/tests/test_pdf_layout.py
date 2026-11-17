@@ -36,6 +36,12 @@ from masking_engine.app.services.pdf_extraction import (
 )
 
 
+def _required[T](value: T | None) -> T:
+    """Narrow an Optional the test knows is present, failing loudly if it is not."""
+    assert value is not None
+    return value
+
+
 def frag(
     x0: float, y0: float, x1: float, y1: float, text: str = "abc", **kw
 ) -> Fragment:
@@ -398,9 +404,9 @@ def test_only_glyphs_inside_an_ocr_box_are_flagged_as_ocr() -> None:
     inside = glyph("a", x0=10.0)
     outside = glyph("b", x0=500.0)
     marked = extraction._mark_ocr_glyphs([inside, None, outside], ((0, 0, 100, 100),))
-    assert marked[0].ocr is True
+    assert _required(marked[0]).ocr is True
     assert marked[1] is None
-    assert marked[2].ocr is False
+    assert _required(marked[2]).ocr is False
 
 
 def test_without_boxes_the_glyph_map_is_returned_untouched() -> None:
@@ -780,7 +786,8 @@ def test_stripping_the_rules_is_carried_through_to_the_cleaner(
 def test_an_encrypted_document_is_refused_by_name() -> None:
     document = pymupdf.open()
     document.new_page().insert_text((72, 100), "geheim")
-    data = document.tobytes(encryption=pymupdf.PDF_ENCRYPT_AES_256, user_pw="secret")
+    aes_256 = pymupdf.PDF_ENCRYPT_AES_256  # type: ignore[attr-defined]
+    data = document.tobytes(encryption=aes_256, user_pw="secret")
     document.close()
     try:
         extract_pdf_pages(data)

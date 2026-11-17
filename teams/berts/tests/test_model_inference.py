@@ -44,7 +44,7 @@ def main() -> None:
         "Behandelend arts: Dr. Peter Van Damme, RIZIV-nummer 1-23456-78-901."
     )
     national = letter.index("78.07.03-456.12")
-    masked = set()
+    masked: set[int] = set()
     for span in detect(letter, {"content_type": "text/plain", "model_format": "onnx"}):
         masked.update(range(span.start, span.end))
     assert set(range(national, national + len("78.07.03-456.12"))) <= masked

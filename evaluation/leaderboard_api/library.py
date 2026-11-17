@@ -104,6 +104,50 @@ def _team_from_source_key(settings: Settings, source_key: str) -> str | None:
     return parts[len(prefix_parts)]
 
 
+def _library_run_id(
+    settings: Settings, stored: objectstore.StoredObject, source_key: str
+) -> str | None:
+    """The arena's id for this key, or a stable one for a run it did not start."""
+    run_id = runs.run_id_from_source_key(settings, source_key)
+    if run_id is None and not settings.library_include_foreign:
+        return None
+    if run_id is None:
+        # Deterministic so a deep link survives a restart, and prefixed so it
+        # can never collide with a uuid4 the arena generated.
+        digest = hashlib.sha256(
+            f"{settings.manifest_bucket}/{stored.key}".encode()
+        ).hexdigest()
+        run_id = f"lib_{digest[:32]}"
+    return run_id
+
+
+def _display_filename(key: str, run_id: str) -> str:
+    filename = PurePosixPath(key).name
+    # The template folds the run id into the filename, so strip it back off for
+    # display -- the reader uploaded "report.pdf", not "<uuid>-report.pdf".
+    if filename.startswith(f"{run_id}-"):
+        filename = filename[len(run_id) + 1 :]
+    return filename
+
+
+def _manifest_times(
+    document: dict, stored: objectstore.StoredObject
+) -> tuple[datetime, datetime | None]:
+    """When the run was submitted and when it finished, as best the manifest says."""
+    submitted = _parse_time(document.get("started_at")) or _parse_time(
+        stored.last_modified
+    )
+    finished = (
+        _parse_time(document.get("completed_at"))
+        or _parse_time(document.get("failed_at"))
+        or _parse_time(stored.last_modified)
+    )
+    # Every ordering below has to tolerate a backend that reports no
+    # last_modified, so fall back rather than leave submitted_at unset.
+    submitted = submitted or finished or datetime.now(UTC)
+    return submitted, finished
+
+
 def entry_from_manifest(
     settings: Settings, stored: objectstore.StoredObject, document: dict
 ) -> runs.Run | None:
@@ -127,16 +171,9 @@ def entry_from_manifest(
     if not source_key:
         return None
 
-    run_id = runs.run_id_from_source_key(settings, source_key)
-    if run_id is None and not settings.library_include_foreign:
-        return None
+    run_id = _library_run_id(settings, stored, source_key)
     if run_id is None:
-        # Deterministic so a deep link survives a restart, and prefixed so it
-        # can never collide with a uuid4 the arena generated.
-        digest = hashlib.sha256(
-            f"{settings.manifest_bucket}/{stored.key}".encode()
-        ).hexdigest()
-        run_id = f"lib_{digest[:32]}"
+        return None
 
     team = _team_from_source_key(settings, source_key) or str(
         document.get("team_id") or ""
@@ -147,23 +184,8 @@ def entry_from_manifest(
         return None
 
     masked_key = runs._first(document, runs.MASKED_KEY_FIELDS)
-    filename = PurePosixPath(masked_key or source_key).name
-    # The template folds the run id into the filename, so strip it back off for
-    # display -- the reader uploaded "report.pdf", not "<uuid>-report.pdf".
-    if filename.startswith(f"{run_id}-"):
-        filename = filename[len(run_id) + 1 :]
-
-    submitted = _parse_time(document.get("started_at")) or _parse_time(
-        stored.last_modified
-    )
-    finished = (
-        _parse_time(document.get("completed_at"))
-        or _parse_time(document.get("failed_at"))
-        or _parse_time(stored.last_modified)
-    )
-    # Every ordering below has to tolerate a backend that reports no
-    # last_modified, so fall back rather than leave submitted_at unset.
-    submitted = submitted or finished or datetime.now(UTC)
+    filename = _display_filename(masked_key or source_key, run_id)
+    submitted, finished = _manifest_times(document, stored)
 
     run = runs.Run(
         run_id=run_id,

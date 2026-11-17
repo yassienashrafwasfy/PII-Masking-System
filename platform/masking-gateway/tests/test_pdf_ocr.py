@@ -81,7 +81,12 @@ def _open(data: bytes) -> tuple[pymupdf.Document, pymupdf.Page]:
 
 def test_blocks_that_touch_become_one_region() -> None:
     """A scan sliced into strips must not be cut at every strip boundary."""
-    strips = [(0, 0, 100, 20), (0, 21, 100, 41), (0, 42, 100, 62), (400, 400, 450, 420)]
+    strips: list[tuple[float, float, float, float]] = [
+        (0, 0, 100, 20),
+        (0, 21, 100, 41),
+        (0, 42, 100, 62),
+        (400, 400, 450, 420),
+    ]
     assert pdf_ocr.cluster_blocks(strips) == [
         (0, 0, 100, 62),
         (400, 400, 450, 420),
@@ -669,7 +674,7 @@ def test_the_original_text_does_not_survive_in_the_layer_that_read_it() -> None:
         )
         document = pymupdf.open(stream=masked, filetype="pdf")
         try:
-            extracted = "\n".join(page.get_text() for page in document)
+            extracted = "\n".join(page.get_text() for page in document.pages())
             assert "Jean-Baptiste Moreau" not in extracted, (style, mode)
             assert "Moreau" not in extracted, (style, mode)
             # ...and it is not merely invisible: searching finds nothing.
@@ -836,10 +841,14 @@ def test_the_line_below_a_masked_one_survives_end_to_end() -> None:
         # Two lines whose unclipped boxes overlap, as a real detector's do.
         return (
             pdf_ocr.OcrLine(
-                "Sint Lucas", tuple(v * scale for v in (10.0, 6.0, 150.0, 30.0)), 0.9
+                "Sint Lucas",
+                (10.0 * scale, 6.0 * scale, 150.0 * scale, 30.0 * scale),
+                0.9,
             ),
             pdf_ocr.OcrLine(
-                "Pneumologie", tuple(v * scale for v in (10.0, 26.0, 150.0, 50.0)), 0.9
+                "Pneumologie",
+                (10.0 * scale, 26.0 * scale, 150.0 * scale, 50.0 * scale),
+                0.9,
             ),
         )
 

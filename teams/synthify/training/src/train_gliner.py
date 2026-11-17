@@ -69,7 +69,9 @@ def _install_trainer_patches(weights: list[float], patience: int) -> None:
 
     original = trainer_module.Trainer
 
-    class WeightedTrainer(original):
+    # Subclass the attribute, not the local: a variable is not a valid base
+    # class to mypy, and the two are the same object here.
+    class WeightedTrainer(trainer_module.Trainer):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.add_callback(EarlyStoppingCallback(early_stopping_patience=patience))
@@ -88,7 +90,7 @@ def _install_trainer_patches(weights: list[float], patience: int) -> None:
         if name.startswith("gliner"):
             module = sys.modules[name]
             if getattr(module, "Trainer", None) is original:
-                module.Trainer = WeightedTrainer
+                setattr(module, "Trainer", WeightedTrainer)
 
 
 def main() -> None:

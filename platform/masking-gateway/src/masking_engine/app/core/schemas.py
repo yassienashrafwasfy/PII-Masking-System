@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 MaskSource = Literal["model", "regex"]
+DetectionMode = Literal["model", "model_regex", "regex"]
 
 
 @dataclass(frozen=True)

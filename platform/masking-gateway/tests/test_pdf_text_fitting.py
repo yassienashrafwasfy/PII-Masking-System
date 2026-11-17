@@ -17,6 +17,7 @@ and it would not fail any other test in the suite.
 from __future__ import annotations
 
 import sys
+from typing import Any
 from pathlib import Path
 
 import pytest
@@ -36,7 +37,7 @@ SPACE = 2.5
 
 
 def plan(available: float, **kwargs) -> fitting.Fit:
-    fields = {
+    fields: dict[str, Any] = {
         "natural": NATURAL,
         "available": available,
         "spaces": SPACES,

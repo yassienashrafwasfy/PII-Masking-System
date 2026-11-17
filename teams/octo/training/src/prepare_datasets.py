@@ -145,7 +145,7 @@ def _normalize_spans(
     *,
     source_value_key: str | None = None,
 ) -> list[dict[str, Any]]:
-    normalized = []
+    normalized: list[dict[str, Any]] = []
     for span in _parse_span_list(value):
         start = span.get("start")
         end = span.get("end")

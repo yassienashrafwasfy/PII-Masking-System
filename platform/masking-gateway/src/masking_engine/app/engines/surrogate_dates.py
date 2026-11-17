@@ -9,6 +9,7 @@ import calendar
 import os
 import random
 import re
+from collections.abc import Callable
 from typing import NamedTuple
 from datetime import date, datetime
 
@@ -33,6 +34,11 @@ DATE_MAX_YEARS = 4
 # is shifted from. An ISO date; anything else is a configuration error and is
 # left to raise rather than be silently ignored.
 _DATE_ANCHOR_ENV = "MASKING_DATE_ANCHOR"
+
+
+# A parsed date: its value, a renderer that restores the source spelling for any
+# moved date, and whether the source year was written with two digits.
+ParsedDate = tuple[date, Callable[[date], str], bool]
 
 
 def unparsed_date_anchor() -> date:
@@ -223,7 +229,7 @@ def _year_offsets(value: date, *, two_digit_year: bool) -> tuple[int, ...]:
 
     def usable(offset: int) -> bool:
         return 1 <= value.year + offset <= 9999 and (
-            not two_digit_year or abs(offset) % 100
+            not two_digit_year or abs(offset) % 100 != 0
         )
 
     offsets = tuple(
@@ -246,7 +252,7 @@ def _render_numeric_date(value: date, pattern: str) -> str:
 _YEAR_ONLY_RE = re.compile(r"\d{4}")
 
 
-def _year_only(text: str):
+def _year_only(text: str) -> ParsedDate | None:
     """Return a bare year parsed, and a renderer that writes a bare year back.
 
     "sinds eind 2020" and "In 2003" carry no separator, so no numeric pattern
@@ -277,7 +283,7 @@ _NUMERIC_PATTERNS: tuple[tuple[str, bool], ...] = (
 )
 
 
-def _numeric_date(text: str):
+def _numeric_date(text: str) -> ParsedDate | None:
     """Parse a numeric spelling, keeping the pattern that read it."""
     for pattern, has_time in _NUMERIC_PATTERNS:
         try:
@@ -313,7 +319,7 @@ _MIXED_SEPARATOR_DATE_RE = re.compile(
 )
 
 
-def _mixed_separator_date(text: str):
+def _mixed_separator_date(text: str) -> ParsedDate | None:
     """Parse a numeric date written with two different separators."""
     match = _MIXED_SEPARATOR_DATE_RE.match(text)
     if match is None:
@@ -327,6 +333,7 @@ def _mixed_separator_date(text: str):
     # `regex_dates._valid_date` decides it; otherwise the year is last and the
     # two leading fields are tried day-first and then month-first, which is
     # the order every other reader in this module uses.
+    order: tuple[tuple[int, int], ...]
     if len(match["first"]) == 4:
         year, order = first, ((second, third),)
     elif len(match["third"]) == 4:
@@ -386,7 +393,7 @@ def _written_date(text: str) -> _Written | None:
     return None
 
 
-def parse_date(text: str, locale: LocaleProfile):
+def parse_date(text: str, locale: LocaleProfile) -> ParsedDate | None:
     """Return the parsed date and a renderer that restores its format."""
     numeric = _numeric_date(text)
     if numeric is not None:
@@ -413,8 +420,8 @@ def parse_date(text: str, locale: LocaleProfile):
     # Not `len(month) <= 4`: "mars", "mai", "juin", "août", "mei", "juni"
     # and "juli" are whole months no longer than an abbreviation, and the
     # length test rendered every one of them back abbreviated.
-    written = match["month"]
-    abbreviated = not locales.is_full_month_name(written)
+    written_month = match["month"]
+    abbreviated = not locales.is_full_month_name(written_month)
     dotted = match["dot"] is not None
     # Only the two day-carrying patterns have this group, so it is not
     # read on the month-and-year fallback.
@@ -434,7 +441,7 @@ def parse_date(text: str, locale: LocaleProfile):
         # `_match_case` rather than a capitalize-only test, so a month
         # written in a caps header comes back in caps instead of losing
         # the case of the line it sits on.
-        name = _match_case(name, written)
+        name = _match_case(name, written_month)
         if dotted:
             name += "."
         # The suffix belongs to the day it is written after, so it

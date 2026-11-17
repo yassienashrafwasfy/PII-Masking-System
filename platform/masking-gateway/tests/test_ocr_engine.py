@@ -293,7 +293,7 @@ def test_ctc_collapsing_follows_the_rule_the_model_was_trained_on() -> None:
 def test_confidence_reports_the_weakest_character_as_well_as_the_mean() -> None:
     """One misread accent has a healthy mean; the mean is what hides it."""
     array = _logits([1, 2, 3])
-    array[1] = np.float32([0.1, 0.2, 0.45, 0.15, 0.1])
+    array[1] = np.array([0.1, 0.2, 0.45, 0.15, 0.1], dtype=np.float32)
     decoded = ctc_decode.greedy_decode(array, _CHARSET)
     assert decoded.text == "abc"
     assert len(decoded.char_confidences) == 3
@@ -424,10 +424,14 @@ def test_model_threads_come_from_the_quota_not_the_host() -> None:
         quota.write_text("200000 100000\n")
         original = model_engine.Path
         try:
-            model_engine.Path = lambda p: quota if str(p).endswith("cpu.max") else original(p)  # type: ignore[assignment]
+            setattr(
+                model_engine,
+                "Path",
+                lambda p: quota if str(p).endswith("cpu.max") else original(p),
+            )
             assert model_engine._available_cores() == 2
         finally:
-            model_engine.Path = original
+            setattr(model_engine, "Path", original)
 
 
 def test_model_threads_honour_the_configured_override() -> None:

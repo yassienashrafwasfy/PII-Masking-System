@@ -14,6 +14,7 @@ table -- so most of what follows pins the cases where nothing moves at all.
 from __future__ import annotations
 
 import sys
+from collections.abc import Set as AbstractSet
 from pathlib import Path
 
 import pymupdf
@@ -28,7 +29,11 @@ from masking_engine.app.services.pdf_block_reflow import Line, plan
 
 
 def paragraph(
-    count: int, *, blank: set[int] = frozenset(), step: float = 14.2, x0: float = 84.0
+    count: int,
+    *,
+    blank: AbstractSet[int] = frozenset(),
+    step: float = 14.2,
+    x0: float = 84.0,
 ) -> list[Line]:
     """A run of *count* evenly-led lines sharing one left edge."""
     return [

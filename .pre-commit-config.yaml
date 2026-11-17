@@ -83,3 +83,45 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+
+      # Static analysis. The same three hooks run in CI (.github/workflows/
+      # static-analysis.yml calls them by id), so "passes locally" and "passes
+      # in CI" are one definition, not two.
+      #
+      # mypy runs through scripts/check_types.py rather than `mypy .` because
+      # several trees keep test files with identical module names, which one
+      # mypy run reports as duplicates. It takes ~40 seconds, so it only fires
+      # when Python or the mypy settings change. Pass filenames: false because
+      # a type error in one file is usually caused by an edit in another.
+      - id: mypy
+        name: mypy (type check, whole repository)
+        entry: python scripts/check_types.py
+        language: system
+        files: (\.pyi?$|^pyproject\.toml$)
+        pass_filenames: false
+        require_serial: true
+        # default_install_hook_types installs pre-push too, and a hook with no
+        # `stages` runs at every installed stage. Without this, a 40-second check
+        # would run on the commit and then again on the push.
+        stages: [pre-commit]
+
+      # radon measures cyclomatic complexity; xenon turns it into a gate. Rank C
+      # is the ceiling (complexity <= 20 per function), so a function ranked D or
+      # worse fails. Tests and the excluded experiment script are not measured.
+      # It scans the tree rather than the changed files because it takes well
+      # under a second and a refactor elsewhere cannot raise a file's score.
+      - id: radon-complexity
+        name: radon cyclomatic complexity (max rank C)
+        entry: xenon --max-absolute C --exclude "*/tests/*,*/test_*,*tamerbert*,*/mutants/*,.venv/*,graphify-out/*" .
+        language: system
+        types: [python]
+        pass_filenames: false
+        require_serial: true
+
+      # Dockerfile lint. Warnings and errors fail; the policy and the reason
+      # there is no global ignore list are in .hadolint.yaml.
+      - id: hadolint
+        name: hadolint (Dockerfile lint)
+        entry: hadolint
+        language: system
+        files: (^|/)(Dockerfile|[^/]*\.Dockerfile)$

@@ -5,9 +5,10 @@ import re
 from collections.abc import Callable
 from dataclasses import MISSING, dataclass, field, fields
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from . import label_registry
+from .schemas import DetectionMode
 
 _ROOT = Path(__file__).resolve().parents[3]
 
@@ -111,7 +112,7 @@ class Settings:
 
     # Select model, model_regex, or regex detection.
     # The model_regex default follows the label ownership table.
-    detection_mode: str = "regex"
+    detection_mode: DetectionMode = "regex"
 
     # Which team's label vocabulary the loaded detector emits. The profile
     # follows the model, not the caller, so it is read at startup rather than
@@ -420,7 +421,11 @@ def _check_ocr_artifacts(pdf_ocr: bool, ocr_model_path: str) -> None:
 
 
 _FIELD_DEFAULTS: dict[str, Any] = {
-    f.name: f.default_factory() if f.default is MISSING else f.default
+    f.name: (
+        cast(Callable[[], Any], f.default_factory)()
+        if f.default is MISSING
+        else f.default
+    )
     for f in fields(Settings)
 }
 

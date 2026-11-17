@@ -306,8 +306,8 @@ fi
                 (checkpoint / artifact).write_text("{}\n")
             if subdir == "onnx":
                 (checkpoint / "merges.txt").write_text("#version: 0.2\n")
-            for artifact in checkpoint.iterdir():
-                artifact.chmod(0o644)
+            for written in checkpoint.iterdir():
+                written.chmod(0o644)
         self.berts_model.chmod(0o755)
         octo_onnx_hash = hashlib.sha256(
             (octo_model / "onnx/model.onnx").read_bytes()
@@ -1574,21 +1574,34 @@ class OperatorSettingReachabilityTests(unittest.TestCase):
         load it that has to keep working.
         """
         source = (REPOSITORY_ROOT / "deploy/migrate-env.py").read_text(encoding="utf-8")
+
+        def names(node: ast.AST) -> list[ast.expr]:
+            # `X = {...}` and the annotated `X: T = {...}` bind the same table.
+            if isinstance(node, ast.Assign):
+                return list(node.targets)
+            if isinstance(node, ast.AnnAssign):
+                return [node.target]
+            return []
+
         table = next(
             node.value
             for node in ast.walk(ast.parse(source))
-            if isinstance(node, ast.Assign)
+            if isinstance(node, (ast.Assign, ast.AnnAssign))
             and any(
                 isinstance(target, ast.Name) and target.id == "MODEL_IDENTITY"
-                for target in node.targets
+                for target in names(node)
             )
         )
-        return {
-            key.value
-            for team in table.values
-            for key in team.keys
-            if isinstance(key, ast.Constant)
-        }
+        assert isinstance(table, ast.Dict)
+        keys: set[str] = set()
+        for team in table.values:
+            assert isinstance(team, ast.Dict)
+            keys.update(
+                key.value
+                for key in team.keys
+                if isinstance(key, ast.Constant) and isinstance(key.value, str)
+            )
+        return keys
 
 
 if __name__ == "__main__":

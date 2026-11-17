@@ -28,7 +28,6 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
-import sys
 from hashlib import sha256
 from pathlib import Path
 
@@ -262,4 +261,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

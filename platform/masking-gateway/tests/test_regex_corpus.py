@@ -17,7 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "platform/masking-gateway/src"))
 
-from masking_engine.app.core.schemas import MaskSpan
+from masking_engine.app.core.schemas import MaskSource, MaskSpan
 from masking_engine.app.engines.regex_arbitration import (
     _arbitrate_overlaps,
     _to_output_spans,
@@ -271,7 +271,9 @@ def test_the_same_span_found_twice_is_emitted_once() -> None:
 from masking_engine.app.engines.regex_arbitration import coalesce_spans  # noqa: E402
 
 
-def scored(start: int, end: int, label: str, source: str, confidence=None, page=None):
+def scored(
+    start: int, end: int, label: str, source: MaskSource, confidence=None, page=None
+):
     return MaskSpan(start, end, label, source, page=page, confidence=confidence)
 
 

@@ -10,14 +10,13 @@ from __future__ import annotations
 
 import logging
 from bisect import bisect_right
-from typing import Literal
 
-from ..core.schemas import MaskSpan
+from ..core.schemas import DetectionMode, MaskSpan
 from . import span_shape
 
 log = logging.getLogger(__name__)
 
-_MODE = Literal["model", "model_regex", "regex"]
+_MODE = DetectionMode
 
 # Regex owns these structured labels. PHONE_NUMBER stays additive: the
 # model's recall on it is measured at or above regex recall, so ownership

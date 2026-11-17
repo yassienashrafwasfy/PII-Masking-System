@@ -177,7 +177,7 @@ def cluster_blocks(
     Transitive, and repeated until nothing more merges, so a column of strips
     collapses to one region however they are ordered in the content stream.
     """
-    regions = [tuple(block) for block in blocks]
+    regions = [(b[0], b[1], b[2], b[3]) for b in blocks]
     merged = True
     while merged:
         merged = False

@@ -31,8 +31,8 @@ import numpy as np
 # ImageNet statistics, in RGB order. Applied to a grayscale plane replicated
 # across three channels, so the per-channel differences below act as a fixed
 # affine transform rather than as a colour operation.
-DET_MEAN = np.float32([0.485, 0.456, 0.406]).reshape(3, 1, 1)
-DET_STD = np.float32([0.229, 0.224, 0.225]).reshape(3, 1, 1)
+DET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32).reshape(3, 1, 1)
+DET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32).reshape(3, 1, 1)
 
 # Recognition normalises to [-1, 1] and is channel-uniform, so it is provably
 # unaffected by the grayscale decision above.
@@ -48,7 +48,7 @@ REC_HEIGHT = 48
 
 # BT.601 luma. Fixed float32 constants rather than a library call, so the
 # conversion is bit-identical run to run.
-_LUMA = np.float32([0.299, 0.587, 0.114])
+_LUMA = np.array([0.299, 0.587, 0.114], dtype=np.float32)
 
 
 def to_gray(image: np.ndarray) -> np.ndarray:

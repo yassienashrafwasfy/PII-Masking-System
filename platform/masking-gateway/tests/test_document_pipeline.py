@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import sys
+from typing import Any, NoReturn, cast
 from pathlib import Path
 
 import pymupdf
@@ -198,14 +199,14 @@ def test_two_replacements_on_a_line_keep_every_word_between_them() -> None:
             start=text.index("71"),
             end=text.index("71") + 2,
             label="AGE",
-            source="test",
+            source="regex",
             page=0,
         ),
         MaskSpan(
             start=text.index("17-02-2026"),
             end=text.index("17-02-2026") + 10,
             label="DATE",
-            source="test",
+            source="regex",
             page=0,
         ),
     ]
@@ -682,7 +683,7 @@ def test_an_image_beside_a_text_layer_is_refused_even_with_ocr() -> None:
     # that does. This page has one, so the image is never read -- and an
     # unread image is the case the refusal above exists for. Turning it on
     # must not quietly widen what the service accepts beyond scans.
-    def _reads_anything(image_samples, *, width: int, height: int):
+    def _reads_anything(image: object, *, width: int, height: int) -> NoReturn:
         raise AssertionError("a page with a text layer must not reach OCR")
 
     try:
@@ -699,7 +700,7 @@ def test_an_ocr_failure_is_not_blamed_on_the_document() -> None:
     # A page with no text of its own is the fallback case, and there the
     # reader does run. A reader that fails is this side's fault, not the
     # caller's document, so it must not arrive as a 422 blaming the file.
-    def _broken(image_samples, *, width: int, height: int):
+    def _broken(image: object, *, width: int, height: int) -> NoReturn:
         raise RuntimeError("no session")
 
     big = pymupdf.open()
@@ -881,7 +882,7 @@ def test_a_run_of_pure_whitespace_still_needs_a_face_that_can_draw_it() -> None:
             def has_glyph(_code: int) -> int:
                 return 0
 
-        assert not _covers(_Blind(), " ")
+        assert not _covers(cast(Any, _Blind()), " ")
     finally:
         document.close()
 

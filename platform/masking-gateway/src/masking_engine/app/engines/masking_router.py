@@ -36,7 +36,7 @@ from ..core import label_registry, locales
 from ..core.locales import DEFAULT_LOCALE
 from ..core.schemas import MaskSpan
 from . import surrogates
-from .surrogate_dates import parse_date
+from .surrogate_dates import ParsedDate, parse_date
 from .surrogate_pools import organization_pool_for
 from .surrogate_text import _sanitize
 
@@ -131,8 +131,8 @@ class MaskingRouter:
         self.locale = locale
         self.organization_pool_kind = organization_pool.casefold()
         self._faker = _faker_for(self._locale.faker_locale)
-        self._dates: dict[str, tuple | None] = {}
-        self._pseudonyms: dict[tuple[str, str], str] = {}
+        self._dates: dict[str, ParsedDate | None] = {}
+        self._pseudonyms: dict[tuple[str, str, str], str] = {}
         self._organization_pool = organization_pool_for(
             locale, self.organization_pool_kind
         )
@@ -243,7 +243,7 @@ class MaskingRouter:
     def _pseudonymize(self, label: str, original: str) -> str:
         return surrogates.resolve(self._context(label, original))
 
-    def _date_of(self, text: str):
+    def _date_of(self, text: str) -> ParsedDate | None:
         """Return the cached parse of *text*.
 
         A date is parsed for its seed and again for its replacement, and one

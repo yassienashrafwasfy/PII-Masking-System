@@ -411,7 +411,7 @@ class _Scanner:
         values = self.operands[-count:] if len(self.operands) >= count else []
         if len(values) != count or any(value is None for value in values):
             raise _Unsupported(f"malformed {operator}")
-        return [float(value) for value in values]
+        return [float(value) for value in values if value is not None]
 
     def _move_line(self, operator: str, token: _Token) -> None:
         """Carry the text line matrix through one positioning operator.
@@ -429,6 +429,7 @@ class _Scanner:
         if operator == "Tm":
             line = tuple(self._numbers(6, operator))
         else:
+            shift: tuple[float, ...]
             if operator == "T*":
                 shift = (0.0, -self.leading)
             else:

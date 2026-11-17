@@ -15,10 +15,10 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from enum import Enum
 
-from ..core.schemas import MaskSpan
+from ..core.schemas import MaskSource, MaskSpan
 from .regex_shared import _trim_right
 
-_SOURCE = "regex"
+_SOURCE: MaskSource = "regex"
 
 
 @dataclass(frozen=True)

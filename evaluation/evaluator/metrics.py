@@ -2,17 +2,28 @@ from __future__ import annotations
 
 from collections import Counter
 import re
+from typing import TypedDict
 
 
-def _tokens(text: str) -> Counter:
+class TextScores(TypedDict):
+    """What `evaluate_text` reports for one document."""
+
+    pii_recall: float
+    leakage_rate: float
+    non_pii_preservation_rate: float
+    overmasking_rate: float
+    per_entity_recall: dict[str, float]
+
+
+def _tokens(text: str) -> Counter[str]:
     return Counter(re.findall(r"[A-Za-z0-9]+", text.casefold()))
 
 
 def evaluate_text(
     source_text: str, masked_text: str, entities: list[dict[str, str]]
-) -> dict[str, object]:
-    total = Counter()
-    masked = Counter()
+) -> TextScores:
+    total: Counter[str] = Counter()
+    masked: Counter[str] = Counter()
     for entity in entities:
         kind = entity["type"]
         total[kind] += 1

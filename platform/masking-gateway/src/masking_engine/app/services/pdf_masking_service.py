@@ -25,6 +25,20 @@ from .pdf_extraction import PdfGlyph
 
 log = logging.getLogger(__name__)
 
+# pymupdf's bundled type stubs omit the redaction flags, which exist at run time.
+_REDACT_IMAGE_NONE: int = pymupdf.PDF_REDACT_IMAGE_NONE  # type: ignore[attr-defined]
+_REDACT_IMAGE_PIXELS: int = pymupdf.PDF_REDACT_IMAGE_PIXELS  # type: ignore[attr-defined]
+_REDACT_LINE_ART_NONE: int = pymupdf.PDF_REDACT_LINE_ART_NONE  # type: ignore[attr-defined]
+_REDACT_TEXT_REMOVE: int = pymupdf.PDF_REDACT_TEXT_REMOVE  # type: ignore[attr-defined]
+
+
+def _present(glyphs: Sequence[PdfGlyph | None], index: int) -> PdfGlyph:
+    """Return the glyph at *index*, which the caller has already established exists."""
+    glyph = glyphs[index]
+    if glyph is None:
+        raise ValueError(f"no source glyph at index {index}")
+    return glyph
+
 
 @dataclass(frozen=True)
 class GlyphRun:
@@ -551,6 +565,8 @@ def _render_styled_run(
             rect, chip.fallback, expand, max_size=ceiling
         )
 
+    if fitted is None:
+        raise ValueError("chip text does not fit its rectangle even when truncated")
     fitted_rect, size, text = fitted
     pdf_redaction_styles.draw_box(
         page,
@@ -711,6 +727,37 @@ def _reflow_plan(
     return _Reflow(line_plan, wanted_by_index, glyph_lift, slot_lift)
 
 
+def _has_rotated_glyph(source_glyphs: Sequence[PdfGlyph | None]) -> bool:
+    return any(
+        glyph is not None and _rotation(glyph.direction) != 0 for glyph in source_glyphs
+    )
+
+
+def _block_lines(
+    pending: Sequence[_PendingRun],
+    source_glyphs: Sequence[PdfGlyph | None],
+    covered: set[int],
+) -> list[pdf_block_reflow.Line]:
+    """One `Line` per baseline, blank when nothing on it survives or is drawn."""
+    drawn_on = {item.run.style.origin[1] for item in pending}
+    by_baseline: dict[float, list[int]] = {}
+    for index, glyph in enumerate(source_glyphs):
+        if glyph is not None and glyph.text.strip():
+            by_baseline.setdefault(glyph.origin[1], []).append(index)
+
+    return [
+        pdf_block_reflow.Line(
+            key=baseline,
+            x0=min(_present(source_glyphs, index).bbox[0] for index in indices),
+            x1=max(_present(source_glyphs, index).bbox[2] for index in indices),
+            baseline=baseline,
+            blank=baseline not in drawn_on
+            and all(index in covered for index in indices),
+        )
+        for baseline, indices in by_baseline.items()
+    ]
+
+
 def _lift_plan(
     pending: Sequence[_PendingRun],
     source_glyphs: Sequence[PdfGlyph | None],
@@ -732,28 +779,10 @@ def _lift_plan(
     reflow leaves it out: v1 does not re-lay-out a rotated run, and moving one
     by its upright geometry would put it somewhere it never was.
     """
-    if any(
-        glyph is not None and _rotation(glyph.direction) != 0 for glyph in source_glyphs
-    ):
+    if _has_rotated_glyph(source_glyphs):
         return {}, {}
 
-    drawn_on = {item.run.style.origin[1] for item in pending}
-    by_baseline: dict[float, list[int]] = {}
-    for index, glyph in enumerate(source_glyphs):
-        if glyph is not None and glyph.text.strip():
-            by_baseline.setdefault(glyph.origin[1], []).append(index)
-
-    lines = [
-        pdf_block_reflow.Line(
-            key=baseline,
-            x0=min(source_glyphs[index].bbox[0] for index in indices),
-            x1=max(source_glyphs[index].bbox[2] for index in indices),
-            baseline=baseline,
-            blank=baseline not in drawn_on
-            and all(index in covered for index in indices),
-        )
-        for baseline, indices in by_baseline.items()
-    ]
+    lines = _block_lines(pending, source_glyphs, covered)
     lifts = pdf_block_reflow.plan(lines)
     if not lifts:
         return {}, {}
@@ -808,16 +837,16 @@ def _extend_to_line_end(
     if not glyph_shift:
         return
     reflowed = {
-        source_glyphs[index].origin[1]
+        _present(source_glyphs, index).origin[1]
         for index in glyph_shift
         if source_glyphs[index] is not None
     }
     opening = {
         baseline: min(
-            source_glyphs[index].bbox[0]
+            _present(source_glyphs, index).bbox[0]
             for index in glyph_shift
             if source_glyphs[index] is not None
-            and source_glyphs[index].origin[1] == baseline
+            and _present(source_glyphs, index).origin[1] == baseline
         )
         for baseline in reflowed
     }
@@ -1034,9 +1063,9 @@ def _erase_text_layer(page, rects: Sequence[pymupdf.Rect]) -> None:
     for rect in rects:
         page.add_redact_annot(rect, fill=False)
     page.apply_redactions(
-        images=pymupdf.PDF_REDACT_IMAGE_NONE,
-        graphics=pymupdf.PDF_REDACT_LINE_ART_NONE,
-        text=pymupdf.PDF_REDACT_TEXT_REMOVE,
+        images=_REDACT_IMAGE_NONE,
+        graphics=_REDACT_LINE_ART_NONE,
+        text=_REDACT_TEXT_REMOVE,
     )
 
 
@@ -1060,9 +1089,9 @@ def _erase_ocr_layer(page, rects: Sequence[pymupdf.Rect]) -> None:
     for rect in rects:
         page.add_redact_annot(rect, fill=False)
     page.apply_redactions(
-        images=pymupdf.PDF_REDACT_IMAGE_PIXELS,
-        graphics=pymupdf.PDF_REDACT_LINE_ART_NONE,
-        text=pymupdf.PDF_REDACT_TEXT_REMOVE,
+        images=_REDACT_IMAGE_PIXELS,
+        graphics=_REDACT_LINE_ART_NONE,
+        text=_REDACT_TEXT_REMOVE,
     )
 
 
@@ -1122,14 +1151,19 @@ def _redraw_moved_glyphs(
     units: list[tuple[float, float, float, float, bytes]] = []
     for baseline, moved in sorted(groups, key=lambda group: group[0]):
         before = set(page.get_contents())
-        left = min(source_glyphs[index].origin[0] + shift for index, shift in moved)
-        right = max(source_glyphs[index].bbox[2] + shift for index, shift in moved)
+        left = min(
+            _present(source_glyphs, index).origin[0] + shift for index, shift in moved
+        )
+        right = max(
+            _present(source_glyphs, index).bbox[2] + shift for index, shift in moved
+        )
         height = max(
-            source_glyphs[index].bbox[3] - source_glyphs[index].bbox[1]
+            _present(source_glyphs, index).bbox[3]
+            - _present(source_glyphs, index).bbox[1]
             for index, shift in moved
         )
         for index, shift in moved:
-            glyph = source_glyphs[index]
+            glyph = _present(source_glyphs, index)
             font = _font_name(page, document, glyph, fonts, glyph.text)
             point = pymupdf.Point(
                 glyph.origin[0] + shift,

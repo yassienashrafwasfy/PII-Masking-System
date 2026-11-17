@@ -484,7 +484,7 @@ def _per_label_block(per_label: dict, *, basis: str) -> dict:
         canonical, aliased_from, is_canonical = labels.normalize(str(raw_label))
         if not canonical:
             continue
-        entry = {
+        entry: dict[str, Any] = {
             "basis": basis,
             "aliased_from": aliased_from,
             "canonical": is_canonical,

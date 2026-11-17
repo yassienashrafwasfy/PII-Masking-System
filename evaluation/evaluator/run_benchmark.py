@@ -8,6 +8,7 @@ import sys
 import tempfile
 import time
 from pathlib import Path
+from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import httpx
@@ -68,7 +69,7 @@ def identity_labels() -> tuple[str, ...]:
     return tuple(json.loads(path.read_text(encoding="utf-8"))["entity_labels"])
 
 
-def main() -> None:
+def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--team-id", required=True)
     parser.add_argument("--model-name", default=None)
@@ -79,40 +80,49 @@ def main() -> None:
     parser.add_argument("--benchmark-round", default="benchmark-v1-2026-08")
     parser.add_argument("--model-digest", default=None)
     parser.add_argument("--image-digest", default="unknown")
-    args = parser.parse_args()
+    return parser.parse_args()
 
-    # --model-name/--model-version/--model-digest are optional: when the
-    # caller omits any of them, ask the endpoint's own /version for what it
-    # is actually running right now, rather than tagging the run "unknown".
-    # An explicitly-passed value always wins -- this only fills gaps.
-    if (
+
+def _fill_live_identity(args: argparse.Namespace) -> None:
+    """Fill any identity the caller left out from the endpoint's own /version.
+
+    --model-name/--model-version/--model-digest are optional: when the caller
+    omits any of them, ask the endpoint for what it is actually running right
+    now, rather than tagging the run "unknown". An explicitly-passed value
+    always wins -- this only fills gaps.
+    """
+    if not (
         args.model_name is None
         or args.model_version is None
         or args.model_digest is None
     ):
-        try:
-            live = fetch_live_identity(args.endpoint, args.team_id, args.timeout)
-        except Exception as exc:  # noqa: BLE001 - identity lookup is best-effort
-            print(
-                f"warning: could not fetch live identity from /version: {exc}",
-                file=sys.stderr,
-            )
-            live = {}
-        args.model_name = args.model_name or live.get("model_name") or "model"
-        args.model_version = (
-            args.model_version or live.get("model_version") or "unknown"
+        return
+    try:
+        live = fetch_live_identity(args.endpoint, args.team_id, args.timeout)
+    except Exception as exc:  # noqa: BLE001 - identity lookup is best-effort
+        print(
+            f"warning: could not fetch live identity from /version: {exc}",
+            file=sys.stderr,
         )
-        args.model_digest = args.model_digest or live.get("model_digest") or "unknown"
+        live = {}
+    args.model_name = args.model_name or live.get("model_name") or "model"
+    args.model_version = args.model_version or live.get("model_version") or "unknown"
+    args.model_digest = args.model_digest or live.get("model_digest") or "unknown"
 
-    policy_path = Path(__file__).parents[1] / "config" / "scoring-policy.yaml"
-    policy = yaml.safe_load(policy_path.read_text())
-    rows = [
-        json.loads(line)
-        for line in args.dataset.read_text().splitlines()
-        if line.strip()
-    ]
+
+def _score_documents(
+    args: argparse.Namespace, rows: list[dict[str, Any]]
+) -> tuple[list[float], list[float], list[float], int, dict[str, list[float]]]:
+    """Send every document to the endpoint and score what comes back.
+
+    Returns per-document recalls, precisions and latencies (ms), the number of
+    documents scored successfully, and the per-entity-type recall samples.
+    """
     dataset_root = args.dataset.parent
-    recalls, precisions, latencies, successes = [], [], [], 0
+    recalls: list[float] = []
+    precisions: list[float] = []
+    latencies: list[float] = []
+    successes = 0
     per_entity_scores: dict[str, list[float]] = {}
     mask_labels = identity_labels()
 
@@ -145,7 +155,22 @@ def main() -> None:
             except Exception:
                 recalls.append(0.0)
                 precisions.append(0.0)
+    return recalls, precisions, latencies, successes, per_entity_scores
 
+
+def _benchmark_metrics(
+    row_count: int,
+    recalls: list[float],
+    precisions: list[float],
+    latencies: list[float],
+    successes: int,
+    per_entity_scores: dict[str, list[float]],
+) -> tuple[dict[str, float], dict[str, float], float]:
+    """Aggregate the per-document samples into the run's metrics.
+
+    Returns the metrics, the per-entity recall, and the critical-entity recall
+    that decides eligibility.
+    """
     elapsed_minutes = max(sum(latencies) / 60000, 1 / 60000)
     recall = statistics.fmean(recalls)
     precision = statistics.fmean(precisions) if precisions else 0.0
@@ -164,19 +189,22 @@ def main() -> None:
         "leakage_rate": 1 - recall,
         "overmasking_rate": 1 - precision,
         "critical_entity_recall": critical_recall,
-        "document_success_rate": successes / len(rows),
-        "api_error_rate": (len(rows) - successes) / len(rows),
+        "document_success_rate": successes / row_count,
+        "api_error_rate": (row_count - successes) / row_count,
         "latency_p50_ms": statistics.median(latencies),
         "latency_p95_ms": percentile(latencies, 0.95),
-        "throughput_docs_min": len(rows) / elapsed_minutes,
+        "throughput_docs_min": row_count / elapsed_minutes,
     }
-    metrics["leaderboard_score"] = leaderboard_score(metrics, policy)
-    eligible = (
-        critical_recall >= 0.98
-        and metrics["document_success_rate"] >= 1.0
-        and metrics["api_error_rate"] <= 0.01
-    )
+    return metrics, entity_recall, critical_recall
 
+
+def _log_to_mlflow(
+    args: argparse.Namespace,
+    policy: dict[str, Any],
+    metrics: dict[str, float],
+    entity_recall: dict[str, float],
+    eligible: bool,
+) -> None:
     mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
     mlflow.set_experiment(
         os.getenv("MLFLOW_EXPERIMENT_NAME", "pii-masking-leaderboard")
@@ -209,6 +237,32 @@ def main() -> None:
             },
             "summary.json",
         )
+
+
+def main() -> None:
+    args = _parse_args()
+    _fill_live_identity(args)
+
+    policy_path = Path(__file__).parents[1] / "config" / "scoring-policy.yaml"
+    policy = yaml.safe_load(policy_path.read_text())
+    rows = [
+        json.loads(line)
+        for line in args.dataset.read_text().splitlines()
+        if line.strip()
+    ]
+    recalls, precisions, latencies, successes, per_entity_scores = _score_documents(
+        args, rows
+    )
+    metrics, entity_recall, critical_recall = _benchmark_metrics(
+        len(rows), recalls, precisions, latencies, successes, per_entity_scores
+    )
+    metrics["leaderboard_score"] = leaderboard_score(metrics, policy)
+    eligible = (
+        critical_recall >= 0.98
+        and metrics["document_success_rate"] >= 1.0
+        and metrics["api_error_rate"] <= 0.01
+    )
+    _log_to_mlflow(args, policy, metrics, entity_recall, eligible)
     print(json.dumps(metrics, indent=2))
 
 

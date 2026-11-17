@@ -109,7 +109,7 @@ FOREIGN_INTERNATIONAL = [
 ]
 
 # Measurements, identifiers and dates stay out.
-GUARDS = [
+GUARDS: list[tuple[str, list[str]]] = [
     ("De dosering is 04.72 50 29 61 mg.", []),
     (f"De dosering is 04.72{NBSP}50 29 61 mg.", []),
     ("Their NHS number is 0676033164.", []),

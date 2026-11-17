@@ -1,0 +1,7 @@
+# Dockerfile lint policy, run by the `hadolint` pre-commit hook and CI.
+#
+# Warnings and errors fail the run; the two info-level rules below only print.
+# There is no `ignored:` list on purpose: a rule is waived where it is broken,
+# with `# hadolint ignore=DLxxxx` and the reason on the line above the
+# instruction, so the exception is visible in review and dies with the code.
+failure-threshold: warning

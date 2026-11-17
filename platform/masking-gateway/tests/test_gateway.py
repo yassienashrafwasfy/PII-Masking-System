@@ -30,6 +30,7 @@ class ModelService(BaseHTTPRequestHandler):
     block_condition = threading.Condition()
     block_release = threading.Event()
     blocked_requests = 0
+    last_document_locale: str | None = None
 
     @classmethod
     def reset_blocking(cls) -> None:
@@ -133,7 +134,7 @@ def _serve(environ: dict[str, object]) -> tuple[str, dict[str, str], bytes]:
         environ,
         lambda status, headers: captured.update(status=status, headers=dict(headers)),
     )
-    return captured["status"], captured["headers"], b"".join(response)  # type: ignore[return-value,arg-type]
+    return captured["status"], captured["headers"], b"".join(response)  # type: ignore[return-value]
 
 
 def invoke(

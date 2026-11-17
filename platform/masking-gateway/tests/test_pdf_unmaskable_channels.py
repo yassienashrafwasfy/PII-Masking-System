@@ -76,7 +76,7 @@ def test_a_filled_form_field_refuses_the_document() -> None:
     document, page = _page()
     widget = pymupdf.Widget()
     widget.field_name = "patient"
-    widget.field_type = pymupdf.PDF_WIDGET_TYPE_TEXT
+    widget.field_type = pymupdf.PDF_WIDGET_TYPE_TEXT  # type: ignore[attr-defined]
     widget.rect = pymupdf.Rect(72, 140, 320, 160)
     widget.field_value = f"{_PATIENT} {_NATIONAL_NUMBER}"
     page.add_widget(widget)
@@ -87,7 +87,7 @@ def test_an_unfilled_form_field_does_not_refuse_the_document() -> None:
     document, page = _page()
     widget = pymupdf.Widget()
     widget.field_name = "patient"
-    widget.field_type = pymupdf.PDF_WIDGET_TYPE_TEXT
+    widget.field_type = pymupdf.PDF_WIDGET_TYPE_TEXT  # type: ignore[attr-defined]
     widget.rect = pymupdf.Rect(72, 140, 320, 160)
     widget.field_value = ""
     page.add_widget(widget)

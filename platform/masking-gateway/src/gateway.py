@@ -42,13 +42,15 @@ def _load_core_module(name: str) -> Any:
     path = Path(__file__).resolve().parent / "masking_engine" / "app" / "core"
     module_name = f"gateway_{name}"
     spec = importlib.util.spec_from_file_location(module_name, path / f"{name}.py")
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load {name} from {path}")
     module = importlib.util.module_from_spec(spec)
     # Registered before execution, not after: `locales.py` defines a frozen
     # dataclass, and `dataclasses` resolves a field's annotation through
     # `sys.modules[cls.__module__]`. A module loaded this way is absent from
     # that table until it is put there, so the decorator raised on import.
     sys.modules[module_name] = module
-    spec.loader.exec_module(module)  # type: ignore[union-attr]
+    spec.loader.exec_module(module)
     return module
 
 
