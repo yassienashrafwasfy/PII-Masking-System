@@ -1,0 +1,11 @@
+[Unit]
+Description=Run immutable model release garbage collection daily
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=30min
+Persistent=true
+Unit=pii-masking-model-gc.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,38 @@
+PII Masking System
+Copyright 2026 The PII Masking System contributors
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+== Code ==
+
+All source code in this repository is licensed under Apache-2.0.
+
+== Models ==
+
+This public repository does not include the model weights. Apache-2.0 applies to the model artifacts (ONNX graphs, tokenizers, manifests)
+that this project's contributors produced. It does NOT replace the licenses of
+the upstream models they were built from or downloaded from. Anyone who
+redistributes or uses a model artifact must also comply with its upstream terms:
+
+  teams/octo       Fine-tuned from XLM-RoBERTa (FacebookAI/xlm-roberta-base).
+                   Upstream license: MIT.
+  teams/synthify   Fine-tuned from GLiNER (urchade/gliner_medium-v2.1).
+                   Upstream license: Apache-2.0.
+  teams/berts      int8 ONNX exports of third-party Hugging Face checkpoints:
+                     nl_BE  ziadosama/medroberta_nl_PII_PHI_onnx_int8
+                     en     ziadosama/deid_bert_en_PII_PHI_onnx_int8
+                     fr_FR  farahelmashad/pii-camembert-bio-fr-int8-onnx
+                   These checkpoints declare no license upstream. Their
+                   authors have not (yet) confirmed Apache-2.0 for the
+                   weights; until they do, treat the Berts weights as
+                   "license not confirmed" and do not assume Apache-2.0.
+                   Their base architectures (MedRoBERTa.nl, CamemBERT) are MIT.
+  OCR (optional)   PP-OCR text detection and recognition graphs under
+                   platform/masking-gateway/src/masking_engine/src/models/ocr/.
+                   Upstream (PaddleOCR) license: Apache-2.0.
+
+Third-party Python dependencies keep their own licenses (see uv.lock).
+
+== Data ==
+
+Only synthetic fixtures are included. No real personal data is distributed.

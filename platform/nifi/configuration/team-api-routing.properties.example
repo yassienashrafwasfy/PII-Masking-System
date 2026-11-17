@@ -1,0 +1,22 @@
+# Platform-owned gateway configuration. Configure credentials only as sensitive
+# NiFi parameters. Keep the stable production bridge endpoint unchanged.
+MASKING_GATEWAY_BASE_URL=http://172.18.0.1:18080
+MASKING_GATEWAY_AUTH_SECRET_NAME=CHANGE_ME
+# Must cover every team the arena offers in ARENA_TEAMS: NiFi derives the
+# trusted team from the incoming/<team>/requests/ prefix, so a team missing here
+# has its uploads listed and then never routed, which surfaces to the console as
+# a run that times out rather than one that fails with a reason.
+SUPPORTED_TEAMS=octo,synthify,berts
+# An optional segment under incoming/<team>/requests/ lets a caller mask part of
+# what it holds rather than everything: `routed/` is processed, and anything not
+# routed here stays on the dead-letter relationship. Name the segment for what
+# the routing does, not for a document kind -- nothing inspects a document, and
+# the segment is matched as a string. The same silent-failure trap as above:
+# a segment with no matching route has its uploads listed and never routed, so it
+# looks like silence rather than a failure. See
+# docs/r2-object-key-conventions.md and docs/document-subsets.md.
+MASKING_GATEWAY_CONNECT_TIMEOUT_SECONDS=5
+MASKING_GATEWAY_READ_TIMEOUT_SECONDS=6600
+MASKING_GATEWAY_MAX_RETRIES=3
+MASKING_GATEWAY_RETRY_AFTER_SECONDS=5
+MASKING_GATEWAY_MAX_CONCURRENT_REQUESTS_PER_TEAM=1

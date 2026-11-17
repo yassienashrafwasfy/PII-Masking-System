@@ -1,0 +1,15 @@
+# Model weights and tokenizer artifacts are stored in Git LFS.
+# This applies to newly added JSONL files only; it does not rewrite history.
+*.jsonl filter=lfs diff=lfs merge=lfs -text
+# These existing evaluation fixtures were committed as ordinary Git blobs
+# before the JSONL rule was added. Keep that representation explicit so Git
+# LFS does not report malformed pointers during checkout.
+teams/berts/samples/eval_indist_org.jsonl -filter -diff -merge text
+teams/berts/samples/eval_real_org.jsonl -filter -diff -merge text
+evaluation/datasets/generated/public/manifest.jsonl -filter -diff -merge text
+teams/octo/samples/combined_development.jsonl -filter -diff -merge text
+teams/synthify/samples/Synthify_Val.jsonl -filter -diff -merge text
+*.bin filter=lfs diff=lfs merge=lfs -text
+*.model filter=lfs diff=lfs merge=lfs -text
+*.onnx filter=lfs diff=lfs merge=lfs -text
+tokenizer.json filter=lfs diff=lfs merge=lfs -text

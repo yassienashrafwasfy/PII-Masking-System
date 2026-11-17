@@ -1,0 +1,161 @@
+preflight_production:
+  extends: .production_deploy_rules
+  stage: deploy
+  image: alpine:3.22
+  timeout: 30m
+  when: manual
+  allow_failure: false
+  resource_group: production
+  needs:
+    - job: load_production_candidate
+      artifacts: true
+  before_script:
+    - apk add --no-cache bash openssh-client
+    - test -n "$VPS_HOST" || { echo "VPS_HOST is required" >&2; exit 1; }
+    - test -n "$VPS_USER" || { echo "VPS_USER is required" >&2; exit 1; }
+    - test -n "$VPS_DEPLOY_DIR" || { echo "VPS_DEPLOY_DIR is required" >&2; exit 1; }
+    - test -n "$VPS_ENV_FILE" || { echo "VPS_ENV_FILE is required" >&2; exit 1; }
+    - test -n "$VPS_VERIFY_URL" || { echo "VPS_VERIFY_URL is required" >&2; exit 1; }
+    - test -s "$SSH_PRIVATE_KEY" || { echo "SSH_PRIVATE_KEY must be a non-empty GitLab file variable" >&2; exit 1; }
+    - test -s "$SSH_KNOWN_HOSTS" || { echo "SSH_KNOWN_HOSTS must be a non-empty GitLab file variable" >&2; exit 1; }
+    - install -m 700 -d "$HOME/.ssh"
+    - install -m 600 "$SSH_PRIVATE_KEY" "$HOME/.ssh/id_ed25519"
+    - install -m 600 "$SSH_KNOWN_HOSTS" "$HOME/.ssh/known_hosts"
+    - case "$VPS_DEPLOY_DIR:$VPS_ENV_FILE" in *[!A-Za-z0-9_./:-]*) echo "VPS paths contain unsupported characters" >&2; exit 1;; esac
+    - case "$VPS_DEPLOY_DIR:$VPS_ENV_FILE" in /*:/*) ;; *) echo "VPS_DEPLOY_DIR and VPS_ENV_FILE must be absolute" >&2; exit 1;; esac
+    - case "/$VPS_DEPLOY_DIR/:/$VPS_ENV_FILE/" in */../*|*/./*) echo "VPS paths must be normalized" >&2; exit 1;; esac
+    - export VPS_STAGING_DIR="${VPS_STAGING_ROOT:-$(dirname "$VPS_DEPLOY_DIR")/staging}/$CI_COMMIT_SHA/deploy"
+    - case "$VPS_STAGING_DIR" in /*) ;; *) echo "VPS_STAGING_DIR must be absolute" >&2; exit 1;; esac
+    - case "$VPS_STAGING_DIR" in *[!A-Za-z0-9_./-]*) echo "VPS_STAGING_DIR contains unsupported characters" >&2; exit 1;; esac
+  script:
+    - ssh -o BatchMode=yes -o IdentitiesOnly=yes -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "umask 077 && install -d -m 700 '$VPS_STAGING_DIR' '$VPS_STAGING_DIR/systemd' '$VPS_STAGING_DIR/sudoers'"
+    - scp -o BatchMode=yes -o IdentitiesOnly=yes -P "${VPS_PORT:-22}" deploy/.env.example deploy/compose.yml deploy/deploy-gateway.sh deploy/verify-gateway.sh deploy/watchdog-gateway.sh deploy/install-vps.sh deploy/migrate-env.py deploy/pii-masking-nginx-control deploy/pii-masking-model-stage deploy/prune-model-releases.sh deploy/stage-model-release.sh deploy/nginx.conf.example deploy/promote-staged-bundle.sh deploy/vps-common.sh "$VPS_USER@$VPS_HOST:$VPS_STAGING_DIR/"
+    - scp -o BatchMode=yes -o IdentitiesOnly=yes -P "${VPS_PORT:-22}" deploy/systemd/* "$VPS_USER@$VPS_HOST:$VPS_STAGING_DIR/systemd/"
+    - scp -o BatchMode=yes -o IdentitiesOnly=yes -P "${VPS_PORT:-22}" deploy/sudoers/* "$VPS_USER@$VPS_HOST:$VPS_STAGING_DIR/sudoers/"
+    - ssh -o BatchMode=yes -o IdentitiesOnly=yes -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "cd '$VPS_STAGING_DIR' && chmod 700 deploy-gateway.sh verify-gateway.sh watchdog-gateway.sh install-vps.sh migrate-env.py pii-masking-nginx-control pii-masking-model-stage prune-model-releases.sh stage-model-release.sh promote-staged-bundle.sh vps-common.sh && chmod 600 .env.example compose.yml nginx.conf.example systemd/* sudoers/* && ./deploy-gateway.sh preflight --env-file '$VPS_ENV_FILE' --state-dir '$VPS_DEPLOY_DIR/state' --gateway-image-ref '$GATEWAY_IMAGE_REF' --gateway-image-digest '$GATEWAY_IMAGE_DIGEST' --model-image-ref '$MODEL_SERVICE_IMAGE_REF' --model-image-digest '$MODEL_SERVICE_IMAGE_DIGEST' --git-sha '$CI_COMMIT_SHA' --stable-url '$VPS_VERIFY_URL'"
+    # Reports whether each enabled team's checkpoint is already staged, can be
+    # hardlinked from another release, or needs a fetch, and proves the commit
+    # and credentials resolve -- without writing anything.
+    - printf 'GIT_TOKEN=%s\n' "$CI_JOB_TOKEN" | ssh -o BatchMode=yes -o IdentitiesOnly=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "cd '$VPS_STAGING_DIR' && ./stage-model-release.sh plan --env-file '$VPS_ENV_FILE' --release-sha '$CI_COMMIT_SHA'"
+
+deploy_production:
+  extends: .production_deploy_rules
+  stage: deploy
+  image: alpine:3.22
+  timeout: 150m
+  when: manual
+  allow_failure: false
+  resource_group: production
+  environment:
+    name: production
+  needs:
+    - job: preflight_production
+    - job: load_production_candidate
+      artifacts: true
+  before_script:
+    - apk add --no-cache bash openssh-client
+    - test -n "$VPS_HOST" || { echo "VPS_HOST is required" >&2; exit 1; }
+    - test -n "$VPS_USER" || { echo "VPS_USER is required" >&2; exit 1; }
+    - test -n "$VPS_DEPLOY_DIR" || { echo "VPS_DEPLOY_DIR is required" >&2; exit 1; }
+    - test -n "$VPS_ENV_FILE" || { echo "VPS_ENV_FILE is required" >&2; exit 1; }
+    - test -n "$VPS_VERIFY_URL" || { echo "VPS_VERIFY_URL is required" >&2; exit 1; }
+    - test -s "$SSH_PRIVATE_KEY" || { echo "SSH_PRIVATE_KEY must be a non-empty GitLab file variable" >&2; exit 1; }
+    - test -s "$SSH_KNOWN_HOSTS" || { echo "SSH_KNOWN_HOSTS must be a non-empty GitLab file variable" >&2; exit 1; }
+    - install -m 700 -d "$HOME/.ssh"
+    - install -m 600 "$SSH_PRIVATE_KEY" "$HOME/.ssh/id_ed25519"
+    - install -m 600 "$SSH_KNOWN_HOSTS" "$HOME/.ssh/known_hosts"
+    - case "$VPS_DEPLOY_DIR:$VPS_ENV_FILE" in *[!A-Za-z0-9_./:-]*) echo "VPS paths contain unsupported characters" >&2; exit 1;; esac
+    - case "$VPS_DEPLOY_DIR:$VPS_ENV_FILE" in /*:/*) ;; *) echo "VPS_DEPLOY_DIR and VPS_ENV_FILE must be absolute" >&2; exit 1;; esac
+    - case "/$VPS_DEPLOY_DIR/:/$VPS_ENV_FILE/" in */../*|*/./*) echo "VPS paths must be normalized" >&2; exit 1;; esac
+    - export VPS_STAGING_DIR="${VPS_STAGING_ROOT:-$(dirname "$VPS_DEPLOY_DIR")/staging}/$CI_COMMIT_SHA/deploy"
+    - case "$VPS_STAGING_DIR" in /*) ;; *) echo "VPS_STAGING_DIR must be absolute" >&2; exit 1;; esac
+    - case "$VPS_STAGING_DIR" in *[!A-Za-z0-9_./-]*) echo "VPS_STAGING_DIR contains unsupported characters" >&2; exit 1;; esac
+  script:
+    - ssh -o BatchMode=yes -o IdentitiesOnly=yes -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "cd '$VPS_STAGING_DIR' && DEPLOYMENT_RELEASE='$CI_COMMIT_SHA' ./promote-staged-bundle.sh apply --source '$VPS_STAGING_DIR' --target '$VPS_DEPLOY_DIR' --approve"
+    # Stages the reviewed commit's weights into their immutable directory and
+    # rewrites this release's model identity, deriving every digest from the
+    # staged manifest so none of it is ever hand-typed. A host without the
+    # staging helper installed skips this and deploys as before.
+    - printf 'GIT_TOKEN=%s\n' "$CI_JOB_TOKEN" | ssh -o BatchMode=yes -o IdentitiesOnly=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "cd '$VPS_DEPLOY_DIR' && ./stage-model-release.sh apply --env-file '$VPS_ENV_FILE' --release-sha '$CI_COMMIT_SHA' --approve"
+    # deploy-gateway.sh rolls its own containers and Nginx back on failure, but
+    # it does not own the environment file, so the model identity promoted just
+    # above has to be restored here or the file would outlive the deploy it
+    # described.
+    - ssh -o BatchMode=yes -o IdentitiesOnly=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "cd '$VPS_DEPLOY_DIR' && { ./deploy-gateway.sh apply --env-file '$VPS_ENV_FILE' --state-dir '$VPS_DEPLOY_DIR/state' --gateway-image-ref '$GATEWAY_IMAGE_REF' --gateway-image-digest '$GATEWAY_IMAGE_DIGEST' --model-image-ref '$MODEL_SERVICE_IMAGE_REF' --model-image-digest '$MODEL_SERVICE_IMAGE_DIGEST' --git-sha '$CI_COMMIT_SHA' --stable-url '$VPS_VERIFY_URL' --approve || { ./stage-model-release.sh rollback --env-file '$VPS_ENV_FILE' --release-sha '$CI_COMMIT_SHA'; exit 1; }; }"
+
+
+# The arena on the MLflow VPS -- a different host from the gateway's, reached
+# publicly at https://leaderboard.mlflow.me rather than over an SSH tunnel.
+# Every variable is MLFLOW_VPS_*-prefixed so this target's GitLab CI/CD
+# variables can never collide with the gateway's VPS_*/SSH_* ones if a
+# NiFi-VPS arena deployment is ever added later.
+#
+# allow_failure: true throughout, per the deploy requirement that a failure
+# here must never stop or fail the rest of the pipeline -- including the
+# gateway's own build, tests, and deployment.
+.arena_deploy_mlflow_base:
+  stage: deploy
+  image: alpine:3.22
+  when: manual
+  allow_failure: true
+  resource_group: arena-mlflow-vps
+  before_script:
+    - apk add --no-cache bash openssh-client
+    - test -n "$MLFLOW_VPS_HOST" || { echo "MLFLOW_VPS_HOST is required" >&2; exit 1; }
+    - test -n "$MLFLOW_VPS_USER" || { echo "MLFLOW_VPS_USER is required" >&2; exit 1; }
+    - test -n "$MLFLOW_VPS_DEPLOY_DIR" || { echo "MLFLOW_VPS_DEPLOY_DIR is required" >&2; exit 1; }
+    - test -n "$MLFLOW_VPS_ENV_FILE" || { echo "MLFLOW_VPS_ENV_FILE is required" >&2; exit 1; }
+    - test -s "$MLFLOW_VPS_SSH_PRIVATE_KEY" || { echo "MLFLOW_VPS_SSH_PRIVATE_KEY must be a non-empty GitLab file variable" >&2; exit 1; }
+    - test -s "$MLFLOW_VPS_SSH_KNOWN_HOSTS" || { echo "MLFLOW_VPS_SSH_KNOWN_HOSTS must be a non-empty GitLab file variable" >&2; exit 1; }
+    - install -m 700 -d "$HOME/.ssh"
+    - install -m 600 "$MLFLOW_VPS_SSH_PRIVATE_KEY" "$HOME/.ssh/id_ed25519"
+    - install -m 600 "$MLFLOW_VPS_SSH_KNOWN_HOSTS" "$HOME/.ssh/known_hosts"
+    - case "$MLFLOW_VPS_DEPLOY_DIR:$MLFLOW_VPS_ENV_FILE" in *[!A-Za-z0-9_./:-]*) echo "MLflow VPS paths contain unsupported characters" >&2; exit 1;; esac
+    - case "$MLFLOW_VPS_DEPLOY_DIR:$MLFLOW_VPS_ENV_FILE" in /*:/*) ;; *) echo "MLFLOW_VPS_DEPLOY_DIR and MLFLOW_VPS_ENV_FILE must be absolute" >&2; exit 1;; esac
+    - case "/$MLFLOW_VPS_DEPLOY_DIR/:/$MLFLOW_VPS_ENV_FILE/" in */../*|*/./*) echo "MLflow VPS paths must be normalized" >&2; exit 1;; esac
+    - test -n "${ARENA_API_IMAGE_REF:-}" || { echo "ARENA_API_IMAGE_REF is required" >&2; exit 1; }
+    - test -n "${ARENA_UI_IMAGE_REF:-}" || { echo "ARENA_UI_IMAGE_REF is required" >&2; exit 1; }
+    - printf '%s\n' "$ARENA_API_IMAGE_REF" | grep -Eq "^$CI_REGISTRY_IMAGE/arena-api@sha256:[0-9a-f]{64}$"
+    - printf '%s\n' "$ARENA_UI_IMAGE_REF" | grep -Eq "^$CI_REGISTRY_IMAGE/arena-ui@sha256:[0-9a-f]{64}$"
+    - export ARENA_STAGING_DIR="${MLFLOW_VPS_STAGING_ROOT:-$(dirname "$MLFLOW_VPS_DEPLOY_DIR")/staging}/$CI_COMMIT_SHA/arena"
+    - case "$ARENA_STAGING_DIR" in /*) ;; *) echo "ARENA_STAGING_DIR must be absolute" >&2; exit 1;; esac
+    - case "$ARENA_STAGING_DIR" in *[!A-Za-z0-9_./-]*) echo "ARENA_STAGING_DIR contains unsupported characters" >&2; exit 1;; esac
+  # No `rules:` here. They live in .gitlab-ci.yml as .arena_deploy_rules,
+  # because they need the *arena_paths anchor and YAML anchors do not cross
+  # `include:` boundaries. Both jobs below therefore extend two templates, and
+  # the rules-bearing one must come last -- `extends:` replaces a list-valued
+  # key rather than merging it, so the later template's `rules:` wins.
+
+preflight_arena_mlflow:
+  extends: [.arena_deploy_mlflow_base, .arena_deploy_rules]
+  timeout: 20m
+  needs:
+    - job: publish_arena_api
+      artifacts: true
+    - job: publish_arena_ui
+      artifacts: true
+  script:
+    # Stage only what deploy-arena.sh needs: itself, the Compose file, and the
+    # shared validation helpers one directory up.
+    - ssh -o BatchMode=yes -o IdentitiesOnly=yes -p "${MLFLOW_VPS_PORT:-22}" "$MLFLOW_VPS_USER@$MLFLOW_VPS_HOST" "umask 077 && install -d -m 700 '$ARENA_STAGING_DIR'"
+    - scp -o BatchMode=yes -o IdentitiesOnly=yes -P "${MLFLOW_VPS_PORT:-22}" deploy/mlflow-vps/arena-compose.yml deploy/mlflow-vps/deploy-arena.sh deploy/vps-common.sh "$MLFLOW_VPS_USER@$MLFLOW_VPS_HOST:$ARENA_STAGING_DIR/"
+    - ssh -o BatchMode=yes -o IdentitiesOnly=yes -p "${MLFLOW_VPS_PORT:-22}" "$MLFLOW_VPS_USER@$MLFLOW_VPS_HOST" "cd '$ARENA_STAGING_DIR' && chmod 700 deploy-arena.sh vps-common.sh && chmod 600 arena-compose.yml"
+    - ssh -o BatchMode=yes -o IdentitiesOnly=yes -p "${MLFLOW_VPS_PORT:-22}" "$MLFLOW_VPS_USER@$MLFLOW_VPS_HOST" "cd '$ARENA_STAGING_DIR' && ./deploy-arena.sh preflight --env-file '$MLFLOW_VPS_ENV_FILE' --api-image-ref '$ARENA_API_IMAGE_REF' --ui-image-ref '$ARENA_UI_IMAGE_REF' --git-sha '$CI_COMMIT_SHA'"
+
+deploy_arena_mlflow:
+  extends: [.arena_deploy_mlflow_base, .arena_deploy_rules]
+  timeout: 30m
+  environment:
+    name: production-arena-mlflow-vps
+    url: https://leaderboard.mlflow.me
+  needs:
+    - job: preflight_arena_mlflow
+    - job: publish_arena_api
+      artifacts: true
+    - job: publish_arena_ui
+      artifacts: true
+  script:
+    - ssh -o BatchMode=yes -o IdentitiesOnly=yes -p "${MLFLOW_VPS_PORT:-22}" "$MLFLOW_VPS_USER@$MLFLOW_VPS_HOST" "umask 077 && install -d -m 700 '$ARENA_STAGING_DIR'"
+    - scp -o BatchMode=yes -o IdentitiesOnly=yes -P "${MLFLOW_VPS_PORT:-22}" deploy/mlflow-vps/arena-compose.yml deploy/mlflow-vps/deploy-arena.sh deploy/vps-common.sh "$MLFLOW_VPS_USER@$MLFLOW_VPS_HOST:$ARENA_STAGING_DIR/"
+    - ssh -o BatchMode=yes -o IdentitiesOnly=yes -p "${MLFLOW_VPS_PORT:-22}" "$MLFLOW_VPS_USER@$MLFLOW_VPS_HOST" "cd '$ARENA_STAGING_DIR' && chmod 700 deploy-arena.sh vps-common.sh && chmod 600 arena-compose.yml"
+    - ssh -o BatchMode=yes -o IdentitiesOnly=yes -p "${MLFLOW_VPS_PORT:-22}" "$MLFLOW_VPS_USER@$MLFLOW_VPS_HOST" "cd '$ARENA_STAGING_DIR' && CI_REGISTRY='$CI_REGISTRY' CI_REGISTRY_USER='$CI_REGISTRY_USER' CI_REGISTRY_PASSWORD='$CI_REGISTRY_PASSWORD' ./deploy-arena.sh apply --env-file '$MLFLOW_VPS_ENV_FILE' --api-image-ref '$ARENA_API_IMAGE_REF' --ui-image-ref '$ARENA_UI_IMAGE_REF' --git-sha '$CI_COMMIT_SHA' --approve"

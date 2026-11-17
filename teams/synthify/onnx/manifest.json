@@ -1,0 +1,8 @@
+{
+  "format": "onnx",
+  "precision": "float32",
+  "runtime": "onnxruntime-cpu",
+  "opset": 19,
+  "source_model_sha256": "64ec6d9460b902afd8b9516b23952203a4cf322c2aa056cf96c7262206a5a097",
+  "model_sha256": "8a6baba537c4a00d518586a2b56f62547259f12685b9b1be9b6cfc91fa44dd45"
+}

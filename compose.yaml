@@ -1,0 +1,180 @@
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: platform/masking-gateway/Dockerfile
+    environment:
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?Set SERVICE_TOKEN in .env}
+      OCTO_MODEL_URL: http://octo-model:8080
+      SYNTHIFY_MODEL_URL: http://synthify-model:8080
+      BERTS_MODEL_URL: http://berts-model:8080
+      SERVICE_RELEASE: demo
+    ports:
+      - "8080:8080"
+    networks:
+      - public
+      - models
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  octo-model:
+    profiles: ["octo"]
+    build:
+      context: .
+      dockerfile: platform/model-service/Dockerfile
+      args:
+        TEAM: octo
+    environment:
+      TEAM_ID: octo
+      ONNX_MODEL_PATH: /models/onnx
+      DETECTION_MODE: model_regex
+      DETECTOR_LABEL_PROFILE: octo
+      MODEL_VERSION: sha256:21b0e69d83e992751c6e1420e74e17f6bb8f5765d0259651a62dd55d85a09236
+      ONNX_MODEL_SHA256: 21b0e69d83e992751c6e1420e74e17f6bb8f5765d0259651a62dd55d85a09236
+      ACCELERATOR: cpu
+      PDF_REDACTION_STYLE: ${PDF_REDACTION_STYLE:-invisible}
+      PDF_REDACTION_MODE: ${PDF_REDACTION_MODE:-pseudonymize}
+      PDF_OCR: ${PDF_OCR:-on}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PDF_LOCALE_BADGE: ${PDF_LOCALE_BADGE:-on}
+      PDF_CHIP_REFLOW: ${PDF_CHIP_REFLOW:-on}
+      MODEL_ID_SHAPE_GATE: ${MODEL_ID_SHAPE_GATE:-on}
+      ORGANIZATION_SURROGATE_POOL: ${ORGANIZATION_SURROGATE_POOL:-medical}
+      SERVICE_RELEASE: demo
+      # Unset means the per-request audit object is not written at all, which
+      # is what `_upload_audit` already does -- it logs audit_upload_disabled
+      # and returns. deploy/compose.yml has always defaulted these to empty;
+      # only this file demanded them, so running the demo meant holding the
+      # production logs bucket's credentials.
+      PROD_LOGS_S3_ACCESS_KEY: ${PROD_LOGS_S3_ACCESS_KEY:-}
+      PROD_LOGS_S3_SECRET_KEY: ${PROD_LOGS_S3_SECRET_KEY:-}
+    volumes:
+      - ./teams/octo/onnx:/models/onnx:ro
+    networks:
+      - models
+      - public
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://localhost:8080/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  synthify-model:
+    profiles: ["synthify"]
+    build:
+      context: .
+      dockerfile: platform/model-service/Dockerfile
+      args:
+        TEAM: synthify
+    environment:
+      TEAM_ID: synthify
+      ONNX_MODEL_PATH: /models/onnx
+      ONNX_MODEL_DIGEST: sha256:8a6baba537c4a00d518586a2b56f62547259f12685b9b1be9b6cfc91fa44dd45
+      MODEL_VERSION: sha256:8a6baba537c4a00d518586a2b56f62547259f12685b9b1be9b6cfc91fa44dd45
+      ACCELERATOR: cpu
+      PDF_REDACTION_STYLE: ${PDF_REDACTION_STYLE:-invisible}
+      PDF_REDACTION_MODE: ${PDF_REDACTION_MODE:-pseudonymize}
+      PDF_OCR: ${PDF_OCR:-on}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PDF_LOCALE_BADGE: ${PDF_LOCALE_BADGE:-on}
+      PDF_CHIP_REFLOW: ${PDF_CHIP_REFLOW:-on}
+      MODEL_ID_SHAPE_GATE: ${MODEL_ID_SHAPE_GATE:-on}
+      ORGANIZATION_SURROGATE_POOL: ${ORGANIZATION_SURROGATE_POOL:-medical}
+      SERVICE_RELEASE: demo
+      # Unset means the per-request audit object is not written at all, which
+      # is what `_upload_audit` already does -- it logs audit_upload_disabled
+      # and returns. deploy/compose.yml has always defaulted these to empty;
+      # only this file demanded them, so running the demo meant holding the
+      # production logs bucket's credentials.
+      PROD_LOGS_S3_ACCESS_KEY: ${PROD_LOGS_S3_ACCESS_KEY:-}
+      PROD_LOGS_S3_SECRET_KEY: ${PROD_LOGS_S3_SECRET_KEY:-}
+    volumes:
+      - ./teams/synthify/onnx:/models/onnx:ro
+    networks:
+      - models
+      - public
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://localhost:8080/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  berts-model:
+    profiles: ["berts"]
+    build:
+      context: .
+      dockerfile: platform/model-service/Dockerfile
+      args:
+        TEAM: berts
+    environment:
+      TEAM_ID: berts
+      # One checkpoint per document language. The digests and the reported
+      # model names live in teams/berts/runtime.py:CHECKPOINTS -- there is
+      # deliberately no MODEL_NAME/MODEL_VERSION here, because a single name
+      # could only rename all three at once.
+      ONNX_MODEL_PATH: /models/onnx
+      ONNX_MODEL_PATH_EN: /models/onnx-en
+      ONNX_MODEL_PATH_FR: /models/onnx-fr
+      # `off` sends every document to the Dutch checkpoint, restoring the
+      # single-model behaviour that predates the other two.
+      BERTS_LANGUAGE_ROUTING: ${BERTS_LANGUAGE_ROUTING:-on}
+      ACCELERATOR: cpu
+      PDF_REDACTION_STYLE: ${PDF_REDACTION_STYLE:-invisible}
+      PDF_REDACTION_MODE: ${PDF_REDACTION_MODE:-pseudonymize}
+      PDF_OCR: ${PDF_OCR:-on}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PDF_LOCALE_BADGE: ${PDF_LOCALE_BADGE:-on}
+      PDF_CHIP_REFLOW: ${PDF_CHIP_REFLOW:-on}
+      MODEL_ID_SHAPE_GATE: ${MODEL_ID_SHAPE_GATE:-on}
+      ORGANIZATION_SURROGATE_POOL: ${ORGANIZATION_SURROGATE_POOL:-medical}
+      SERVICE_RELEASE: demo
+      # Unset means the per-request audit object is not written at all, which
+      # is what `_upload_audit` already does -- it logs audit_upload_disabled
+      # and returns. deploy/compose.yml has always defaulted these to empty;
+      # only this file demanded them, so running the demo meant holding the
+      # production logs bucket's credentials.
+      PROD_LOGS_S3_ACCESS_KEY: ${PROD_LOGS_S3_ACCESS_KEY:-}
+      PROD_LOGS_S3_SECRET_KEY: ${PROD_LOGS_S3_SECRET_KEY:-}
+    volumes:
+      - ./teams/berts/onnx:/models/onnx:ro
+      - ./teams/berts/onnx-en:/models/onnx-en:ro
+      - ./teams/berts/onnx-fr:/models/onnx-fr:ro
+    networks:
+      - models
+      - public
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://localhost:8080/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+networks:
+  public:
+  models:
+    internal: true

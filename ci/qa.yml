@@ -1,0 +1,95 @@
+# Downstream QA validation (internshipjuly2026/qa-automation).
+#
+# Two distinct questions, deliberately split:
+#
+#   qa_release_gate      merge-request path, `qa` stage. Blocking. Runs the
+#                        synthetic contract gate against the exact candidate
+#                        images and must pass before a production candidate is
+#                        recorded.
+#   qa_arena_evaluation  default-branch path, `arena` stage. Advisory.
+#                        Evaluates every team against the R2 validation
+#                        datasets and publishes leaderboard metrics to MLflow.
+#
+# Both use a native `trigger` with `strategy: mirror` rather than a script that
+# polls the downstream API. A mirrored trigger job holds no runner slot while it
+# waits, which matters because the VPS runners are configured `concurrent = 1`:
+# a blocking poller would occupy the only slot and deadlock against the very
+# pipeline it is waiting for.
+
+# How the candidate's identity crosses the project boundary.
+#
+# `trigger:inputs` cannot carry it. GitLab does not expand CI/CD variables in
+# input values - they are interpolated in the *downstream* configuration, so
+# "$GATEWAY_IMAGE_REF" arrives as that literal string and is rejected by the
+# input's own `regex:` (gitlab-org/gitlab#528630). Only the static policy values
+# below travel as inputs, where the typed `spec:` contract is real.
+#
+# `trigger:variables:` cannot carry it either, and this is the part that is
+# easy to get wrong twice. Those become *pipeline* variables downstream, which
+# qa-automation's "Pipeline variables" setting governs. It is `no_one_allowed`
+# - GitLab.com's default for projects created after 17.7 - which denies every
+# role including Owner. A trigger job carrying `variables:` does not merely
+# fail to hand the values over: GitLab refuses to create the downstream
+# pipeline at all, and the bridge fails with "downstream pipeline can not be
+# created, Insufficient permissions to set pipeline variables". That is
+# strictly worse than sending nothing, because the downstream never runs and
+# so never reports what it was missing.
+#
+# Changing that setting is not available to us - it lives in qa-automation,
+# which this project's maintainers do not own. So **neither trigger job may
+# declare `variables:`**, and tests/test_ci_production_promotion.py pins that.
+#
+# The candidate identity is therefore resolved *downstream* instead, by
+# qa-automation's scripts/verify_candidate_contract.py: it queries this
+# project's API for the pipeline whose bridge job points at the downstream
+# pipeline's own $CI_PIPELINE_ID, which identifies the real trigger
+# deterministically rather than guessing at "the latest pipeline". Nothing
+# needs to cross the project boundary for that to work.
+#
+# `inherit: variables: false` remains for a narrower reason: without it this
+# project's top-level `variables:` block - six uv, LFS and pre-commit cache
+# settings that mean nothing to QA - would be forwarded as pipeline variables
+# and trip the very same permission error.
+
+# Handover contract validated with qa-automation main branch.
+qa_release_gate:
+  extends: .release_candidate_rules
+  inherit:
+    variables: false
+  stage: qa
+  needs:
+    - job: publish_gateway
+      artifacts: true
+    - job: publish_model_service
+      artifacts: true
+  trigger:
+    project: internshipjuly2026/qa-automation
+    branch: main
+    strategy: mirror
+    inputs:
+      evaluation_mode: "synthetic"
+      dataset_version: "synthetic-v1"
+
+qa_arena_evaluation:
+  extends: .main_promotion_rules
+  inherit:
+    variables: false
+  # After `release`, because it consumes the verified candidate manifest that
+  # load_production_candidate resolves; a job cannot `need` a later stage.
+  stage: arena
+  # A ranking movement must never block a deployment. The arena's own gate
+  # still enforces contract safety and evidence integrity downstream; every
+  # model-quality threshold there is an unenforced observation until a baseline
+  # round is approved.
+  allow_failure: true
+  needs:
+    - job: load_production_candidate
+      artifacts: true
+  trigger:
+    project: internshipjuly2026/qa-automation
+    branch: main
+    strategy: mirror
+    inputs:
+      evaluation_mode: "release"
+      dataset_version: "validation-r2-v1"
+      arena_teams: "octo,synthify,berts"

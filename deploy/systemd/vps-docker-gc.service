@@ -1,0 +1,13 @@
+[Unit]
+Description=Reclaim disk from unused Docker/BuildKit images, build cache, and containers
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/vps-docker-gc.sh
+StandardOutput=journal
+StandardError=journal
+NoNewPrivileges=false
+ProtectSystem=strict
+ReadWritePaths=/run/docker.sock

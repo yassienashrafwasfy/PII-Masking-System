@@ -1,0 +1,137 @@
+[project]
+name = "pii-masking-demo"
+version = "0.1.0"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "boto3==1.40.1",
+    "Faker==38.2.0",
+    "fastapi==0.140.0",
+    "gliner==0.2.28",
+    "lingua-language-detector==2.2.0",
+    "onnxruntime==1.28.0",
+    "PyMuPDF==1.28.0",
+    "torch==2.7.0+cpu",
+    "transformers==5.10.1",
+]
+
+[dependency-groups]
+dev = [
+    "black==26.3.1",
+    "pre-commit==4.3.0",
+    "pre-commit-hooks==6.0.0",
+    "pytest==8.4.2",
+    "python-multipart>=0.0.20,<1",
+    "ruff==0.14.2",
+]
+
+# `mutmut run` leaves a full copy of the gateway's src and tests under
+# platform/masking-gateway/mutants/. It is gitignored, but pytest still walks
+# into it from the repository root and fails to collect every file in it -- the
+# copy has no importable `masking_engine` on its path, so a plain `pytest` after
+# a mutation run reports 72 collection errors that have nothing to do with the
+# tree. The default norecursedirs list is repeated here because setting the
+# option replaces it rather than adding to it.
+[tool.pytest.ini_options]
+norecursedirs = [
+    "*.egg",
+    ".*",
+    "_darcs",
+    "build",
+    "CVS",
+    "dist",
+    "node_modules",
+    "venv",
+    "{arch}",
+    "mutants",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+# Dead-code search, the complement to mutation testing: mutmut asks whether a
+# test notices a change, vulture asks whether anything runs the code at all. A
+# detector nobody calls masks nothing and no green suite says so.
+#
+# Not a dependency on purpose, for the same reason mutmut is not: `uv sync
+# --locked` removes anything not in the lock file, and neither tool is needed to
+# run or serve the service. Install it for a run (`uv pip install vulture`) and
+# invoke `vulture .` from the repository root -- this section is inert without it.
+#
+# 60 is the level at which the remaining reports are worth reading. Names below
+# that are dominated by framework callbacks and attribute-only dataclasses.
+[tool.vulture]
+min_confidence = 60
+paths = ["."]
+exclude = [
+    ".venv",
+    "*/mutants/*",
+    "*/node_modules/*",
+    "graphify-out",
+    # Offline, team-owned experiment scripts. A trial keeps the branch it
+    # decided against on purpose, and its owners -- not this check -- decide
+    # when it goes. What this check guards is the serving path. Reported at the
+    # time of writing and left to the teams: `prepare_dataset` in octo's
+    # prepare_datasets.py has no caller, and berts' `Hit`/`merge_fallback` are
+    # documented leftovers of a trial.
+    "*/training/*",
+]
+ignore_decorators = [
+    # FastAPI and Flask reach their handlers through the decorator, never by
+    # name, so every route reads as unused.
+    "@app.*",
+    "@router.*",
+    # An autouse fixture is called by pytest, not by a test.
+    "@pytest.fixture",
+    # pydantic calls a validator during construction; nothing names it.
+    "@field_validator",
+]
+ignore_names = [
+    # Interfaces called by something outside Python's view of the code.
+    "do_GET",             # http.server dispatches on the method name
+    "do_POST",
+    "log_message",
+    "forward",            # torch calls it through __call__
+    "__getattr__",        # module-level lazy imports
+    "__dir__",
+    "image_samples",      # a PageReader stub keeping the protocol's signature
+    # onnxruntime SessionOptions attributes, set once and read by the C++ side.
+    "enable_cpu_mem_arena",
+    "intra_op_num_threads",
+    "inter_op_num_threads",
+    "graph_optimization_level",
+    "log_severity_level",
+    "execution_mode",
+    # gunicorn reads its configuration module by attribute name.
+    "bind",
+    "workers",
+    "worker_class",
+    "timeout",
+    "graceful_timeout",
+    "keepalive",
+    "accesslog",
+    "errorlog",
+    "loglevel",
+    "preload_app",
+    "threads",
+    "access_log_format",
+    "capture_output",
+    # pymupdf Widget fields, written from Python and read by MuPDF itself.
+    "field_name",
+    "field_type",
+    # transformers TrainerCallback hooks and Trainer overrides: the framework
+    # calls them, the training scripts never do.
+    "on_train_begin",
+    "on_step_end",
+    "on_log",
+    "on_epoch_end",
+    "on_train_end",
+    "on_save",
+    "_get_train_sampler",
+]

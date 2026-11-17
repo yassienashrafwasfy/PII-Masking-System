@@ -1,0 +1,167 @@
+variables:
+  GATEWAY_IMAGE: "$CI_REGISTRY_IMAGE/masking-gateway:$CI_COMMIT_SHA"
+  MODEL_SERVICE_IMAGE: "$CI_REGISTRY_IMAGE/model-service:$CI_COMMIT_SHA"
+  ARENA_API_IMAGE: "$CI_REGISTRY_IMAGE/arena-api:$CI_COMMIT_SHA"
+  ARENA_UI_IMAGE: "$CI_REGISTRY_IMAGE/arena-ui:$CI_COMMIT_SHA"
+  GATEWAY_CACHE_IMAGE: "$CI_REGISTRY_IMAGE/cache/masking-gateway:buildkit"
+  MODEL_SERVICE_CACHE_IMAGE: "$CI_REGISTRY_IMAGE/cache/model-service:buildkit"
+  ARENA_API_CACHE_IMAGE: "$CI_REGISTRY_IMAGE/cache/arena-api:buildkit"
+  ARENA_UI_CACHE_IMAGE: "$CI_REGISTRY_IMAGE/cache/arena-ui:buildkit"
+  # Overridden per-context by .arena_image_rules: pushed only from the
+  # default branch, where the images are actually deployed from. The default
+  # here is the safe one -- a context that somehow matches neither rule builds
+  # without publishing, rather than pushing an unreviewed tag.
+  ARENA_IMAGE_PUSH: "false"
+
+.rootless_build:
+  stage: package
+  image:
+    name: moby/buildkit:v0.31.2-rootless
+    entrypoint: [""]
+  timeout: 45m
+  # Every base image except ghcr.io/astral-sh/uv comes from Docker Hub, and the
+  # runner host has IPv6 while its build containers do not. When DNS hands back
+  # a AAAA record first, BuildKit dials it and the pull dies instantly with
+  # "connect: network is unreachable" on a Cloudflare v6 address. It is a coin
+  # flip per lookup, not an outage: publish_arena_api pulled python:3.13-slim
+  # from the same Hub seconds before publish_arena_ui failed to reach
+  # node:24-alpine (job 16190458140).
+  #
+  # `when` has to restate runner_system_failure because a job-level `retry`
+  # replaces the default block outright rather than merging with it.
+  #
+  # One retry, not two. The runner is `concurrent = 1` and this template also
+  # carries the model-service build, so a genuinely broken build that fails late
+  # occupies the only slot for its whole timeout again. Doubling that worst case
+  # is affordable; tripling it is not. The transient failure this targets dies
+  # in about seven seconds, so the retry is nearly free when it is the one that
+  # actually happens.
+  retry:
+    max: 1
+    when: [script_failure, runner_system_failure]
+  variables:
+    BUILDKITD_FLAGS: "--oci-worker-no-process-sandbox"
+  before_script:
+    - mkdir -p "$HOME/.docker"
+    - printf '{"auths":{"%s":{"username":"%s","password":"%s"}}}\n' "$CI_REGISTRY" "$CI_REGISTRY_USER" "$CI_REGISTRY_PASSWORD" > "$HOME/.docker/config.json"
+
+# The OCR weights are Git LFS objects, and the global GIT_LFS_SKIP_SMUDGE=1
+# leaves them as 130-byte pointer files in the checkout. Both image builds run
+# in moby/buildkit-rootless, which carries no git-lfs and cannot install one
+# rootless, so the pull happens here and reaches the builds as an artifact --
+# BuildKit picks it up from `--local context=.` with no Dockerfile change.
+#
+# QA is why this has to be baked rather than mounted: qa_release_gate runs the
+# downstream contract gate against the published images, and GitLab `services:`
+# cannot mount volumes, so an image is the only way the OCR fallback is
+# reachable there. Production still prefers the host-mounted artifacts that
+# deploy-gateway.sh verifies before pulling an image.
+#
+# Same rules as the two jobs it feeds. An artifact source absent from the
+# pipeline invalidates the whole configuration, the way an absent `needs`
+# target does.
+fetch_ocr_artifacts:
+  extends: .release_candidate_rules
+  stage: build
+  variables:
+    OCR_ARTIFACTS: platform/masking-gateway/src/masking_engine/src/models/ocr/artifacts
+  before_script:
+    - apt-get update && apt-get install --yes --no-install-recommends git-lfs
+  script:
+    - git lfs pull --include="$OCR_ARTIFACTS/**" --exclude=''
+    # Fail here rather than shipping an image whose OCR model is a pointer.
+    - |
+      printf '%s  %s\n' \
+        049d5107f028a88efb9c96857ab72af847f0be7aeb413285669a84cf00b8f973 "$OCR_ARTIFACTS/det/model.onnx" \
+        14a9e7d184b186fe9c0551737e0bfe53d0a3afee97806a0eeafc6565fc732a1d "$OCR_ARTIFACTS/rec/model.onnx" \
+        b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d "$OCR_ARTIFACTS/rec/charset.txt" \
+        | sha256sum --check --strict
+  artifacts:
+    paths:
+      - platform/masking-gateway/src/masking_engine/src/models/ocr/artifacts
+    expire_in: 1 week
+
+publish_gateway:
+  extends: [.rootless_build, .release_candidate_rules]
+  # No artifacts: the gateway never loads OCR, so it has no use for the weights
+  # `fetch_ocr_artifacts` produces. `.dockerignore` is shared by both image
+  # builds, so the split has to happen here rather than there.
+  dependencies: []
+  script:
+    - buildctl-daemonless.sh build --frontend dockerfile.v0 --local context=. --local dockerfile=platform/masking-gateway --opt build-arg:GIT_SHA="$CI_COMMIT_SHA" --import-cache "type=registry,ref=$GATEWAY_CACHE_IMAGE" --export-cache "type=registry,ref=$GATEWAY_CACHE_IMAGE,mode=max" --output "type=image,name=$GATEWAY_IMAGE,push=true" --metadata-file gateway-metadata.json
+    - GATEWAY_IMAGE_DIGEST="$(sed -n 's/.*"containerimage.digest"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' gateway-metadata.json)"
+    - test -n "$GATEWAY_IMAGE_DIGEST"
+    - GATEWAY_IMAGE_REF="${GATEWAY_IMAGE%:*}@$GATEWAY_IMAGE_DIGEST"
+    - printf 'GATEWAY_IMAGE_REF=%s\nGATEWAY_IMAGE_DIGEST=%s\n' "$GATEWAY_IMAGE_REF" "$GATEWAY_IMAGE_DIGEST" > gateway-image.env
+  artifacts:
+    reports:
+      dotenv: gateway-image.env
+    paths:
+      - gateway-image.env
+      - gateway-metadata.json
+    expire_in: 1 week
+
+publish_model_service:
+  extends: [.rootless_build, .release_candidate_rules]
+  # `mode=min` rather than the `mode=max` the other three images use. This build
+  # installs torch and bytecode-compiles ~9,800 files, and exporting every
+  # intermediate layer meant materialising all of it in BuildKit's local content
+  # store before pushing -- which is where this job ran the runner out of disk.
+  # Only the layers that make up the final image are cached now, so a rebuild
+  # after an unrelated change re-runs the dependency install instead of pulling
+  # it from cache. That is the trade this job can afford; the smaller images
+  # keep full-layer caching.
+  # The OCR weights, and only those: this is the image QA exercises the
+  # scanned-PDF fallback against.
+  dependencies: [fetch_ocr_artifacts]
+  script:
+    - buildctl-daemonless.sh build --frontend dockerfile.v0 --local context=. --local dockerfile=platform/model-service --opt build-arg:GIT_SHA="$CI_COMMIT_SHA" --import-cache "type=registry,ref=$MODEL_SERVICE_CACHE_IMAGE" --export-cache "type=registry,ref=$MODEL_SERVICE_CACHE_IMAGE,mode=min" --output "type=image,name=$MODEL_SERVICE_IMAGE,push=true" --metadata-file model-service-metadata.json
+    - MODEL_SERVICE_IMAGE_DIGEST="$(sed -n 's/.*"containerimage.digest"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' model-service-metadata.json)"
+    - test -n "$MODEL_SERVICE_IMAGE_DIGEST"
+    - MODEL_SERVICE_IMAGE_REF="${MODEL_SERVICE_IMAGE%:*}@$MODEL_SERVICE_IMAGE_DIGEST"
+    - printf 'MODEL_SERVICE_IMAGE_REF=%s\nMODEL_SERVICE_IMAGE_DIGEST=%s\n' "$MODEL_SERVICE_IMAGE_REF" "$MODEL_SERVICE_IMAGE_DIGEST" > model-service-image.env
+  artifacts:
+    reports:
+      dotenv: model-service-image.env
+    paths:
+      - model-service-image.env
+      - model-service-metadata.json
+    expire_in: 1 week
+
+# The arena is a separate deployable: two images, consumed by
+# deploy/mlflow-vps/deploy-arena.sh rather than by the gateway promotion.
+# allow_failure: a broken arena build must never fail the pipeline that also
+# carries the gateway's build, tests, and security scans.
+publish_arena_api:
+  extends: [.rootless_build, .arena_image_rules]
+  allow_failure: true
+  script:
+    - buildctl-daemonless.sh build --frontend dockerfile.v0 --local context=evaluation --local dockerfile=evaluation/leaderboard_api --import-cache "type=registry,ref=$ARENA_API_CACHE_IMAGE" --export-cache "type=registry,ref=$ARENA_API_CACHE_IMAGE,mode=max" --output "type=image,name=$ARENA_API_IMAGE,push=$ARENA_IMAGE_PUSH" --metadata-file arena-api-metadata.json
+    - ARENA_API_IMAGE_DIGEST="$(sed -n 's/.*"containerimage.digest"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' arena-api-metadata.json)"
+    - test -n "$ARENA_API_IMAGE_DIGEST"
+    - ARENA_API_IMAGE_REF="${ARENA_API_IMAGE%:*}@$ARENA_API_IMAGE_DIGEST"
+    - printf 'ARENA_API_IMAGE_REF=%s\nARENA_API_IMAGE_DIGEST=%s\n' "$ARENA_API_IMAGE_REF" "$ARENA_API_IMAGE_DIGEST" > arena-api-image.env
+  artifacts:
+    reports:
+      dotenv: arena-api-image.env
+    paths:
+      - arena-api-image.env
+      - arena-api-metadata.json
+    expire_in: 1 week
+
+publish_arena_ui:
+  extends: [.rootless_build, .arena_image_rules]
+  allow_failure: true
+  script:
+    - buildctl-daemonless.sh build --frontend dockerfile.v0 --local context=evaluation/leaderboard --local dockerfile=evaluation/leaderboard --import-cache "type=registry,ref=$ARENA_UI_CACHE_IMAGE" --export-cache "type=registry,ref=$ARENA_UI_CACHE_IMAGE,mode=max" --output "type=image,name=$ARENA_UI_IMAGE,push=$ARENA_IMAGE_PUSH" --metadata-file arena-ui-metadata.json
+    - ARENA_UI_IMAGE_DIGEST="$(sed -n 's/.*"containerimage.digest"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' arena-ui-metadata.json)"
+    - test -n "$ARENA_UI_IMAGE_DIGEST"
+    - ARENA_UI_IMAGE_REF="${ARENA_UI_IMAGE%:*}@$ARENA_UI_IMAGE_DIGEST"
+    - printf 'ARENA_UI_IMAGE_REF=%s\nARENA_UI_IMAGE_DIGEST=%s\n' "$ARENA_UI_IMAGE_REF" "$ARENA_UI_IMAGE_DIGEST" > arena-ui-image.env
+  artifacts:
+    reports:
+      dotenv: arena-ui-image.env
+    paths:
+      - arena-ui-image.env
+      - arena-ui-metadata.json
+    expire_in: 1 week

@@ -1,0 +1,36 @@
+{
+  "schema_version": 2,
+  "default_profile": "octo",
+  "note": "Profiles convert detector output to qa-pii-v1. Legacy model labels remain mapped so the deployed checkpoint can mask safely until it is retrained. routing_only_labels are masked alongside the qa-pii-v1 identity taxonomy but are not identity PII themselves -- Octo's checkpoint natively emits these as clinical/administrative PHI classes, and this list lets it mask them without expanding qa-pii-v1 itself, or scoring them: the evaluation taxonomy only ever mirrors entity_labels. See ADR 006.",
+  "routing_only_labels": ["MEDICATION", "SYMPTOM", "DIAGNOSIS", "CNP", "COLEGIADO", "DNI", "LANR", "NIE", "PARAFA", "STEUER_ID"],
+  "profiles": {
+    "octo": {
+      "note": "The deployed Octo checkpoint uses legacy labels; qa-pii-v1 training emits canonical labels directly.",
+      "aliases": {
+        "BUILDINGNUM": "ADDRESS", "CITY": "ADDRESS", "HOSPITAL_NAME": "ORGANIZATION_NAME",
+        "INSZ": "INSZ_NISS", "ORGANIZATION_ID": "BTW_EENHEID", "RIZIV": "RIZIV_INAMI",
+        "SEX": "GENDER", "STREET": "ADDRESS",
+        "TELEFOON": "PHONE_NUMBER", "ZIPCODE": "ADDRESS"
+      },
+      "composite_address_labels": ["ADDRESS"]
+    },
+    "synthify": {
+      "note": "Synthify's address is composite and remains one ADDRESS span.",
+      "aliases": {
+        "HOSPITAL_NAME": "ORGANIZATION_NAME", "INSZ": "INSZ_NISS", "RIZIV": "RIZIV_INAMI", "RVIZ": "RIZIV_INAMI", "TELEFOON": "PHONE_NUMBER"
+      },
+      "composite_address_labels": ["ADDRESS"]
+    },
+    "berts": {
+      "note": "Berts MedRoBERTa/CamemBERT-bio/BERT labels map to qa-pii-v1. DISEASE is the checkpoints' own spelling for the clinical routing-only label this taxonomy calls DIAGNOSIS (see ADR 006); PROCEDURE has no target and stays unmapped, dropped the same way Octo's own PROCEDURE class is.",
+      "aliases": {
+        "DATA": "DATE", "DISEASE": "DIAGNOSIS", "DOB": "DATE", "DOCTOR_NAME": "NAME",
+        "HOSPITAL": "ORGANIZATION_NAME",
+        "NATIONAL_ID": "INSZ_NISS", "ORG": "ORGANIZATION_NAME", "ORGANIZATION": "ORGANIZATION_NAME",
+        "PATIEN_NAME": "NAME", "PATIENT_NAME": "NAME", "PHONE": "PHONE_NUMBER",
+        "PROVIDER_ID": "RIZIV_INAMI", "WEBSITE": "URL"
+      },
+      "composite_address_labels": ["ADDRESS"]
+    }
+  }
+}

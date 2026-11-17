@@ -1,0 +1,7 @@
+[lint.per-file-ignores]
+# Tests bootstrap sys.path before importing the package under test, so
+# module-level imports intentionally follow executable statements.
+"platform/masking-gateway/tests/*" = ["E402"]
+"platform/model-service/tests/*" = ["E402"]
+# Same reason: this verification script bootstraps sys.path before
+# importing the package under test.

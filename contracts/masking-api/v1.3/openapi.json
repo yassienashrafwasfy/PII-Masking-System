@@ -1,0 +1,291 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "PII Masking API",
+    "version": "1.3.0",
+    "description": "See PII_Masking_API_Contract_v1.2.md for the authoritative contract."
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Service is alive"
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ModelFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Runtime is ready"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/version": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ModelFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deployed release identity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Version"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mask": {
+      "post": {
+        "summary": "Mask one raw file",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Authorization"
+          },
+          {
+            "$ref": "#/components/parameters/RequestId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/TeamId"
+          },
+          {
+            "$ref": "#/components/parameters/ModelFormat"
+          },
+          {
+            "$ref": "#/components/parameters/SourceETag"
+          },
+          {
+            "$ref": "#/components/parameters/SourceObjectKey"
+          },
+          {
+            "$ref": "#/components/parameters/MaskLabels"
+          },
+          {
+            "$ref": "#/components/parameters/DocumentLocale"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/pdf": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "text/plain": {
+              "schema": {
+                "type": "string"
+              }
+            },
+            "text/csv": {
+              "schema": {
+                "type": "string"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Masked bytes and release headers"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error"
+          },
+          "415": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "Authorization": {
+        "in": "header",
+        "name": "Authorization",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "RequestId": {
+        "in": "header",
+        "name": "X-Request-ID",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "IdempotencyKey": {
+        "in": "header",
+        "name": "Idempotency-Key",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "TeamId": {
+        "in": "header",
+        "name": "X-Team-ID",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "octo",
+            "synthify",
+            "berts"
+          ]
+        }
+      },
+      "ModelFormat": {
+        "in": "header",
+        "name": "X-Model-Format",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "onnx",
+            "safetensors"
+          ],
+          "default": "onnx"
+        }
+      },
+      "SourceETag": {
+        "in": "header",
+        "name": "X-Source-ETag",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "SourceObjectKey": {
+        "in": "header",
+        "name": "X-Source-Object-Key",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "MaskLabels": {
+        "in": "header",
+        "name": "X-Mask-Labels",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "DocumentLocale": {
+        "in": "header",
+        "name": "X-Document-Locale",
+        "description": "Language every pseudonym in the response reads as. Omit it and the language is detected from the document's own text, which is the normal case; send it to override detection for a document too short or too mixed to detect. Echoed back on a 200 when it was sent.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "en",
+            "fr_FR",
+            "nl_BE"
+          ]
+        }
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Sanitized contract error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "retryable",
+              "request_id"
+            ]
+          }
+        }
+      },
+      "Version": {
+        "type": "object",
+        "required": [
+          "service",
+          "api_contract_version",
+          "service_release",
+          "git_sha",
+          "image_digest",
+          "model_name",
+          "model_version",
+          "model_digest",
+          "model_format",
+          "selectable_labels",
+          "default_masked_labels",
+          "supported_mime_types",
+          "supported_model_formats",
+          "max_file_bytes"
+        ]
+      }
+    }
+  }
+}

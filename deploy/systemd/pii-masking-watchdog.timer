@@ -1,0 +1,12 @@
+[Unit]
+Description=Probe the PII masking gateway every minute
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=60s
+AccuracySec=5s
+Persistent=true
+Unit=pii-masking-watchdog.service
+
+[Install]
+WantedBy=timers.target

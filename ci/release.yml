@@ -1,0 +1,244 @@
+record_production_candidate:
+  extends: .release_candidate_rules
+  stage: release
+  image: alpine:3.22
+  needs:
+    - job: publish_gateway
+      artifacts: true
+    - job: publish_model_service
+      artifacts: true
+    - job: scan_gateway_image
+    - job: scan_model_service_image
+    - job: qa_release_gate
+  script:
+    - set -eu
+    - apk add --no-cache curl
+    - test -n "${GATEWAY_IMAGE_REF:-}" || { echo "GATEWAY_IMAGE_REF is required" >&2; exit 1; }
+    - test -n "${GATEWAY_IMAGE_DIGEST:-}" || { echo "GATEWAY_IMAGE_DIGEST is required" >&2; exit 1; }
+    - test -n "${MODEL_SERVICE_IMAGE_REF:-}" || { echo "MODEL_SERVICE_IMAGE_REF is required" >&2; exit 1; }
+    - test -n "${MODEL_SERVICE_IMAGE_DIGEST:-}" || { echo "MODEL_SERVICE_IMAGE_DIGEST is required" >&2; exit 1; }
+    - printf '%s\n' "$GATEWAY_IMAGE_DIGEST" | grep -Eq '^sha256:[0-9a-f]{64}$'
+    - printf '%s\n' "$MODEL_SERVICE_IMAGE_DIGEST" | grep -Eq '^sha256:[0-9a-f]{64}$'
+    - case "$GATEWAY_IMAGE_REF" in "$CI_REGISTRY_IMAGE/masking-gateway@"*) ;; *) echo "GATEWAY_IMAGE_REF has an unexpected registry namespace" >&2; exit 1 ;; esac
+    - case "$MODEL_SERVICE_IMAGE_REF" in "$CI_REGISTRY_IMAGE/model-service@"*) ;; *) echo "MODEL_SERVICE_IMAGE_REF has an unexpected registry namespace" >&2; exit 1 ;; esac
+    - test "${GATEWAY_IMAGE_REF#*@}" = "$GATEWAY_IMAGE_DIGEST"
+    - test "${MODEL_SERVICE_IMAGE_REF#*@}" = "$MODEL_SERVICE_IMAGE_DIGEST"
+    - umask 077
+    - |
+      {
+        printf 'CANDIDATE_SHA=%s\n' "$CI_COMMIT_SHA"
+        printf 'GATEWAY_IMAGE_REF=%s\n' "$GATEWAY_IMAGE_REF"
+        printf 'GATEWAY_IMAGE_DIGEST=%s\n' "$GATEWAY_IMAGE_DIGEST"
+        printf 'MODEL_SERVICE_IMAGE_REF=%s\n' "$MODEL_SERVICE_IMAGE_REF"
+        printf 'MODEL_SERVICE_IMAGE_DIGEST=%s\n' "$MODEL_SERVICE_IMAGE_DIGEST"
+        printf 'CANDIDATE_PIPELINE_ID=%s\n' "$CI_PIPELINE_ID"
+      } > production-candidate.env
+    - 'curl --fail --show-error --silent --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file production-candidate.env "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/production-candidate/${CI_COMMIT_SHA}/production-candidate.env"'
+  artifacts:
+    reports:
+      dotenv: production-candidate.env
+    paths:
+      - production-candidate.env
+    expire_in: 1 year
+
+load_production_candidate:
+  extends: .main_promotion_rules
+  stage: release
+  image: alpine:3.22
+  script:
+    - set -eu
+    - apk add --no-cache curl jq
+    - |
+      # $CI_COMMIT_SHA on main is not guaranteed to be the commit the MR pipeline
+      # tested: squash-on-merge (and any other merge strategy that mints a new
+      # commit) gives main a different SHA than the one record_production_candidate
+      # recorded the package under. Resolve the merged MR for this commit and use
+      # the pre-merge source SHA it actually ran its pipeline against.
+      mr_response=$(curl --fail --show-error --silent --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/commits/${CI_COMMIT_SHA}/merge_requests")
+      candidate_lookup_sha=$(printf '%s' "$mr_response" | jq -r --arg sha "$CI_COMMIT_SHA" --arg branch "$CI_DEFAULT_BRANCH" '
+        [.[] | select(.state == "merged" and .target_branch == $branch and (.sha == $sha or .squash_commit_sha == $sha or .merge_commit_sha == $sha))][0].sha // empty
+      ')
+      test -n "$candidate_lookup_sha" || { echo "No merged MR found for commit $CI_COMMIT_SHA" >&2; exit 1; }
+    - candidate_file=production-candidate.env
+    - 'curl --fail --show-error --silent --header "JOB-TOKEN: $CI_JOB_TOKEN" --output "$candidate_file" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/production-candidate/${candidate_lookup_sha}/production-candidate.env"'
+    - |
+      fail() {
+        echo "Invalid production candidate manifest" >&2
+        exit 1
+      }
+
+      candidate_sha=
+      gateway_image_ref=
+      gateway_image_digest=
+      model_service_image_ref=
+      model_service_image_digest=
+      candidate_pipeline_id=
+      seen_keys=' '
+      record_count=0
+
+      while IFS='=' read -r key value || [ -n "$key" ]; do
+        record_count=$((record_count + 1))
+        case "$key" in
+          CANDIDATE_SHA|GATEWAY_IMAGE_REF|GATEWAY_IMAGE_DIGEST|MODEL_SERVICE_IMAGE_REF|MODEL_SERVICE_IMAGE_DIGEST|CANDIDATE_PIPELINE_ID) ;;
+          *) fail ;;
+        esac
+        case "$seen_keys" in *" $key "*) fail ;; esac
+        seen_keys="$seen_keys$key "
+        test -n "$value" || fail
+        case "$key" in
+          CANDIDATE_SHA) candidate_sha=$value ;;
+          GATEWAY_IMAGE_REF) gateway_image_ref=$value ;;
+          GATEWAY_IMAGE_DIGEST) gateway_image_digest=$value ;;
+          MODEL_SERVICE_IMAGE_REF) model_service_image_ref=$value ;;
+          MODEL_SERVICE_IMAGE_DIGEST) model_service_image_digest=$value ;;
+          CANDIDATE_PIPELINE_ID) candidate_pipeline_id=$value ;;
+        esac
+      done < "$candidate_file"
+
+      test "$record_count" -eq 6 || fail
+      test "$candidate_sha" = "$candidate_lookup_sha" || fail
+      case "$candidate_pipeline_id" in ''|*[!0-9]*) fail ;; esac
+      printf '%s\n' "$gateway_image_digest" | grep -Eq '^sha256:[0-9a-f]{64}$' || fail
+      printf '%s\n' "$model_service_image_digest" | grep -Eq '^sha256:[0-9a-f]{64}$' || fail
+      case "$gateway_image_ref" in "$CI_REGISTRY_IMAGE/masking-gateway@"*) ;; *) fail ;; esac
+      case "$model_service_image_ref" in "$CI_REGISTRY_IMAGE/model-service@"*) ;; *) fail ;; esac
+      test "${gateway_image_ref#*@}" = "$gateway_image_digest" || fail
+      test "${model_service_image_ref#*@}" = "$model_service_image_digest" || fail
+
+      # Give the promoted images a second name: this main commit's SHA.
+      #
+      # Downstream QA resolves the candidate by asking this registry for the
+      # tag named after the triggering pipeline's commit
+      # (qa-automation's verify_candidate_contract.py). It cannot simply be
+      # handed the digests: `trigger:variables:` is refused outright by
+      # qa-automation's no_one_allowed pipeline-variables setting, and
+      # `trigger:inputs:` does not expand CI/CD variables
+      # (gitlab-org/gitlab#528630). See ci/qa.yml.
+      #
+      # publish_gateway and publish_model_service only ever run on merge
+      # requests, so every tag in the registry is named after an MR head SHA
+      # and a tag for a default-branch commit has never existed. That is why
+      # every arena evaluation failed here with a bare "HTTP Error 404".
+      #
+      # This is a manifest copy, not a rebuild or a re-push: the blobs already
+      # live in this repository, so the same digest simply gains a second tag.
+      # The image a main SHA resolves to is therefore byte-identical to the
+      # candidate that was actually tested, which is the whole point -- a
+      # rebuild here could produce a different digest and silently evaluate
+      # something other than the promoted candidate.
+      alias_digest_to_commit() {
+        repository=$1
+        digest=$2
+        auth=$(curl --fail --show-error --silent \
+          --user "$CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD" \
+          "https://gitlab.com/jwt/auth?service=container_registry&scope=repository:${repository}:pull,push" \
+          | jq -r '.token')
+        case "$auth" in ''|null) echo "registry auth failed for $repository" >&2; exit 1 ;; esac
+        header_file=$(mktemp)
+        manifest_file=$(mktemp)
+        curl --fail --show-error --silent \
+          --dump-header "$header_file" --output "$manifest_file" \
+          --header "Authorization: Bearer $auth" \
+          --header 'Accept: application/vnd.docker.distribution.manifest.v2+json' \
+          --header 'Accept: application/vnd.docker.distribution.manifest.list.v2+json' \
+          --header 'Accept: application/vnd.oci.image.manifest.v1+json' \
+          --header 'Accept: application/vnd.oci.image.index.v1+json' \
+          "https://${CI_REGISTRY}/v2/${repository}/manifests/${digest}"
+        # The tag must be re-PUT under the exact media type it was served as;
+        # a manifest list and a single-platform manifest are not interchangeable.
+        media_type=$(tr -d '\r' < "$header_file" | awk 'tolower($1) == "content-type:" { print $2 }' | tail -n 1)
+        test -n "$media_type" || { echo "no Content-Type for ${repository}@${digest}" >&2; exit 1; }
+        curl --fail --show-error --silent --request PUT \
+          --header "Authorization: Bearer $auth" \
+          --header "Content-Type: ${media_type}" \
+          --data-binary "@${manifest_file}" \
+          "https://${CI_REGISTRY}/v2/${repository}/manifests/${CI_COMMIT_SHA}" >/dev/null
+        rm -f "$header_file" "$manifest_file"
+        echo "tagged ${repository}:${CI_COMMIT_SHA} -> ${digest}"
+      }
+
+      registry_path=${CI_REGISTRY_IMAGE#"$CI_REGISTRY/"}
+      alias_digest_to_commit "${registry_path}/masking-gateway" "$gateway_image_digest"
+      alias_digest_to_commit "${registry_path}/model-service" "$model_service_image_digest"
+
+      umask 077
+      {
+        printf 'CANDIDATE_SHA=%s\n' "$candidate_sha"
+        printf 'GATEWAY_IMAGE_REF=%s\n' "$gateway_image_ref"
+        printf 'GATEWAY_IMAGE_DIGEST=%s\n' "$gateway_image_digest"
+        printf 'MODEL_SERVICE_IMAGE_REF=%s\n' "$model_service_image_ref"
+        printf 'MODEL_SERVICE_IMAGE_DIGEST=%s\n' "$model_service_image_digest"
+        printf 'CANDIDATE_PIPELINE_ID=%s\n' "$candidate_pipeline_id"
+      } > loaded-production-candidate.env
+
+      # Republish the manifest under THIS commit's SHA as well as the merge
+      # request head's.
+      #
+      # Downstream QA finds the upstream pipeline whose bridge job triggered
+      # it, which yields a default-branch SHA. record_production_candidate
+      # keys its upload by the merge request head SHA instead, so that lookup
+      # 404s -- the same MR-only/default-branch split that made the registry
+      # tags unreachable above.
+      #
+      # It cannot be served by the registry alias alone. Those tags carry the
+      # right image digests but not the right *identity*: the gateway bakes
+      # GIT_SHA at build time from the merge request's commit, so QA comparing
+      # its /version against a default-branch SHA fails with sha_mismatch.
+      # This file carries CANDIDATE_SHA, the commit the images were actually
+      # built from, which is what QA must verify against.
+      # Only when the two SHAs differ. A fast-forward merge leaves this commit
+      # identical to the merge request head, so record_production_candidate has
+      # already published this exact version+filename and re-uploading it would
+      # be a duplicate the package registry can reject. A squash or merge
+      # commit mints a new SHA, and that is the case this exists for.
+      if [ "$CI_COMMIT_SHA" != "$candidate_lookup_sha" ]; then
+        curl --fail --show-error --silent \
+          --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+          --upload-file loaded-production-candidate.env \
+          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/production-candidate/${CI_COMMIT_SHA}/production-candidate.env"
+        echo "published production-candidate manifest for ${CI_COMMIT_SHA}"
+      else
+        echo "fast-forward merge: manifest already published for ${CI_COMMIT_SHA}"
+      fi
+  artifacts:
+    reports:
+      dotenv: loaded-production-candidate.env
+    expire_in: 1 week
+
+# Turns a pushed vX.Y.Z tag into a GitLab Release, with notes generated from
+# the commit log since the previous matching tag. This is independent of
+# record_production_candidate/load_production_candidate above: those track
+# which image digests are safe to deploy, keyed off commit SHAs on main; a
+# tag here is a human-facing changelog marker and never gates a deploy.
+create_gitlab_release:
+  extends: .tag_release_rules
+  stage: release
+  image: alpine:3.22
+  variables:
+    # The job needs full tag history to find the previous release tag and
+    # walk the commit log between the two; the repo-wide GIT_DEPTH: "20"
+    # would silently truncate that range on an older repo.
+    GIT_DEPTH: "0"
+  script:
+    - set -eu
+    - apk add --no-cache curl jq git
+    - git fetch --tags --force --quiet
+    - |
+      previous_tag=$(git tag --list --sort=-creatordate 'v[0-9]*.[0-9]*.[0-9]*' \
+        | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+        | grep -v -x -- "$CI_COMMIT_TAG" \
+        | head -n1 || true)
+    - |
+      if [ -n "$previous_tag" ]; then
+        notes=$(git log "${previous_tag}..${CI_COMMIT_TAG}" --pretty=format:'- %s (%h)')
+      else
+        notes=$(git log "$CI_COMMIT_TAG" --pretty=format:'- %s (%h)')
+      fi
+    - test -n "$notes" || notes="No changes recorded."
+    - |
+      payload=$(jq -n \
+        --arg tag "$CI_COMMIT_TAG" \
+        --arg ref "$CI_COMMIT_SHA" \
+        --arg desc "$notes" \
+        '{tag_name: $tag, ref: $ref, description: $desc}')
+    - 'curl --fail --show-error --silent --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN" --header "Content-Type: application/json" --data "$payload" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases"'

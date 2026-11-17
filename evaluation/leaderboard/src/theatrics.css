@@ -1,0 +1,744 @@
+/* ============================================================================
+   Arena theatrics — combatants, duels, laurels, torches, masking preview,
+   mirage. The components are in theatrics.jsx; the reasoning for each effect
+   lives there. This file is only how they look.
+
+   Two rules hold throughout:
+     · animate transform and opacity, never layout or colour properties, so
+       nothing here forces a reflow of a table that can run to a dozen rows;
+     · every @keyframes name defined here is repeated in the
+       prefers-reduced-motion block at the end, with an end-state restoration
+       wherever stopping the animation mid-definition would hide something.
+   ========================================================================= */
+
+/* ---------- combatants entering the ring ---------- */
+
+/* The row entrance itself is `combatant-enter` in console.css, which keeps the
+   existing `--row-index` stagger. This is only the silhouette that walks in
+   ahead of it. */
+
+.team-cell {
+  position: relative;
+}
+
+/* Sits behind the team orb and is gone by the time the row settles, so it
+   never covers the name. `left` matches the orb's own 36px column so the two
+   are concentric as it fades out. */
+.combatant {
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  width: 28px;
+  height: 36px;
+  pointer-events: none;
+  opacity: 0;
+  animation: combatant-march .62s ease-out both;
+  animation-delay: calc(min(var(--row-index, 0), 12) * 40ms);
+}
+
+.combatant path,
+.combatant rect {
+  fill: currentColor;
+}
+
+/* The accent set here is the same five Arena.jsx keeps in ACCENT_HEX, spelled
+   out because styles.css only ever styled three of them. */
+.combatant.ocean { color: #005272; }
+.combatant.teal { color: #008f8b; }
+.combatant.sky { color: #2689b8; }
+.combatant.violet { color: #7c5cbf; }
+.combatant.coral { color: #e2725b; }
+
+/* A team with no rank is not in the contest. It still takes the field -- the
+   board is a fuller picture with it there -- but in grey, and it never duels. */
+.combatant.muted { color: #9fb3c3; }
+
+@keyframes combatant-march {
+  0% { opacity: 0; transform: translate(-26px, -50%); }
+  45% { opacity: .5; transform: translate(-6px, -50%); }
+  70% { opacity: .42; transform: translate(0, -50%); }
+  100% { opacity: 0; transform: translate(0, -50%); }
+}
+
+/* ---------- spotlight sweep ---------- */
+
+/* The moving band is the pseudo-element, not this box, and the box clips it.
+   That is required, not tidiness: `.table-wrap` is `overflow-x: auto`, so a
+   child translating to 330% would enlarge the scrollable area and leave the
+   table scrollable into empty space long after the light had gone. */
+.spotlight-sweep {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* `soft-light` rather than a plain white overlay: on the near-white table a
+   normal-blend highlight is invisible, and a stronger one blows out the row
+   text underneath it.
+
+   The band paints over the rows, so its alpha is a legibility budget, not a
+   taste setting -- at .95 white the navy team names visibly greyed out as the
+   light crossed them. These values are the most it can carry while every row
+   stays fully readable mid-sweep. The warm stop does most of the work: amber
+   against this blue-grey table reads as light without lifting the text. */
+.spotlight-sweep::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 46%;
+  mix-blend-mode: soft-light;
+  background: linear-gradient(100deg,
+      transparent, rgba(255, 255, 255, .34) 45%, rgba(242, 183, 92, .62) 64%, transparent);
+  animation: spotlight-sweep 1.6s cubic-bezier(.4, 0, .3, 1) both;
+}
+
+@keyframes spotlight-sweep {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(330%); }
+}
+
+/* ---------- duel sparks ---------- */
+
+/* A rank change means the same thing in every theme, so the duel is the one
+   effect that survives a theme switch -- only its colour changes. These are
+   the colosseum's; themes.css overrides them for the other two. Declared on
+   :root so the keyframes can read them, since a keyframe resolves custom
+   properties against the element it animates.
+
+   Amber sparks over a night sky read as an error state rather than a clash,
+   which is what made this worth parametrising instead of leaving hard-coded. */
+:root {
+  --duel-light: var(--torch);
+  --duel-glow: rgba(242, 183, 92, .9);
+  --duel-wash: rgba(242, 183, 92, .16);
+}
+
+/* The layer spans the wrap; each duel is placed on it by an inline `top` the
+   hook measured. `left` is fixed near the rank column rather than centred, so
+   a horizontally scrolled table still shows the clash. */
+.duel-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  /* Clipped for the same reason the spotlight is: sparks thrown past the first
+     or last row's boundary would otherwise extend the scroll area of a wrapper
+     that scrolls. */
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.duel {
+  position: absolute;
+  left: 96px;
+  display: grid;
+  width: 0;
+  height: 0;
+  place-items: center;
+}
+
+.duel-blades {
+  position: absolute;
+  color: var(--duel-light);
+  filter: drop-shadow(0 0 6px var(--duel-glow));
+  animation: duel-clash .6s cubic-bezier(.3, 1.6, .5, 1) both;
+}
+
+/* Each spark is one short line thrown along its own `--angle`. The rotation
+   sits on the element and the travel on a translate inside the same transform,
+   so the pair composites as a single property. */
+.duel-spark {
+  position: absolute;
+  width: 13px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--duel-light), transparent);
+  transform: rotate(var(--angle)) translateX(0);
+  animation: duel-spark .6s ease-out both;
+}
+
+@keyframes duel-clash {
+  0% { opacity: 0; transform: scale(.3) rotate(-25deg); }
+  40% { opacity: 1; transform: scale(1.25) rotate(6deg); }
+  100% { opacity: 0; transform: scale(1) rotate(0); }
+}
+
+@keyframes duel-spark {
+  0% { opacity: 0; transform: rotate(var(--angle)) translateX(2px) scaleX(.4); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--angle)) translateX(34px) scaleX(1); }
+}
+
+/* The two rows that swapped, marked for the length of the clash. Inset
+   box-shadow rather than `background`, so this layers over the zebra and
+   ineligible row colours instead of replacing them -- the same reason
+   `.row-changed` is built that way. */
+.row-duel-winner {
+  animation: duel-winner .9s ease-out both;
+}
+
+.row-duel-loser {
+  animation: duel-loser .9s ease-out both;
+}
+
+@keyframes duel-winner {
+  0%, 20% { box-shadow: inset 4px 0 0 var(--duel-light), inset 0 0 0 9999px var(--duel-wash); }
+  100% { box-shadow: inset 4px 0 0 transparent, inset 0 0 0 9999px transparent; }
+}
+
+@keyframes duel-loser {
+  0%, 20% { box-shadow: inset 0 0 0 9999px rgba(72, 101, 125, .1); }
+  100% { box-shadow: inset 0 0 0 9999px rgba(72, 101, 125, 0); }
+}
+
+/* ---------- champion laurel ---------- */
+
+/* Centred on the crown that styles.css already clips into the card's top edge,
+   and wider than it so the branches close around it rather than behind it.
+   Flush at `top: 0` rather than overhanging: .podium-card sets
+   `overflow: hidden`, so anything above the edge is cut off, not floated. */
+.laurel {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 120px;
+  height: 68px;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.laurel-stem {
+  fill: none;
+  stroke: var(--torch);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: laurel-draw .9s ease-out both;
+}
+
+/* `fill-box` so each leaf scales from its own stem end, not from the SVG's
+   origin -- without it every leaf would fly in from the top-left corner. */
+.laurel-leaf {
+  fill: var(--torch);
+  opacity: .92;
+  transform-box: fill-box;
+  transform-origin: 0 50%;
+  animation: laurel-leaf .32s ease-out both;
+  animation-delay: calc(.28s + var(--leaf-index, 0) * .075s);
+}
+
+@keyframes laurel-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes laurel-leaf {
+  from { opacity: 0; transform: scale(.2); }
+  to { opacity: .92; transform: scale(1); }
+}
+
+/* ---------- torches ---------- */
+
+.torch-pair {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Flanking the crown+laurel cluster (also centered on this card, see .crown
+   and .laurel) rather than sitting out at the card's own left/right edges --
+   the previous placement put ~180px of card between each torch and the
+   emblem it was meant to flank, so the two never read as one piece. The
+   laurel is 120px wide and centered, so its outer tips land at 50% +/- 60px;
+   these sit just past that. */
+.torch {
+  position: absolute;
+  top: 6px;
+  width: 20px;
+  height: 25px;
+}
+
+.torch-left { left: calc(50% - 90px); }
+.torch-right { left: calc(50% + 70px); }
+
+.torch svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* The drop-shadow is the light the torch throws onto the card. Animating a
+   shadow's spread would repaint the card every frame, so only transform and
+   opacity move and the glow simply rides along on the same element. */
+.torch-flame {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 0 9px rgba(242, 183, 92, .85));
+  /* linear, not ease-in-out: with only 3-4 keyframe stops, easing each
+     segment on top of already-large swings is what made this read as a
+     slow, mechanical "pop" back and forth between two states rather than
+     fire -- see torch-flicker/flame-core below, now enough stops at
+     irregular spacing and small per-step deltas that the timing function
+     itself no longer needs to do the shaping. */
+  animation: torch-flicker 2.4s linear infinite;
+}
+
+.torch-right .torch-flame {
+  /* Offset so the pair gutters independently; two flames in lockstep read as a
+     loading spinner rather than as fire. */
+  animation-delay: -1.15s;
+}
+
+/* Two bodies, two speeds. The core running faster than the sheet around it is
+   what makes the flame look like it is burning rather than merely wobbling --
+   a single path at one rate reads as a swaying leaf. */
+.flame-outer { fill: var(--torch); }
+
+.flame-inner {
+  fill: #fff2cc;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: flame-core 1.05s linear infinite;
+}
+
+.torch-right .flame-inner { animation-delay: -.5s; }
+
+/* Real flicker is jitter, not a slow breathe between two extremes -- more
+   stops than a person would consciously read as a sequence, at irregular
+   spacing, each one only a small step from its neighbour. Amplitude stays
+   modest throughout rather than swinging between two wide poses, and no two
+   gaps between stops are equal, so the eye cannot lock onto a beat. */
+@keyframes flame-core {
+  0% { opacity: .95; transform: scale(1, 1) translateY(0); }
+  9% { opacity: .87; transform: scale(.96, 1.04) translateY(-.1px); }
+  17% { opacity: .93; transform: scale(1.03, .98) translateY(.05px); }
+  24% { opacity: .82; transform: scale(.92, 1.07) translateY(-.15px); }
+  33% { opacity: .98; transform: scale(1.06, .95) translateY(.15px); }
+  41% { opacity: .89; transform: scale(.97, 1.03) translateY(-.05px); }
+  52% { opacity: 1; transform: scale(1.08, .93) translateY(.2px); }
+  60% { opacity: .85; transform: scale(.94, 1.05) translateY(-.1px); }
+  69% { opacity: .95; transform: scale(1.02, .99) translateY(.05px); }
+  78% { opacity: .9; transform: scale(.98, 1.02) translateY(0); }
+  88% { opacity: .96; transform: scale(1.03, .97) translateY(.1px); }
+  100% { opacity: .95; transform: scale(1, 1) translateY(0); }
+}
+
+@keyframes torch-flicker {
+  0% { opacity: .92; transform: scale(1, 1); }
+  8% { opacity: .86; transform: scale(.97, 1.03); }
+  15% { opacity: .95; transform: scale(1.02, .98); }
+  23% { opacity: .8; transform: scale(.93, 1.06); }
+  31% { opacity: .9; transform: scale(1.01, .99); }
+  39% { opacity: .97; transform: scale(1.04, .96); }
+  47% { opacity: .84; transform: scale(.95, 1.04); }
+  56% { opacity: .93; transform: scale(1, 1.01); }
+  64% { opacity: .8; transform: scale(.96, 1.03); }
+  73% { opacity: .9; transform: scale(1.02, .97); }
+  82% { opacity: .95; transform: scale(.99, 1); }
+  91% { opacity: .87; transform: scale(1.01, .98); }
+  100% { opacity: .92; transform: scale(1, 1); }
+}
+
+/* A warm pool of light under the champion, painted behind the card's own
+   gradient. Static: the flicker above is the moving part, and a pulsing glow
+   this large would be the loudest thing on the page. */
+:root[data-theme='colosseum'] .podium-card.featured.torchlit {
+  background:
+    radial-gradient(120% 74% at 50% -12%, rgba(242, 183, 92, .22), transparent 62%),
+    linear-gradient(145deg, #fff, #edf9f8);
+}
+
+/* ---------- masking preview ---------- */
+
+/* Exempt from the board's row entrance: this row appears on hover, long after
+   the board arrived, so walking it in from a wing would read as a new
+   competitor rather than as a panel opening. `.mask-preview` below does the
+   opening instead. */
+.masking-preview-row {
+  animation: none;
+}
+
+.masking-preview-row > td {
+  padding: 0 17px 15px;
+  border-top: 0;
+}
+
+/* Each span kind (PII, caught, missed) is a from/to/edge/text quartet, so a
+   theme overrides one place instead of chasing five hard-coded hex values
+   through the chip rules below. Declared on :root, matching --duel-light, so
+   themes.css can win a specificity tie by declaring later.
+
+   Colosseum's own values are a real gradient rather than the flat pale fills
+   the panel shipped with -- a flat #fdf3f3 chip on a near-white panel read as
+   barely tinted paper, which is what made the whole preview look washed out
+   even before it ever met a dark theme. */
+:root {
+  --mask-panel-bg: linear-gradient(155deg, rgba(255, 255, 255, .92), rgba(237, 245, 248, .86));
+  --mask-panel-border: #d6e6ec;
+  --mask-before-text: #7a5252;
+  --mask-after-text: #17503f;
+
+  --mask-pii-from: #fdeaea;
+  --mask-pii-to: #f8c9c9;
+  --mask-pii-edge: #d6716f;
+  --mask-pii-text: #8c3b3b;
+
+  --mask-token-from: #e3faf1;
+  --mask-token-to: #b9edd6;
+  --mask-token-edge: #2fa87f;
+  --mask-token-text: #0a6b4d;
+
+  --mask-missed-from: #fdf0dd;
+  --mask-missed-to: #f7d6a2;
+  --mask-missed-edge: #d99a3e;
+  --mask-missed-text: #8a5a10;
+}
+
+.mask-preview {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--mask-panel-border);
+  border-radius: 9px;
+  background: var(--mask-panel-bg);
+  animation: mask-open .22s ease-out both;
+}
+
+.mask-side {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  align-items: start;
+  gap: 12px;
+}
+
+.mask-side-label {
+  padding-top: 2px;
+  color: var(--ink-soft);
+  font: 800 9.5px/1.6 'Manrope', sans-serif;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.mask-side p {
+  margin: 0;
+  font: 500 12.5px/1.75 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* The masked line grows a character at a time, so without a reserved height
+     the row would jitter every time the text wrapped onto a new line. */
+  min-height: 2.6em;
+  word-break: break-word;
+}
+
+/* The same before/after pair the console's document viewer already uses, so a
+   reader who has seen one recognises the other. */
+.mask-side.original p { color: var(--mask-before-text); }
+.mask-side.masked p { color: var(--mask-after-text); }
+
+/* Each chip is its own diagonal gradient rather than a flat fill, so the span
+   reads as a distinct object sitting on the line instead of a tint smeared
+   behind the text -- and so the three kinds stay visually distinct from each
+   other at a glance, not only by their (harder to read at 12px) colour. */
+.mask-pii {
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: linear-gradient(155deg, var(--mask-pii-from), var(--mask-pii-to));
+  box-shadow: inset 2px 0 0 var(--mask-pii-edge);
+  color: var(--mask-pii-text);
+}
+
+.mask-token {
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: linear-gradient(155deg, var(--mask-token-from), var(--mask-token-to));
+  box-shadow: inset 0 0 0 1px var(--mask-token-edge);
+  color: var(--mask-token-text);
+  font-weight: 700;
+}
+
+/* A span this model was measured as likely to miss, left as it was written.
+   Styled as a warning rather than an error: the model is not broken, its
+   published recall for that entity is simply below the display threshold. */
+.mask-missed {
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: linear-gradient(155deg, var(--mask-missed-from), var(--mask-missed-to));
+  box-shadow: inset 0 0 0 1px var(--mask-missed-edge);
+  color: var(--mask-missed-text);
+  font-weight: 700;
+}
+
+.mask-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 1px;
+  vertical-align: -2px;
+  background: var(--teal);
+  animation: mask-caret .7s steps(1) infinite;
+}
+
+.mask-note {
+  margin: 2px 0 0;
+  color: var(--ink-soft);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+@keyframes mask-open {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes mask-caret {
+  50% { opacity: 0; }
+}
+
+@media (max-width: 820px) {
+  .mask-side { grid-template-columns: 1fr; gap: 3px; }
+}
+
+/* ---------- arena gates opening ---------- */
+
+.gates-door {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Flush and straight, unlike the vault's chevron interlock -- a real gate
+   meets its twin down a plain vertical line. The ornament here is the crest
+   and the torchlight, not the joint. The two repeating gradients are coarse
+   masonry coursing (horizontal beds, vertical joints), at a scale meant to
+   read as stone from across a page rather than up close. */
+.gates-leaf {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 51%;
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, .07) 0 3px, transparent 3px 46px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, .05) 0 2px, transparent 2px 96px),
+    linear-gradient(160deg, #cdbb92, #a58f61 55%, #7c6741);
+  transition: transform .72s cubic-bezier(.62, .02, .28, 1);
+}
+
+.gates-leaf.left { left: 0; }
+.gates-leaf.right { right: 0; }
+
+.gates-door.open .gates-leaf.left { transform: translateX(-101%); }
+.gates-door.open .gates-leaf.right { transform: translateX(101%); }
+
+.gates-seam {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: linear-gradient(180deg,
+      transparent, var(--torch) 18%, #ffe1a8 50%, var(--torch) 82%, transparent);
+  box-shadow: 0 0 20px 3px rgba(242, 183, 92, .8);
+  transform: translateX(-50%);
+  animation: gates-charge .42s ease-out both;
+}
+
+.gates-door.open .gates-seam {
+  opacity: 0;
+  transition: opacity .3s ease .1s;
+}
+
+@keyframes gates-charge {
+  from { opacity: 0; transform: translateX(-50%) scaleY(.2); }
+  to { opacity: 1; transform: translateX(-50%) scaleY(1); }
+}
+
+/* The champion's own crest, borrowed rather than redrawn: whatever is true of
+   .laurel already (its draw-on, its reduced-motion handling) is true here for
+   free. Scaled up for the width of a full page rather than a podium card. */
+.gates-crest {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 68px;
+  margin: -34px 0 0 -60px;
+  transform: scale(1.7);
+  transform-origin: center;
+  /* Matched to .gates-leaf's own .72s below -- see the near-identical note on
+     .vault-ring in themes.css for why a centerpiece fading out on its own,
+     much shorter timeline reads as it freezing independent of the door. */
+  transition: opacity .5s ease, transform .68s cubic-bezier(.5, -.4, .3, 1);
+}
+
+.gates-door.open .gates-crest {
+  opacity: 0;
+  transform: scale(2.2);
+}
+
+/* Two torches flanking the crest, the same way .torch-pair flanks the
+   champion's card -- reusing `.torch-flame` for the flicker and glow, so only
+   placement is declared here. */
+.gates-flame {
+  position: absolute;
+  top: 50%;
+  width: 20px;
+  height: 25px;
+  margin-top: -30px;
+}
+
+.gates-flame-left { left: calc(50% - 96px); }
+.gates-flame-right { left: calc(50% + 76px); animation-delay: -1.15s; }
+
+.gates-door.open .gates-flame {
+  /* `.torch-flame` (shared with the champion card's own torches) puts an
+     `infinite` flicker animation on this same element's opacity. A CSS
+     animation on a property always wins over a transition on that same
+     property on the same element, so the opacity: 0 below was never
+     actually reachable -- the transition never got to run, and the torches
+     just kept flickering at full brightness for the door's whole 1.1s,
+     abandoned in the middle of the page once the leaves had already
+     finished parting. Overriding the animation here (higher specificity
+     than the bare `.torch-flame` rule) frees opacity for the transition to
+     actually animate. */
+  animation: none;
+  opacity: 0;
+  transition: opacity .5s ease;
+}
+
+/* ---------- desert mirage ---------- */
+
+/* `z-index: -1` rather than 0, and this is the load-bearing detail: nothing on
+   the page except the topbar is positioned, so an in-flow `main` paints in the
+   block phase — *before* any positioned element at z-index 0. At 0 the haze
+   would sit over the table's background and under its text. At -1 it paints
+   above the root background and below all content, which is where it belongs,
+   and no other rule has to change. */
+.mirage-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Horizontal bands rather than a full-screen wash: heat haze collects at a
+   horizon, and a band is also far cheaper to blur than a viewport. */
+.mirage-band {
+  position: absolute;
+  left: -10%;
+  width: 120%;
+  background: linear-gradient(180deg,
+      transparent, rgba(232, 220, 196, .5), rgba(232, 220, 196, .16), transparent);
+  filter: blur(14px);
+  will-change: transform;
+}
+
+.mirage-band.band-near {
+  top: 46vh;
+  height: 20vh;
+  opacity: .5;
+  animation: mirage-drift 19s ease-in-out infinite;
+}
+
+.mirage-band.band-far {
+  top: 74vh;
+  height: 15vh;
+  opacity: .34;
+  animation: mirage-drift 27s ease-in-out infinite reverse;
+}
+
+@keyframes mirage-drift {
+  0%, 100% { transform: translate3d(-2%, 0, 0) scaleY(1); }
+  50% { transform: translate3d(2%, -1.2vh, 0) scaleY(1.28); }
+}
+
+/* The pun only lands if something solid is affected too. Confined to the two
+   hero ornaments -- never text, never the table, where a moving baseline would
+   be a legibility bug rather than a joke. */
+.hero-art .trust-disc,
+.hero-art .data-panel {
+  animation: mirage-wobble 7s ease-in-out infinite;
+}
+
+.hero-art .data-panel {
+  animation-delay: -2.6s;
+}
+
+@keyframes mirage-wobble {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
+}
+
+/* ---------- reduced motion ---------- */
+
+/* styles.css already collapses every animation to .01ms, which is enough for
+   anything that ends where it started. These are the ones that do not: each
+   would otherwise be frozen at its opening frame, i.e. invisible or misplaced.
+   Same approach, and same reasoning, as the block in console.css. */
+@media (prefers-reduced-motion: reduce) {
+  .combatant,
+  .spotlight-sweep,
+  .duel-blades,
+  .duel-spark,
+  .row-duel-winner,
+  .row-duel-loser,
+  .laurel-stem,
+  .laurel-leaf,
+  .torch-flame,
+  .flame-inner,
+  .mask-preview,
+  .mask-caret,
+  .mirage-band,
+  .hero-art .trust-disc,
+  .hero-art .data-panel,
+  .gates-seam { animation: none; }
+
+  /* Restorations. The stem's dash offset would hide the wreath entirely and
+     the leaves would sit at a fifth of their size at the branch root; the
+     flame would keep whatever scale the keyframe opened on. */
+  .laurel-stem { stroke-dashoffset: 0; }
+  .laurel-leaf { opacity: .92; transform: none; }
+  .torch-flame { opacity: .95; transform: none; }
+  .flame-inner { opacity: .95; transform: none; }
+  .mask-preview { opacity: 1; transform: none; }
+  .mask-caret { display: none; }
+
+  /* The seam's dash offset would otherwise hide it at a flat scaleY(.2)
+     rather than its full height. Gates, vault door and starfall veil are not
+     listed here at all: each mounts only via its own JS gate (see useIntro in
+     introShared.js), which already prevents them existing under reduced
+     motion -- this block only has to cover what would be visible *if* one
+     were forced open regardless. */
+  .gates-seam { transform: translateX(-50%) scaleY(1); }
+
+  /* The combatant and the spotlight are both entrances with nothing to leave
+     behind -- their end state is "gone" -- so they are simply not drawn. */
+  .combatant,
+  .spotlight-sweep,
+  .duel-layer { display: none; }
+}
+
+/* ---------- theme scoping ---------- */
+
+/* The colosseum is one of three themes now (see themes.css), so the pieces
+   that are specific to it have to stop at its boundary. Written as a negation
+   on :root rather than as a positive rule on each selector above, so the
+   effects keep reading as the default the file describes and only the
+   exception lives here.
+
+   Display, not visibility or opacity: a combatant that is merely transparent
+   still animates every frame, and the mirage would still be compositing a
+   blurred layer behind a night sky that has its own. */
+:root:not([data-theme='colosseum']) .combatant,
+:root:not([data-theme='colosseum']) .laurel,
+:root:not([data-theme='colosseum']) .torch-pair,
+:root:not([data-theme='colosseum']) .mirage-layer { display: none; }
+
+/* The hero ornaments wobble because of the mirage. Without it there is no
+   heat, so there is no shimmer. */
+:root:not([data-theme='colosseum']) .hero-art .trust-disc,
+:root:not([data-theme='colosseum']) .hero-art .data-panel { animation: none; }

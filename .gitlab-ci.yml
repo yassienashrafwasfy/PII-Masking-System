@@ -1,0 +1,214 @@
+image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+
+# Two independent lanes, deliberately not one list.
+#
+# The gateway/model-service promotion and the arena are separate deployables
+# that share no code, no dependency set, no image content and no host. Driving
+# both from a single `changes:` anchor meant a stylesheet edit in
+# evaluation/leaderboard built the torch-based model-service image -- the job
+# that once ran the runner out of disk (see ci/container.yml) -- and a
+# teams/*/adapter.py edit rebuilt two arena images that cannot contain a byte
+# of it.
+#
+# Anything matching neither lane (docs, contracts, postman, platform/nifi)
+# still gets the merge-request build and validation jobs, which carry no
+# `changes:` filter at all.
+.platform_paths: &platform_paths
+  - .dockerignore
+  - .gitlab-ci.yml
+  - ci/**/*.yml
+  - pyproject.toml
+  - uv.lock
+  - platform/masking-gateway/**/*
+  - platform/model-service/**/*
+  - teams/**/*.py
+  # The model-service image bakes in each team's ONNX runtime artifacts --
+  # .dockerignore re-includes them explicitly. Without this line a weights-only
+  # change published no image and recorded no candidate, so the deployed image
+  # silently drifted from the repository.
+  - teams/*/onnx/**/*
+  # `deploy/**/*` minus deploy/mlflow-vps, which belongs to the arena lane.
+  # GitLab's `changes:` has no negation, and under File::FNM_PATHNAME a single
+  # `*` does not cross a `/`, so enumerating the three subtrees preflight_production
+  # actually scp's is the way to express the exclusion.
+  - deploy/*
+  - deploy/systemd/**/*
+  - deploy/sudoers/**/*
+
+.arena_paths: &arena_paths
+  - .gitlab-ci.yml
+  - ci/**/*.yml
+  - evaluation/leaderboard/**/*
+  - evaluation/leaderboard_api/**/*
+  - evaluation/config/**/*
+  - evaluation/requirements.txt
+  # Baked into the arena-api image via evaluation/leaderboard_api/Dockerfile's
+  # `COPY samples ./samples`, for the masking console's sample picker. Without
+  # this, a sample-only change matches neither lane, no pipeline runs, and the
+  # new files never reach the deployed container.
+  - evaluation/samples/**/*
+  - deploy/mlflow-vps/**/*
+  # Shared with the platform lane on purpose: both deploy paths scp this file
+  # onto their respective VPS (ci/deploy.yml), so a change to it must be able
+  # to reach either host.
+  - deploy/vps-common.sh
+
+.mr_only_rules:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - when: never
+
+.release_candidate_rules:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes: *platform_paths
+    - when: never
+
+# The arena images are consumed by deploy_arena_mlflow, which runs only on the
+# default branch. They must therefore also build there: a job whose `needs`
+# target is absent from the pipeline makes the whole configuration invalid,
+# which is why a main pipeline could not start the first time this was tried
+# with MR-only rules (see git history at commit 0417116).
+.arena_image_rules:
+  rules:
+    # On a merge request the image is built but never pushed. Nothing consumes
+    # it there -- the scans and both deploy jobs are default-branch only -- so
+    # pushing produced a registry tag per MR commit that no one ever pulled.
+    # Building still proves the Dockerfile works before merge, and
+    # `--export-cache` runs regardless of `push`, so the default-branch build
+    # after merge stays warm.
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes: *arena_paths
+      variables:
+        ARENA_IMAGE_PUSH: "false"
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"'
+      changes: *arena_paths
+      variables:
+        ARENA_IMAGE_PUSH: "true"
+    # The web arm carries no `changes:` on purpose: a manually started main
+    # pipeline is the escape hatch that builds and offers to deploy everything,
+    # whatever the last commit happened to touch.
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "web"'
+      variables:
+        ARENA_IMAGE_PUSH: "true"
+    - when: never
+
+# Scanning follows the artifact that actually ships. The arena images are only
+# pushed and deployed from the default branch, so scanning the merge-request
+# build meant downloading the Trivy database and scanning an image twice for
+# one change -- the slowest pair of jobs in an arena MR, for a throwaway
+# artifact. `deploy_arena_mlflow` needs only the publish jobs, never these.
+.arena_scan_rules:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"'
+      changes: *arena_paths
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "web"'
+    - when: never
+
+# The arena deploy pair, kept here rather than in ci/deploy.yml because the
+# *arena_paths anchor is defined in this file and YAML anchors do not cross
+# `include:` boundaries -- unlike `extends:`, which is how ci/deploy.yml picks
+# this up. Every arm must restate `when: manual`: once a job has `rules:`, the
+# matching rule's `when` governs and the job-level `when: manual` is ignored.
+.arena_deploy_rules:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"'
+      changes: *arena_paths
+      when: manual
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "web"'
+      when: manual
+    - when: never
+
+# Governs load_production_candidate and qa_arena_evaluation. The `changes:`
+# filter on the push arm is not an optimisation, it is required for
+# correctness: load_production_candidate downloads the candidate manifest with
+# `curl --fail`, so on a main push that recorded no candidate -- which is every
+# arena-only merge, now that the arena lane no longer publishes one -- it would
+# 404 and fail the pipeline. qa_arena_evaluation must share the rule rather
+# than keep its own, because it `needs:` load_production_candidate and a job
+# whose needs target is absent invalidates the whole configuration.
+.main_promotion_rules:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"'
+      changes: *platform_paths
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "web"'
+    - when: never
+
+# .main_promotion_rules for the two manual production jobs. They cannot simply
+# extend it: `rules:` overrides the job-level `when: manual`, so each arm has
+# to restate it. They cannot keep their own inline rules either -- both `need`
+# load_production_candidate, and the moment that job gained a `changes:` filter
+# an unfiltered copy here dangled the need on every arena-only main push and
+# made the configuration unloadable.
+.production_deploy_rules:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"'
+      changes: *platform_paths
+      when: manual
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "web"'
+      when: manual
+    - when: never
+
+# Tag pipelines carry no $CI_COMMIT_BRANCH, so they match none of the rules
+# above -- create_gitlab_release is the only job that runs in one.
+.tag_release_rules:
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/'
+    - when: never
+
+workflow:
+  rules:
+    # Do not spend VPS capacity on a duplicate push pipeline when an MR exists.
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == "push"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    # One rule per lane rather than one merged list: `changes:` takes a single
+    # list, and a main push is worth a pipeline if it touches either lane.
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"'
+      changes: *platform_paths
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"'
+      changes: *arena_paths
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/'
+    - when: never
+
+stages:
+  - build
+  - validate
+  - evaluate
+  - package
+  - security
+  - qa
+  - release
+  - arena
+  - deploy
+
+variables:
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTHONUNBUFFERED: "1"
+  GIT_LFS_SKIP_SMUDGE: "1"
+  GIT_DEPTH: "20"
+  UV_CACHE_DIR: "$CI_PROJECT_DIR/.cache/uv"
+  PRE_COMMIT_HOME: "$CI_PROJECT_DIR/.pre-commit-cache"
+
+default:
+  # Every job runs on the self-hosted Docker runner. Nothing overrides this
+  # any more: the manual full-corpus GPU job was the only exception and is
+  # gone.
+  tags: [vps-ci]
+  interruptible: true
+  timeout: 15m
+  retry:
+    max: 1
+    when: [runner_system_failure]
+
+include:
+  - local: ci/build.yml
+  - local: ci/validate.yml
+  - local: ci/ml.yml
+  - local: ci/container.yml
+  - local: ci/security.yml
+  - local: ci/qa.yml
+  - local: ci/release.yml
+  - local: ci/deploy.yml

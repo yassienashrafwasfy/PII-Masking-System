@@ -1,0 +1,166 @@
+# The arena (leaderboard + gated masking console), deployed on the MLflow VPS
+# behind its existing Traefik reverse proxy -- a different host from the NiFi
+# VPS that runs deploy/compose.yml, and reached publicly at
+# https://leaderboard.mlflow.me rather than over an SSH tunnel.
+#
+# This project never touches the existing mlflow-auth-gui compose project. It
+# only joins the external Docker network Traefik already watches
+# (MLFLOW_TRAEFIK_NETWORK) and lets Traefik's Docker-provider label discovery
+# do the rest, exactly the way mlflow.me itself is routed.
+#
+# Only arena-ui is reachable from Traefik. arena-api sits on an internal-only
+# network and is reached solely through arena-ui's own nginx proxy, the same
+# topology the local Compose file and the (superseded) NiFi-VPS design use.
+#
+# Two Traefik routers on the same Host(): a high-priority one matching the
+# masking-console API paths, gated by HTTP basic auth, and a low-priority
+# catch-all serving the public leaderboard and its read-only endpoints. This
+# is the only place that distinction can be enforced -- the leaderboard and
+# console are one single-page app sharing a browser-side hash route
+# (#/console), which the server never sees in the request path.
+services:
+  # Named leaderboard-api, not arena-api: evaluation/leaderboard/nginx.conf
+  # (baked into the arena-ui image and shared with the local dev compose file)
+  # proxy_passes to this exact hostname for Docker's embedded DNS to resolve.
+  leaderboard-api:
+    image: ${ARENA_API_IMAGE_REF:?ARENA_API_IMAGE_REF is required}
+    restart: unless-stopped
+    environment:
+      ARENA_S3_ENDPOINT_URL: ${ARENA_S3_ENDPOINT_URL:?ARENA_S3_ENDPOINT_URL is required}
+      ARENA_S3_ACCESS_KEY_ID: ${ARENA_S3_ACCESS_KEY_ID:?ARENA_S3_ACCESS_KEY_ID is required}
+      ARENA_S3_SECRET_ACCESS_KEY: ${ARENA_S3_SECRET_ACCESS_KEY:?ARENA_S3_SECRET_ACCESS_KEY is required}
+      ARENA_S3_REGION: ${ARENA_S3_REGION:-auto}
+      ARENA_RESULTS_BUCKET: ${ARENA_RESULTS_BUCKET:-data}
+      ARENA_RESULTS_PREFIX: ${ARENA_RESULTS_PREFIX:-results}
+      ARENA_RANKING_BASIS: ${ARENA_RANKING_BASIS:-overlapping}
+      # `-` and not `:-`: an empty value here means "consider every run mode",
+      # which is a real setting, and `:-` would silently replace it with
+      # "release". Only a genuinely unset variable should get the default.
+      ARENA_LEADERBOARD_MODE: ${ARENA_LEADERBOARD_MODE-release}
+      ARENA_LEADERBOARD_KEY: ${ARENA_LEADERBOARD_KEY:-}
+      # qa-automation names its published ranking after the document count and
+      # mode alone, so every run overwrites the last and R2 -- which has no
+      # object versioning -- loses the previous scores. The arena keeps its own
+      # content-addressed copy here, which is what lets the board show a trend
+      # and a real run count instead of a single point forever. Needs PutObject
+      # on this prefix; without it the archive logs and no-ops.
+      ARENA_HISTORY_PREFIX: ${ARENA_HISTORY_PREFIX:-results/history}
+      ARENA_ARCHIVE_RANKINGS: ${ARENA_ARCHIVE_RANKINGS:-true}
+      # Only consulted when the board cannot be read at all. The console
+      # normally takes its team from the leaderboard's own `champion`.
+      ARENA_CHAMPION_FALLBACK_TEAM: ${ARENA_CHAMPION_FALLBACK_TEAM:-berts}
+      ARENA_SOURCE_BUCKET: ${ARENA_SOURCE_BUCKET:-source}
+      ARENA_INCOMING_PREFIX: ${ARENA_INCOMING_PREFIX:-incoming}
+      ARENA_INCOMING_KEY_TEMPLATE: ${ARENA_INCOMING_KEY_TEMPLATE:-}
+      ARENA_MASKED_BUCKET: ${ARENA_MASKED_BUCKET:-destination}
+      ARENA_MASKED_PREFIX: ${ARENA_MASKED_PREFIX:-masked}
+      ARENA_MANIFEST_BUCKET: ${ARENA_MANIFEST_BUCKET:-}
+      ARENA_MANIFEST_PREFIX: ${ARENA_MANIFEST_PREFIX:-manifests}
+      # Every team the API will accept an upload for. This is not just UI
+      # dressing: runs.py validates the submitted team against this list, so
+      # a request naming any other team is rejected server-side too.
+      #
+      # All three, because the team console (#/teams) lets a visitor choose
+      # which model masks their document. The masking console (#/console) still
+      # offers exactly one -- but it resolves that one from the leaderboard's
+      # `champion` rather than from this list, so the top-ranked model takes
+      # over automatically instead of waiting for an operator to edit this file.
+      #
+      # A team listed here whose model service is not running, or which NiFi is
+      # not configured to route, produces a run that times out after
+      # ARENA_RUN_TIMEOUT_SECONDS. Keep this list matched to the teams that are
+      # actually live in the gateway's *_MODEL_URL settings.
+      ARENA_TEAMS: ${ARENA_TEAMS:-octo,synthify,berts}
+      ARENA_RUN_TIMEOUT_SECONDS: ${ARENA_RUN_TIMEOUT_SECONDS:-900}
+      ARENA_MAX_UPLOAD_BYTES: ${ARENA_MAX_UPLOAD_BYTES:-10485760}
+      # Off: the board now reads QA's real cross-team ranking document from
+      # the results prefix. Setting this true short-circuits that entirely
+      # and shows randomized preview data instead.
+      ARENA_MOCK_LEADERBOARD: ${ARENA_MOCK_LEADERBOARD:-false}
+      # Baked into the arena-api image (see evaluation/samples/), so the
+      # console's one-click picker works here without any host folder. Point
+      # this elsewhere to override, or set it empty to disable the picker.
+      ARENA_SAMPLE_DIRECTORY: ${ARENA_SAMPLE_DIRECTORY-/app/samples}
+      LEADERBOARD_ALLOWED_ORIGINS: https://${LEADERBOARD_DOMAIN:-leaderboard.mlflow.me}
+    networks: [arena_internal, arena_egress]
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8080/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+
+  arena-ui:
+    image: ${ARENA_UI_IMAGE_REF:?ARENA_UI_IMAGE_REF is required}
+    restart: unless-stopped
+    depends_on:
+      leaderboard-api:
+        condition: service_healthy
+    networks:
+      - mlflow_traefik
+      - arena_internal
+    labels:
+      - "traefik.enable=true"
+      # Required because this container is on more than one network; Traefik
+      # cannot otherwise tell which network's IP to route to.
+      - "traefik.docker.network=${MLFLOW_TRAEFIK_NETWORK:-mlflow-auth-gui_mlflow}"
+      # 8080: the UI image runs nginx as the unprivileged `nginx` user, which
+      # cannot bind a port below 1024 without CAP_NET_BIND_SERVICE. Must match
+      # `listen` in evaluation/leaderboard/nginx.conf.
+      - "traefik.http.services.leaderboard.loadbalancer.server.port=8080"
+
+      # One router serves the whole host. The masking console's API paths used
+      # to sit on a second, higher-priority router behind a basic-auth
+      # middleware; that gate is removed. It fired a browser credential prompt
+      # the moment anyone uploaded a document, which was never the intended
+      # experience, and the apr1 hash behind it had to survive both Compose's
+      # .env parser and bash's `$$` expansion intact to authenticate at all.
+      #
+      # What actually constrains the console is in the API, not the proxy: it
+      # accepts only runs.ALLOWED_CONTENT_TYPES, caps uploads at
+      # ARENA_MAX_UPLOAD_BYTES, and writes only under the prefixes of the teams
+      # in ARENA_TEAMS. The page itself warns that uploads land in the shared
+      # source bucket.
+
+      # The leaderboard UI and every API endpoint behind it.
+      - "traefik.http.routers.leaderboard.rule=Host(`${LEADERBOARD_DOMAIN:-leaderboard.mlflow.me}`)"
+      - "traefik.http.routers.leaderboard.entrypoints=${MLFLOW_TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.leaderboard.tls=true"
+      - "traefik.http.routers.leaderboard.tls.certresolver=${MLFLOW_TRAEFIK_CERTRESOLVER:-letsEncrypt}"
+      - "traefik.http.routers.leaderboard.priority=1"
+      - "traefik.http.routers.leaderboard.service=leaderboard"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+      # uid/gid=101 is the "nginx" user the container now runs as, so it owns
+      # this tmpfs and can create its own temp directories in it. Both halves
+      # matter: Docker mounts a tmpfs 0755 once uid/gid are given, so a root
+      # process would need CAP_DAC_OVERRIDE to write here, and cap_drop below
+      # removes it. See evaluation/leaderboard/Dockerfile for the full reason.
+      - /var/cache/nginx:size=32m,uid=101,gid=101
+      - /var/run:size=8m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+
+networks:
+  # Traefik's own network. Declared external: this compose project must never
+  # create or own it -- it belongs to the existing mlflow-auth-gui project.
+  mlflow_traefik:
+    external: true
+    name: ${MLFLOW_TRAEFIK_NETWORK:-mlflow-auth-gui_mlflow}
+  arena_internal:
+    internal: true
+  # Outbound-only, so arena-api can reach R2. Nothing is published here and
+  # no port is mapped; Traefik never talks to this network at all.
+  arena_egress:

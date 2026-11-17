@@ -1,0 +1,7 @@
+policy_version: "1.0"
+eligibility:
+  critical_entity_recall_min: 0.98
+  document_success_rate_min: 1.0
+  api_error_rate_max: 0.01
+  contract_tests_required: true
+  security_checks_required: true

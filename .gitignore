@@ -1,0 +1,63 @@
+.env
+.env.*
+!.env.example
+.agents
+
+# Anchored: an unanchored "models/" also matched the gateway's
+# src/masking_engine/src/models/ package and kept it out of git.
+/models/
+# Nothing under teams/*/model/ is tracked any more: the served artifact is
+# the exported graph in teams/*/onnx/, and a source checkpoint fetched here to
+# retrain or re-export from must not reach a commit.
+teams/*/model/
+teams/*/data/
+teams/*/training/artifacts/
+teams/*/training/cache/
+teams/*/training/outputs/
+artifacts/
+# The OCR model is platform-owned and shipped, not a training output.
+# The blanket rule above is for `teams/*/training/artifacts/`; without
+# this the two ONNX graphs and the charset are silently left untracked
+# and CI's `git lfs pull --include=.../ocr/artifacts/**` fetches nothing.
+!platform/masking-gateway/src/masking_engine/src/models/ocr/artifacts/
+mlruns/
+data/raw/
+data/private/
+*.db
+*.sqlite
+*.pem
+*.key
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+.venv/
+.cache/
+.mypy_cache/
+.ruff_cache/
+.pip-cache/
+.pre-commit-cache/
+
+# Graphify tool-local cache and state: regenerates every run, churns on
+# every rebuild, and can embed local machine paths. The committed
+# deliverables are graph.html, graph.json, manifest.json, GRAPH_REPORT.md.
+graphify-out/cache/
+graphify-out/cost.json
+graphify-out/.graphify_*
+# `graphify cluster-only` snapshots the previous deliverables into a dated
+# directory before it rewrites them. Committing one would trip the
+# graphify-hygiene hook, which allows exactly the four deliverables.
+graphify-out/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
+
+# Runtime state, artifacts, weights, and non-synthetic data must stay local.
+mlartifacts/
+evaluation/output/
+platform/nifi/runtime-state/
+platform/nifi/conf/
+platform/nifi/content_repository/
+platform/nifi/database_repository/
+platform/nifi/flowfile_repository/
+platform/nifi/provenance_repository/
+*Zone*
+.gitlab-ci-local
+build-artifacts
+mutants/

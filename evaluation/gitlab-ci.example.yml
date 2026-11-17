@@ -1,0 +1,18 @@
+evaluation:frontend:
+  image: node:24-alpine
+  stage: test
+  script:
+    - cd evaluation/leaderboard
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - evaluation/leaderboard/dist/
+
+evaluation:python:
+  image: python:3.13-slim
+  stage: test
+  script:
+    - cd evaluation
+    - pip install -r requirements.txt
+    - PYTHONPATH=. pytest -q

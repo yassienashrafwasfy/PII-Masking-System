@@ -1,0 +1,15 @@
+build_preflight:
+  extends: .mr_only_rules
+  stage: build
+  cache:
+    key:
+      files: [uv.lock]
+    paths: [.cache/uv/]
+  script:
+    - uv lock --check
+    - python -m compileall -q scripts evaluation platform teams tests
+    - mkdir -p build-artifacts
+    - printf 'commit=%s\nbranch=%s\npipeline=%s\n' "$CI_COMMIT_SHA" "$CI_COMMIT_REF_NAME" "$CI_PIPELINE_ID" > build-artifacts/manifest.txt
+  artifacts:
+    paths: [build-artifacts/manifest.txt]
+    expire_in: 1 week

@@ -1,0 +1,10 @@
+{
+  "format": "onnx",
+  "locale": "fr_FR",
+  "model_sha256": "2b1af7af5f455b5f623b13d0669c8085e7dd0aa20dd0156bd6d28e4cee4d12c4",
+  "opset": 18,
+  "precision": "int8",
+  "runtime": "onnxruntime-cpu",
+  "source_model": "farahelmashad/pii-camembert-bio-fr-int8-onnx",
+  "source_revision": "162c057100bb174252303bb350df4c47296ea5bd"
+}

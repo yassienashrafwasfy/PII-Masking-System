@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "purpose": "English healthcare-organisation pseudonymisation pool",
+  "sources": [
+    {
+      "name": "NHS ODS (Organisation Data Service)",
+      "source_url": "https://directory.spineservices.nhs.uk/ORD/2-0-0/organisations?Status=Active&Limit=1000",
+      "source_dataset": "https://digital.nhs.uk/services/organisation-data-service",
+      "source_sha256": "0f56c4d2fb73d7bf94b29a7c89a6902aad5f4a5715fed828232012a6931a6ed0",
+      "included_name_count": 28937,
+      "licence_status": "Open Government Licence v3.0 (NHS England, Organisation Data Service)"
+    },
+    {
+      "name": "CMS provider-data facility listings",
+      "source_url": "https://data.cms.gov/provider-data/api/1/metastore/schemas/dataset/items",
+      "source_dataset": "https://data.cms.gov/provider-data/",
+      "source_datasets": [
+        "Hospital General Information",
+        "Hospice - General Information",
+        "Dialysis Facility - Listing by Facility",
+        "Ambulatory Surgical Center Quality Measures - Facility"
+      ],
+      "source_sha256": "64c88ba520a8ac321b3aea5e60c8c9eb7d645eb8ad3e184bb554b2a4dbe585a8",
+      "included_name_count": 21063,
+      "licence_status": "U.S. Government work, public domain (CMS provider data)"
+    }
+  ],
+  "source_snapshot_date": "2026-09-03",
+  "included_name_count": 50000,
+  "selection": "active organisation and facility names, leading register-code strip, case-insensitive deduplication across both registers, unsafe-character exclusion, register-artefact exclusion (mojibake, administrative notes, placeholders, bare acronyms, closed-facility markers), English person-name exclusion including title+name, initials+surname, partnership forms and a given name in any position, deterministic SHA-256 sample capped at half the pool per register",
+  "generated_at": "2026-09-03T10:29:08.185264+00:00"
+}

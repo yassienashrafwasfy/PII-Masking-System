@@ -1,0 +1,17 @@
+{
+  "component": "det",
+  "format": "onnx",
+  "model_sha256": "049d5107f028a88efb9c96857ab72af847f0be7aeb413285669a84cf00b8f973",
+  "opset": 19,
+  "postprocess": {
+    "box_thresh": 0.45,
+    "max_candidates": 3000,
+    "name": "DBPostProcess",
+    "thresh": 0.2,
+    "unclip_ratio": 1.4
+  },
+  "precision": "float32",
+  "runtime": "onnxruntime-cpu",
+  "source_model": "PP-OCRv6_small_det",
+  "source_model_sha256": "bfb7c1e59f0faa6b540ebdca93aea3f4b1f2477805b389fbee117820d68fe9f5"
+}

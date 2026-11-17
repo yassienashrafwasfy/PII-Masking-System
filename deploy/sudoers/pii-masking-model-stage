@@ -1,0 +1,8 @@
+Cmnd_Alias PII_MASKING_MODEL_STAGE = @MODEL_STAGE_HELPER@ status, \
+    @MODEL_STAGE_HELPER@ plan octo, \
+    @MODEL_STAGE_HELPER@ plan synthify, \
+    @MODEL_STAGE_HELPER@ plan berts, \
+    @MODEL_STAGE_HELPER@ stage octo, \
+    @MODEL_STAGE_HELPER@ stage synthify, \
+    @MODEL_STAGE_HELPER@ stage berts
+@DEPLOY_USER@ ALL=(root) NOPASSWD: PII_MASKING_MODEL_STAGE

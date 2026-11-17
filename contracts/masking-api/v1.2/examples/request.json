@@ -1,0 +1,1 @@
+{"method":"POST","path":"/v1/mask","headers":{"X-Request-ID":"request-123","X-Team-ID":"octo","X-Model-Format":"onnx","X-Source-Object-Key":"incoming/octo/request-123/synthetic.txt","Content-Type":"text/plain"},"body":"SYNTHETIC_CONTENT_ONLY"}

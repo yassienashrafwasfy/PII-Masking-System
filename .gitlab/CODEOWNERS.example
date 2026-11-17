@@ -1,0 +1,7 @@
+# Copy to .gitlab/CODEOWNERS and replace placeholders with GitLab groups or usernames.
+/contracts/ @mlops-owners @qa-owners
+/platform/ @mlops-owners
+/evaluation/ @mlops-owners @qa-owners
+/teams/octo/ @octo-owners
+/teams/synthify/ @synthify-owners
+/teams/team-3/ @team-3-owners

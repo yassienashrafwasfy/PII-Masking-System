@@ -1,0 +1,217 @@
+{
+  "info": {
+    "_postman_id": "b7f18382-f1fd-473c-a069-9587ee95a7c2",
+    "name": "PII Masking Demo",
+    "description": "Local Compose requests for the public masking gateway. Set the collection's base_url and service_token variables before sending authenticated requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "base_url", "value": "http://localhost:8080"},
+    {"key": "service_token", "value": ""},
+    {"key": "model_format", "value": "onnx"},
+    {"key": "pdf_file", "value": "Nova_samples_filled/Nova_sample_4.pdf"}
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {"method": "GET", "url": "{{base_url}}/health"},
+      "event": [{"listen": "test", "script": {"exec": [
+        "pm.test('gateway is up', () => pm.response.to.have.status(200));"
+      ]}}]
+    },
+    {
+      "name": "Octo Ready",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "X-Team-ID", "value": "octo"}, {"key": "X-Model-Format", "value": "{{model_format}}"}],
+        "url": "{{base_url}}/ready"
+      },
+      "event": [{"listen": "test", "script": {"exec": [
+        "pm.test('Octo is ready', () => pm.response.to.have.status(200));",
+        "pm.test('model loaded', () => pm.expect(pm.response.json().model_loaded).to.eql(true));"
+      ]}}]
+    },
+    {
+      "name": "Synthify Ready",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "X-Team-ID", "value": "synthify"}, {"key": "X-Model-Format", "value": "{{model_format}}"}],
+        "url": "{{base_url}}/ready"
+      },
+      "event": [{"listen": "test", "script": {"exec": [
+        "pm.test('Synthify is ready', () => pm.response.to.have.status(200));",
+        "pm.test('model loaded', () => pm.expect(pm.response.json().model_loaded).to.eql(true));"
+      ]}}]
+    },
+    {
+      "name": "Octo Version",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "X-Team-ID", "value": "octo"}, {"key": "X-Model-Format", "value": "{{model_format}}"}],
+        "url": "{{base_url}}/version"
+      },
+      "event": [{"listen": "test", "script": {"exec": [
+        "pm.test('Octo version is available', () => pm.response.to.have.status(200));",
+        "pm.test('model identity is present', () => pm.expect(pm.response.json().model_name).to.eql('octo-pii-masker'));"
+      ]}}]
+    },
+    {
+      "name": "Synthify Version",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "X-Team-ID", "value": "synthify"}, {"key": "X-Model-Format", "value": "{{model_format}}"}],
+        "url": "{{base_url}}/version"
+      },
+      "event": [{"listen": "test", "script": {"exec": [
+        "pm.test('Synthify version is available', () => pm.response.to.have.status(200));",
+        "pm.test('model identity is present', () => pm.expect(pm.response.json().model_name).to.eql('synthify-gliner-belgian-pii-ner'));"
+      ]}}]
+    },
+    {
+      "name": "Mask Text - Octo",
+      "request": {
+        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{service_token}}", "type": "string"}]},
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "text/plain"},
+          {"key": "Accept", "value": "text/plain"},
+          {"key": "X-Request-ID", "value": "postman-octo-001"},
+          {"key": "Idempotency-Key", "value": "postman-octo-001"},
+          {"key": "X-Team-ID", "value": "octo"},
+          {"key": "X-Model-Format", "value": "{{model_format}}"},
+          {"key": "X-Source-ETag", "value": "postman-demo-etag"},
+          {"key": "X-Source-Object-Key", "value": "incoming/octo/postman-octo-001/sample.txt"}
+        ],
+        "body": {"mode": "raw", "raw": "Contact Alice Example at alice@example.org.", "options": {"raw": {"language": "text"}}},
+        "url": "{{base_url}}/v1/mask"
+      },
+      "event": [{"listen": "test", "script": {"exec": [
+        "pm.test('Octo masks text', () => pm.response.to.have.status(200));",
+        "pm.test('Octo model handled the request', () => pm.expect(pm.response.headers.get('X-Model-Name')).to.eql('octo-pii-masker'));",
+        "pm.test('source email is absent', () => pm.expect(pm.response.text()).not.to.include('alice@example.org'));"
+      ]}}]
+    },
+    {
+      "name": "Mask Text - Synthify",
+      "request": {
+        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{service_token}}", "type": "string"}]},
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "text/plain"},
+          {"key": "Accept", "value": "text/plain"},
+          {"key": "X-Request-ID", "value": "postman-synthify-001"},
+          {"key": "Idempotency-Key", "value": "postman-synthify-001"},
+          {"key": "X-Team-ID", "value": "synthify"},
+          {"key": "X-Model-Format", "value": "{{model_format}}"},
+          {"key": "X-Source-ETag", "value": "postman-demo-etag"},
+          {"key": "X-Source-Object-Key", "value": "incoming/synthify/postman-synthify-001/sample.txt"}
+        ],
+        "body": {"mode": "raw", "raw": "Contact Alice Example at alice@example.org.", "options": {"raw": {"language": "text"}}},
+        "url": "{{base_url}}/v1/mask"
+      },
+      "event": [{"listen": "test", "script": {"exec": [
+        "pm.test('Synthify masks text', () => pm.response.to.have.status(200));",
+        "pm.test('Synthify model handled the request', () => pm.expect(pm.response.headers.get('X-Model-Name')).to.eql('synthify-gliner-belgian-pii-ner'));",
+        "pm.test('source email is absent', () => pm.expect(pm.response.text()).not.to.include('alice@example.org'));"
+      ]}}]
+    },
+    {
+      "name": "Mask PDF - Octo",
+      "request": {
+        "description": "Send the repository PDF fixture. If Postman cannot resolve the relative path, select Nova_samples_filled/Nova_sample_4.pdf in Body > file.",
+        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{service_token}}", "type": "string"}]},
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/pdf"},
+          {"key": "Accept", "value": "application/pdf"},
+          {"key": "X-Request-ID", "value": "postman-octo-pdf-001"},
+          {"key": "Idempotency-Key", "value": "postman-octo-pdf-001"},
+          {"key": "X-Team-ID", "value": "octo"},
+          {"key": "X-Model-Format", "value": "{{model_format}}"},
+          {"key": "X-Source-ETag", "value": "postman-demo-etag"},
+          {"key": "X-Source-Object-Key", "value": "incoming/octo/postman-octo-pdf-001/sample.pdf"}
+        ],
+        "body": {"mode": "file", "file": {"src": "{{pdf_file}}"}},
+        "url": "{{base_url}}/v1/mask"
+      },
+      "event": [{"listen": "test", "script": {"exec": [
+        "pm.test('Octo masks a PDF', () => pm.response.to.have.status(200));",
+        "pm.test('response is a PDF', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf'));",
+        "pm.test('Octo model handled the request', () => pm.expect(pm.response.headers.get('X-Model-Name')).to.eql('octo-pii-masker'));"
+      ]}}]
+    },
+    {
+      "name": "Mask PDF - Synthify",
+      "request": {
+        "description": "Send the repository PDF fixture. If Postman cannot resolve the relative path, select Nova_samples_filled/Nova_sample_4.pdf in Body > file.",
+        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{service_token}}", "type": "string"}]},
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/pdf"},
+          {"key": "Accept", "value": "application/pdf"},
+          {"key": "X-Request-ID", "value": "postman-synthify-pdf-001"},
+          {"key": "Idempotency-Key", "value": "postman-synthify-pdf-001"},
+          {"key": "X-Team-ID", "value": "synthify"},
+          {"key": "X-Model-Format", "value": "{{model_format}}"},
+          {"key": "X-Source-ETag", "value": "postman-demo-etag"},
+          {"key": "X-Source-Object-Key", "value": "incoming/synthify/postman-synthify-pdf-001/sample.pdf"}
+        ],
+        "body": {"mode": "file", "file": {"src": "{{pdf_file}}"}},
+        "url": "{{base_url}}/v1/mask"
+      },
+      "event": [{"listen": "test", "script": {"exec": [
+        "pm.test('Synthify masks a PDF', () => pm.response.to.have.status(200));",
+        "pm.test('response is a PDF', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf'));",
+        "pm.test('Synthify model handled the request', () => pm.expect(pm.response.headers.get('X-Model-Name')).to.eql('synthify-gliner-belgian-pii-ner'));"
+      ]}}]
+    },
+    {
+      "name": "Mask JSON - Octo",
+      "request": {
+        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{service_token}}", "type": "string"}]},
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"},
+          {"key": "Accept", "value": "application/json"},
+          {"key": "X-Request-ID", "value": "postman-octo-json-001"},
+          {"key": "Idempotency-Key", "value": "postman-octo-json-001"},
+          {"key": "X-Team-ID", "value": "octo"},
+          {"key": "X-Model-Format", "value": "{{model_format}}"},
+          {"key": "X-Source-ETag", "value": "postman-demo-etag"},
+          {"key": "X-Source-Object-Key", "value": "incoming/octo/postman-octo-json-001/sample.json"}
+        ],
+        "body": {"mode": "raw", "raw": "{\"contact\": \"alice@example.org\"}", "options": {"raw": {"language": "json"}}},
+        "url": "{{base_url}}/v1/mask"
+      },
+      "event": [{"listen": "test", "script": {"exec": [
+        "pm.test('Octo masks JSON', () => pm.response.to.have.status(200));",
+        "pm.test('response remains JSON', () => pm.response.json());",
+        "pm.test('source email is absent', () => pm.expect(pm.response.text()).not.to.include('alice@example.org'));"
+      ]}}]
+    },
+    {
+      "name": "Mask Text - Berts",
+      "request": {
+        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{service_token}}", "type": "string"}]},
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "text/plain"},
+          {"key": "Accept", "value": "text/plain"},
+          {"key": "X-Request-ID", "value": "postman-berts-001"},
+          {"key": "Idempotency-Key", "value": "postman-berts-001"},
+          {"key": "X-Team-ID", "value": "berts"},
+          {"key": "X-Model-Format", "value": "onnx"},
+          {"key": "X-Source-ETag", "value": "postman-demo-etag"},
+          {"key": "X-Source-Object-Key", "value": "incoming/berts/postman-berts-001/sample.txt"}
+        ],
+        "body": {"mode": "raw", "raw": "Contact Alice Example at alice@example.org.", "options": {"raw": {"language": "text"}}},
+        "url": "{{base_url}}/v1/mask"
+      },
+      "event": [{"listen": "test", "script": {"exec": [
+        "pm.test('Berts masks text', () => pm.response.to.have.status(200));",
+        "pm.test('Berts used ONNX', () => pm.expect(pm.response.headers.get('X-Model-Format')).to.eql('onnx'));",
+        "pm.test('source email is absent', () => pm.expect(pm.response.text()).not.to.include('alice@example.org'));"
+      ]}}]
+    }
+  ]
+}

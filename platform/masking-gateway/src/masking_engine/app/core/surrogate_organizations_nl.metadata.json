@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "purpose": "Dutch organisation-name pseudonymisation pool",
+  "source_url": "https://mirror.openstreetmap.nl/openkvk/kvk-btw-handelsnamen.csv.gz",
+  "source_snapshot_date": "2021-12-24",
+  "source_sha256": "458bbce356754f13d9c02d8df7dad129d9008c73a03111370de587e26e212fc6",
+  "included_name_count": 47895,
+  "selection": "case-insensitive deduplication, unsafe-character and obvious-person-name exclusion, deterministic SHA-256 sample; personal names (including initials+surname), register artefacts (mojibake, administrative notes, placeholders, bare acronyms) and non-Latin spellings removed",
+  "licence_status": "The historical source archive did not expose a licence statement. Review source terms before redistributing this derived pool outside this deployment.",
+  "generated_at": "2026-08-18T12:11:06.779835+00:00"
+}

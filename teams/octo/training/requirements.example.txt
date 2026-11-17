@@ -1,0 +1,9 @@
+accelerate>=1.2,<2
+datasets>=3,<5
+filelock>=3,<4
+numpy>=1.26
+pandas>=2,<3
+peft==0.18.0
+pyarrow>=16
+torch>=2.6,<3
+transformers>=5.3.0,<6

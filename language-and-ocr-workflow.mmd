@@ -1,0 +1,150 @@
+---
+title: How a document gets masked — language choice and the OCR fallback
+---
+flowchart TB
+    %% Three questions this answers:
+    %%   1. Where do Dutch, French and English pseudonyms come from?
+    %%   2. Which model reads the document, now that Berts has one per language?
+    %%   3. When does OCR run, and when does it not?
+    %% Everything between them (reading order, box drawing) is left out on
+    %% purpose — see the micro architecture_*.mmd files for that.
+
+    Start(["A file arrives<br/>PDF, plain text, CSV or JSON"]) --> IsPdf{"Is it a PDF?"}
+    IsPdf -->|"no"| PlainText["Read the text straight from the file"]
+    IsPdf -->|"yes"| Pages
+
+    subgraph Pages["Reading a PDF — each page decided on its own"]
+        direction TB
+        HasChars{"Does this page have<br/>any real characters in it?<br/>(spaces alone don't count)"}
+
+        HasChars -->|"yes — it has real text"| UseLayer["Use the page's own text"]
+        UseLayer --> AlsoImage{"Does it also carry<br/>a picture?"}
+        AlsoImage -->|"yes"| Refuse["Refuse the whole document.<br/>Words inside a picture can't be<br/>searched, and half-masked is worse<br/>than not masked."]
+        AlsoImage -->|"no"| PageDone(["Page read"])
+
+        HasChars -->|"no — the page is a picture of text"| Ocr["OCR FALLBACK<br/>read the page with PP-OCRv6"]
+        Ocr --> Broke{"Did the OCR engine<br/>itself fail?"}
+        Broke -->|"yes"| Fault["Server error (500).<br/>Our fault, not the file's —<br/>so the caller can retry."]
+        Broke -->|"no"| ReadOk{"Did OCR come back<br/>with any words?"}
+        ReadOk -->|"no"| Refuse
+        ReadOk -->|"yes"| WriteBack["Put the words back into the PDF<br/>as an invisible text layer, so the rest<br/>of the pipeline treats it like a normal PDF"]
+        WriteBack --> PageDone
+    end
+
+    OcrOff["If OCR is switched off (PDF_OCR=off)<br/>the fallback branch doesn't exist:<br/>any picture refuses the document."]
+    OcrOff -.-> Ocr
+
+    PlainText --> Lang
+    PageDone --> Lang
+
+    subgraph Lang["Which language is this document in?"]
+        direction TB
+        Override{"Did the caller send<br/>X-Document-Locale?"}
+        UseGiven(["Use the locale they asked for,<br/>once it is checked<br/>against the known list"])
+        Sample["Look at the first 2000 characters<br/>of the whole document"]
+        Enough{"At least 40 letters<br/>to judge by?"}
+        Score["Score it as Dutch, French or English<br/>(lingua, pinned version)"]
+        Sure{"Is the winner at least<br/>70% sure?"}
+        Which{"Which one won?"}
+        NL(["Dutch → nl_BE"])
+        FR(["French → fr_FR"])
+        EN(["English → en"])
+        Fallback(["Too little to judge<br/>→ fall back to nl_BE"])
+
+        Override -->|"yes"| UseGiven
+        Override -->|"no"| Sample
+        Sample --> Enough
+        Enough -->|"no"| Fallback
+        Enough -->|"yes"| Score --> Sure
+        Sure -->|"no"| Fallback
+        Sure -->|"yes"| Which
+        Which -->|"Dutch"| NL
+        Which -->|"French"| FR
+        Which -->|"English"| EN
+    end
+
+    OneVerdict["One verdict for the whole document, decided once, before<br/>anything reads it. It now settles two things that used to be<br/>settled separately: which model reads the document, and<br/>which language the pseudonyms are written in. A page is<br/>never judged on its own — a short page carries no language<br/>signal, and a document that switched model halfway would<br/>mask its second half by different rules than its first."]
+    OneVerdict -.-> Lang
+
+    NL --> Find
+    FR --> Find
+    EN --> Find
+    UseGiven --> Find
+    Fallback --> Find
+
+    subgraph Find["Finding the values to mask"]
+        direction TB
+        Routing{"Is per-language routing on?<br/>BERTS_LANGUAGE_ROUTING"}
+        Rollback["The way back. Off sends every document to the<br/>Dutch model — what this service did before the<br/>other two existed. A checkpoint that masks badly<br/>is backed out by restarting one service, without<br/>waiting for a release to remove it."]
+        Pick{"Which language<br/>did we settle on?"}
+        MNL["Dutch model<br/>MedRoBERTa int8"]
+        MEN["English model<br/>BERT i2b2 int8"]
+        MFR["French model<br/>CamemBERT-bio int8"]
+        Loaded["Only the language actually seen is loaded,<br/>and an idle one is dropped again after<br/>MODEL_IDLE_TIMEOUT_SECONDS — three<br/>checkpoints on disk, rarely three in memory."]
+        Model(["The model's guesses<br/>NAME · DATE · ADDRESS · AGE · PHONE · ORGANIZATION"])
+        Rules["The rules (regex) read the text"]
+        Shared["Same in every language:<br/>INSZ · RIZIV · BTW · IBAN · email · URL<br/>— a checksum does not change with the wording"]
+        Words["Language-bound word lists only:<br/>nl 'januari' · 'op' · 'jaar'<br/>fr 'janvier' · 'le' · 'ans'<br/>en 'january' · 'on' · 'years old'"]
+        Owned{"Is this a value with a checksum<br/>or a fixed shape?<br/>NIR, RPPS, RIZIV, INSZ, BTW, email, URL,<br/>SSN, NPI, NHS number, GMC"}
+        Dropped["Drop the model's guess — the rule<br/>already gives a certain answer"]
+        Keep["Keep it"]
+        Merged(["One list, overlaps joined"])
+
+        Routing -->|"off"| MNL
+        Routing -->|"on"| Pick
+        Rollback -.-> Routing
+        Pick -->|"nl_BE"| MNL
+        Pick -->|"en"| MEN
+        Pick -->|"fr_FR"| MFR
+        MNL --> Model
+        MEN --> Model
+        MFR --> Model
+        Loaded -.-> Model
+        Model --> Owned
+        Owned -->|"yes"| Dropped
+        Owned -->|"no"| Keep
+        Routing --> Rules
+        Shared -.-> Rules
+        Words -.-> Rules
+        Rules --> Keep
+        Keep --> Merged
+    end
+
+    ThreeModels["All three read the same six kinds of value and were<br/>quantized the same way, so nothing downstream has to know<br/>which one ran. The masked file still says: X-Model-Name<br/>and the model= folder it is written to name the checkpoint."]
+    ThreeModels -.-> Find
+
+    NL --> Replace
+    FR --> Replace
+    EN --> Replace
+    UseGiven --> Replace
+    Fallback --> Replace
+    Merged --> Replace
+
+    Replace["Swap each value for a pseudonym in that language.<br/>The same value always becomes the same pseudonym,<br/>so masking the same file twice gives the same result."]
+
+    LocaleNote["The locale decides the name and address style, the<br/>month names, the gender words, the ending on a masked<br/>web address, and which list of organisation names to<br/>draw from. English carries a medical list only — a<br/>request for the general list falls back to Faker."]
+    LocaleNote -.-> Replace
+
+    DateNote["A numeric date is read day-first; if that can't make a<br/>real date, month-first is tried, so 02-17-2026 keeps<br/>its shape whichever way the writer meant it. A written<br/>date is read either way round too — 17 February 2026<br/>and February 17, 2026 both come back in their own shape."]
+    DateNote -.-> Replace
+
+    Replace --> Origin{"Where did this value<br/>come from?"}
+    Origin -->|"the page's own text"| CleanText["Delete the text.<br/>Leave pictures untouched."]
+    Origin -->|"OCR"| CleanBoth["Delete the text <b>and</b> erase the pixels.<br/>Covering them would leave the original<br/>recoverable with any PDF tool."]
+
+    CleanText --> Draw
+    CleanBoth --> Draw
+    Draw["Draw the pseudonym — or a labelled box —<br/>back in the same spot"]
+    Draw --> Out(["Masked file out, same type it came in"])
+
+    classDef stop fill:#fde2e2,stroke:#c23b3b,color:#5a1414
+    classDef ocr fill:#e4efff,stroke:#3b6cc2,color:#12305e
+    classDef pick fill:#e6f6ea,stroke:#3b9a55,color:#12401f
+    classDef model fill:#efe6fb,stroke:#7a4bc2,color:#2f1257
+    classDef note fill:#fdf6e3,stroke:#c9a227,color:#5a4708,font-style:italic
+
+    class Refuse,Fault stop
+    class Ocr,WriteBack,CleanBoth ocr
+    class NL,FR,EN,UseGiven,Fallback,Out pick
+    class MNL,MEN,MFR,Model model
+    class OcrOff,LocaleNote,DateNote,OneVerdict,ThreeModels,Shared,Words,Loaded,Rollback note

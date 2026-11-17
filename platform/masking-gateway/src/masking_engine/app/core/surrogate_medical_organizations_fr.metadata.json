@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "purpose": "French healthcare-organisation pseudonymisation pool",
+  "source_url": "https://static.data.gouv.fr/resources/finess-structures-1/20260901-021627/finess-structures-mensuel-202608.json.gz",
+  "source_dataset": "https://www.data.gouv.fr/datasets/finess-structures-1",
+  "source_snapshot_date": "2026-08",
+  "source_sha256": "86b73d3c4a0fd491e8d837a27a665c94e16d39e6a6a02652283184b7ae4d63ac",
+  "included_name_count": 50000,
+  "selection": "nomEgeLong/nomEgeCourt, case-insensitive deduplication, unsafe-character exclusion, uppercase-aware person-name exclusion, personal-name exclusion including initials+surname, register-artefact exclusion (mojibake, administrative notes, placeholders, bare acronyms, non-Latin spellings), deterministic SHA-256 sample",
+  "licence_status": "Licence Ouverte / Open Licence v2.0 (Etalab)",
+  "generated_at": "2026-09-01T16:03:25.940518+00:00"
+}

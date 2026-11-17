@@ -1,0 +1,23 @@
+version: "1.0"
+entities:
+  - id: person_name
+    label: Person name
+    critical: false
+  - id: email
+    label: Email address
+    critical: false
+  - id: phone
+    label: Phone number
+    critical: true
+  - id: national_id
+    label: National ID
+    critical: true
+  - id: patient_id
+    label: Patient ID
+    critical: true
+  - id: date_of_birth
+    label: Date of birth
+    critical: true
+  - id: address
+    label: Address
+    critical: false

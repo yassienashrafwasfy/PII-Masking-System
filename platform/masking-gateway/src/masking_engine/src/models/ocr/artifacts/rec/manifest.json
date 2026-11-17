@@ -1,0 +1,15 @@
+{
+  "charset_entries": 18708,
+  "charset_has_appended_space": true,
+  "charset_sha256": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d",
+  "component": "rec",
+  "format": "onnx",
+  "model_sha256": "14a9e7d184b186fe9c0551737e0bfe53d0a3afee97806a0eeafc6565fc732a1d",
+  "opset": 19,
+  "output_classes": 18710,
+  "precision": "float32",
+  "rec_output_is_softmax": true,
+  "runtime": "onnxruntime-cpu",
+  "source_model": "PP-OCRv6_small_rec",
+  "source_model_sha256": "da460f968ce9f88325ac3a34fa302077d6e9b0dcefb16ba3137cd7796f879d06"
+}

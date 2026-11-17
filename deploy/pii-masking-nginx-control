@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+upstream_file="@NGINX_UPSTREAM_FILE@"
+next_file=
+backup_file=
+
+cleanup() {
+  [[ -z "$next_file" ]] || rm -f "$next_file"
+  [[ -z "$backup_file" ]] || rm -f "$backup_file"
+}
+trap cleanup EXIT
+
+require_argument_count() {
+  local expected=$1 actual=$2
+  if (( actual != expected )); then
+    echo "Invalid Nginx control arguments." >&2
+    exit 2
+  fi
+}
+
+switch_upstream() {
+  local port=$1 headers
+  [[ -f "$upstream_file" ]] || {
+    echo "Nginx upstream configuration is missing." >&2
+    return 1
+  }
+  ss -H -ltn | awk -v endpoint="127.0.0.1:$port" '$4 == endpoint {found=1} END {exit !found}' || {
+    echo "Refusing to switch Nginx to a non-listening candidate port." >&2
+    return 1
+  }
+  headers=$(curl --silent --show-error --connect-timeout 5 --max-time 10 \
+    -D - -o /dev/null "http://127.0.0.1:$port/health") || {
+    echo "Refusing to switch Nginx to an unhealthy candidate." >&2
+    return 1
+  }
+  printf '%s\n' "$headers" | tr -d '\r' | grep -Eq '^HTTP/[^ ]+[[:space:]]+200([[:space:]]|$)' || {
+    echo "Candidate health endpoint did not return HTTP 200." >&2
+    return 1
+  }
+  printf '%s\n' "$headers" | tr -d '\r' | grep -Eiq '^X-Git-SHA:[[:space:]]*[^[:space:]]+' || {
+    echo "Candidate health response lacks release provenance." >&2
+    return 1
+  }
+  printf '%s\n' "$headers" | tr -d '\r' | grep -Eiq '^X-Image-Digest:[[:space:]]*sha256:[0-9a-f]{64}' || {
+    echo "Candidate health response lacks immutable image provenance." >&2
+    return 1
+  }
+  next_file=$(mktemp "${upstream_file}.next.XXXXXX")
+  backup_file=$(mktemp "${upstream_file}.backup.XXXXXX")
+  cp -- "$upstream_file" "$backup_file"
+  printf 'upstream masking_gateway { server 127.0.0.1:%s; keepalive 32; }\n' "$port" > "$next_file"
+  chmod 644 "$next_file"
+  mv -f -- "$next_file" "$upstream_file"
+  next_file=
+  if ! nginx -t; then
+    mv -f -- "$backup_file" "$upstream_file"
+    backup_file=
+    return 1
+  fi
+  if ! nginx -s reload; then
+    mv -f -- "$backup_file" "$upstream_file"
+    backup_file=
+    nginx -t && nginx -s reload || true
+    return 1
+  fi
+  rm -f "$backup_file"
+  backup_file=
+}
+
+command_name=${1:-}
+case "$command_name" in
+  exists)
+    require_argument_count 1 "$#"
+    test -f "$upstream_file"
+    ;;
+  test)
+    require_argument_count 1 "$#"
+    nginx -t
+    ;;
+  restart)
+    require_argument_count 1 "$#"
+    systemctl restart nginx.service
+    ;;
+  switch)
+    require_argument_count 2 "$#"
+    case "$2" in
+      18081|18082) switch_upstream "$2" ;;
+      *)
+        echo "Nginx switch port must be 18081 or 18082." >&2
+        exit 2
+        ;;
+    esac
+    ;;
+  *)
+    echo "Usage: pii-masking-nginx-control {exists|test|restart|switch 18081|switch 18082}" >&2
+    exit 2
+    ;;
+esac

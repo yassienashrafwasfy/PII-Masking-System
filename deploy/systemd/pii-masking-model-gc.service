@@ -1,0 +1,13 @@
+[Unit]
+Description=Reclaim disk from unreferenced immutable model release directories
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=@MODEL_PRUNE_HELPER@
+StandardOutput=journal
+StandardError=journal
+NoNewPrivileges=false
+ProtectSystem=strict
+ReadWritePaths=/run/docker.sock @MODEL_RELEASES_ROOT@

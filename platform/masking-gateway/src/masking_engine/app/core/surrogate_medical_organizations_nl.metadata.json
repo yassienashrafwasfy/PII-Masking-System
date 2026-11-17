@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "purpose": "Dutch healthcare-organisation pseudonymisation pool",
+  "included_name_count": 9606,
+  "selection": "case-insensitive deduplication and unsafe-character/person-name exclusion; CIBG names supplemented only to the 10,000 floor with healthcare-keyword matches from the existing Dutch trade-name pool; personal names (including initials+surname), register artefacts (mojibake, administrative notes, placeholders, bare acronyms) and non-Latin spellings removed",
+  "official_cibg_name_count": 7302,
+  "source_licence": "CC0-1.0 for the CIBG DigiMV releases (https://data.overheid.nl/dataset/124ca8ff-66f6-4453-bf5d-b873cf411ed9)",
+  "sources": [
+    {
+      "url": "https://www.jaarverantwoordingzorg.nl/site/binaries/site-content/collections/documents/2023/01/25/digimv-2020-definitieve-dataset/DigiMV2020_tot-en-met_20230121_ODS_MeerdereTabellen.zip",
+      "sha256": "a05a231fc8a90e4522158d50a7bba1ea44d483af4bffb043e93ffc3c885cf8c8"
+    },
+    {
+      "url": "https://www.jaarverantwoordingzorg.nl/site/binaries/site-content/collections/documents/2023/01/25/dataset-2021-zorg-jeugd-en-veilig-thuis/DigiMV2021_tot-en-met_20230121_ODS_MeerdereTabellen.zip",
+      "sha256": "fa1e99af431cdaffbdebcb8416729929802073bbbbf403a33e8734eb2ec9d2d3"
+    },
+    {
+      "url": "https://www.jaarverantwoordingzorg.nl/site/binaries/site-content/collections/documents/2024/10/08/definitieve-dataset-2023/DigiMV2023_MultipleTables_20241001_0927.ods",
+      "sha256": "db25dd6b56f8f878809a6875d28ed4d43274a2f3cb0dcbf4d3a59bd049d17c88"
+    }
+  ],
+  "supplement": "Healthcare-keyword matches from surrogate_organizations_nl.txt; retain its separate provenance and licence review."
+}

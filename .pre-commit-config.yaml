@@ -1,0 +1,85 @@
+default_install_hook_types: [pre-commit, pre-push]
+# Graphify owns the formatting of its generated deliverables. Its cache and
+# machine-local state are checked separately by graphify-hygiene below.
+# Model artifacts (tokenizer.json, *.onnx, *.bin, *.model) are
+# Git LFS pointers in the tree. A hook that edits one produces a diff of the
+# pointer's *smudged* content -- the lfs diff driver fetches and expands the
+# real multi-MB artifact just to render it -- which is meaningless for a
+# generated binary and blows past CI's per-job log cap (2026-08-26 pre_commit
+# job truncated at 4 MiB rendering one tokenizer.json diff).
+exclude: ^(?:graphify-out/|teams/berts/training/tamerbert_generalization_trial\.py$|.*/tokenizer\.json$|.*\.(?:onnx|bin|model)$|.*/ocr/artifacts/rec/charset\.txt$)
+
+# ruff, black and the four pre-commit-hooks checks run as `repo: local`
+# against the versions already pinned in uv.lock (pre-commit-hooks==6.0.0,
+# ruff==0.14.2, black==26.3.1) rather than as GitHub-hosted repos. Each entry
+# and types_or below mirrors that hook's own upstream .pre-commit-hooks.yaml
+# exactly, so behaviour is unchanged -- only the source of the binary is.
+# This is not cosmetic: the CI cache key is a hash of this file plus
+# uv.lock (see ci/validate.yml), so any edit here mints a cache miss and
+# forces pre-commit to fetch a fresh hook environment. That used to mean a
+# `git fetch` to github.com, which the runner cannot always reach; a local
+# hook needs no fetch at all, since `uv sync` already put the binary on PATH
+# from PyPI.
+#
+# gitleaks used to be a GitHub-hosted repo entry here too. It is gone
+# entirely, not just skipped: `SKIP=gitleaks` in CI does not help the way it
+# does for a real hook failure, because pre-commit provisions every declared
+# repo's environment up front, before it decides what to skip -- merely
+# listing a GitHub repo here was enough to force the same `git fetch` CI
+# cannot always make. It also has no PyPI package, so it could not join the
+# local hooks above the way ruff/black did. Its actual coverage here was
+# already close to nothing: the real pre-commit hook runs `gitleaks git
+# --pre-commit --staged`, which only ever inspected a developer's own staged
+# changes -- CI's checkout never has anything staged, so it was a no-op in
+# every pipeline run regardless of network. Secret scanning for this
+# repository is `repository_security` (ci/security.yml), whose `trivy fs
+# --scanners vuln,secret` includes Trivy's own secret detector, on the
+# weekly schedule.
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff (legacy alias)
+        entry: ruff check --force-exclude
+        args: [--fix]
+        language: system
+        types_or: [python, pyi, jupyter]
+        require_serial: true
+
+      - id: black
+        name: black
+        entry: black
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+
+      - id: check-merge-conflict
+        name: check for merge conflicts
+        entry: check-merge-conflict
+        language: system
+        types: [text]
+
+      - id: detect-private-key
+        name: detect private key
+        entry: detect-private-key
+        language: system
+        types: [text]
+
+      - id: end-of-file-fixer
+        name: fix end of files
+        entry: end-of-file-fixer
+        language: system
+        types: [text]
+
+      - id: trailing-whitespace
+        name: trim trailing whitespace
+        entry: trailing-whitespace-fixer
+        language: system
+        types: [text]
+
+      - id: graphify-hygiene
+        name: prevent tracked Graphify cache and state
+        entry: python scripts/check_graphify_hygiene.py
+        language: system
+        pass_filenames: false
+        always_run: true

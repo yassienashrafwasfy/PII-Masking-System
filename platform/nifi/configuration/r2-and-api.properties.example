@@ -1,0 +1,6 @@
+# R2 settings only. Unified gateway settings belong in team-api-routing.properties.example.
+# Populate actual values through the NiFi runtime or protected CI/CD variables.
+r2.endpoint=https://<account-id>.r2.cloudflarestorage.com
+r2.bucket=REPLACE_WITH_BUCKET_NAME
+r2.access-key-id=REPLACE_WITH_R2_ACCESS_KEY_ID
+r2.secret-access-key=REPLACE_WITH_R2_SECRET_ACCESS_KEY

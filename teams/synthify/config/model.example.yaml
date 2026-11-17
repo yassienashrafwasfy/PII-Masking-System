@@ -1,0 +1,8 @@
+model_name: synthify-gliner-belgian-pii-ner
+immutable_model_version: sha256:64ec6d9460b902afd8b9516b23952203a4cf322c2aa056cf96c7262206a5a097
+onnx_model_path: teams/synthify/onnx
+onnx_model_digest: REPLACE_WITH_ONNX_SHA256
+base_model: urchade/gliner_medium-v2.1
+label_schema: legacy-gliner-belgian-pii-v1
+supported_content_types: [text/plain]
+mlflow_experiment: REPLACE_WITH_MLFLOW_EXPERIMENT_NAME

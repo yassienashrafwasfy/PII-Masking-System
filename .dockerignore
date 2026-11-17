@@ -1,0 +1,48 @@
+.git
+.gitlab
+.agents
+.cache
+.venv
+.env
+.env.*
+__pycache__
+.pytest_cache
+.ruff_cache
+*.py[cod]
+*.md
+# CI points PRE_COMMIT_HOME and the job caches inside $CI_PROJECT_DIR, so these
+# land in the build context unless named here. `.pre-commit-cache` alone is
+# ~130MB of installed hook environments that no image has any use for.
+.pre-commit-cache
+build-artifacts
+graphify-out
+# Lower-cased: this read `Nova_samples_filled`, which matches nothing on a
+# case-sensitive filesystem, so the directory was never actually excluded.
+nova_samples_filled
+ci
+contracts
+docs
+evaluation
+scripts
+tests
+platform/masking-gateway/tests
+platform/model-service/tests
+teams/*/config
+teams/*/docs
+teams/*/model
+teams/*/onnx
+# QA evaluates the published model-service image directly, and GitLab CI
+# `services:` cannot mount volumes, so each team's ONNX runtime artifacts are
+# baked in. Production is unaffected: deploy/compose.yml mounts the immutable
+# host model directories at /models/<team>, which is what the services read;
+# these baked copies under /app/teams/<team>/onnx are only reachable when
+# ONNX_MODEL_PATH points at them, as it does in the QA pipeline.
+!teams/octo/onnx
+!teams/octo/onnx/**
+!teams/synthify/onnx
+!teams/synthify/onnx/**
+!teams/berts/onnx
+!teams/berts/onnx/**
+teams/*/samples
+teams/*/tests
+teams/*/training

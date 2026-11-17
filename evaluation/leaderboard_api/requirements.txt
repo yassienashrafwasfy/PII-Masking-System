@@ -1,0 +1,13 @@
+# Runtime dependencies of the arena API image, and nothing else.
+#
+# The evaluation toolchain lives in ../requirements.txt: it carries mlflow,
+# pandas, scipy, scikit-learn, matplotlib, reportlab, pypdf, and pytest, none of
+# which this service imports. Installing it here produced a 950 MB image with
+# 108 packages for a service whose only third-party imports are fastapi, PyYAML,
+# and boto3 — a large attack surface for no benefit.
+fastapi>=0.116,<1
+uvicorn[standard]>=0.35,<1
+python-multipart>=0.0.20,<1
+pydantic>=2.11,<3
+PyYAML>=6.0,<7
+boto3>=1.35,<2

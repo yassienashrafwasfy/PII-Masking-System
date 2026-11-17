@@ -1,0 +1,9 @@
+# The Dockerfile runs `npm ci` and then `COPY . .`, so host build artifacts must
+# never enter the context: they would overwrite the installed dependency tree
+# and ship a stale bundle.
+node_modules
+dist
+.env
+.env.*
+npm-debug.log*
+.DS_Store

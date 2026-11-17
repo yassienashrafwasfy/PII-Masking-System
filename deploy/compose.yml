@@ -1,0 +1,240 @@
+# Every setting the three model services share, defined once. A toggle added
+# here reaches all three teams at once, which is what stops the drift that
+# `test_production_compose_exposes_every_demo_model_service_toggle` and
+# `test_every_operator_setting_reaches_production` in
+# tests/test_deployment_scripts.py exist to catch: three hand-maintained copies
+# of this block is how an opt-in setting reached the demo and never reached a
+# real deployment, twice.
+#
+# Each `:-` default must match the matching `Settings` default in
+# platform/masking-gateway/src/masking_engine/app/core/config.py. The guard
+# asserts that too, so an unset variable here behaves exactly as the code does
+# and this file never becomes a second, quieter source of defaults.
+#
+# Per-team values (TEAM_ID, ONNX_MODEL_PATH, the digests, ACCELERATOR) stay in each
+# service block: they are deployment identity rather than operator toggles.
+x-model-toggles: &model-toggles
+  # Release identity, injected by the deploy job.
+  SERVICE_RELEASE: ${SERVICE_RELEASE:?SERVICE_RELEASE is required}
+  GIT_SHA: ${GIT_SHA:?GIT_SHA is required}
+  IMAGE_DIGEST: ${MODEL_SERVICE_IMAGE_DIGEST:?MODEL_SERVICE_IMAGE_DIGEST is required}
+  APP_NAME: "${APP_NAME:-PII Masking Service}"
+  APP_VERSION: ${APP_VERSION:-1.0.0}
+  # Shared by every team, matching the code default. Kept shared rather than
+  # per-team so that overriding it cannot silently give one team a different
+  # reported identity from the rest.
+  SERVICE_NAME: ${SERVICE_NAME:-octo-pii-masker}
+
+  # Runtime and logging.
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  WEB_THREADS: ${MODEL_SERVICE_WEB_THREADS:-2}
+  REQUEST_TIMEOUT_SECONDS: ${REQUEST_TIMEOUT_SECONDS:-6600}
+  MODEL_IDLE_TIMEOUT_SECONDS: ${MODEL_IDLE_TIMEOUT_SECONDS:-0}
+
+  # Detection sensitivity. Raising a floor trades recall for precision, so a
+  # change here belongs with a QA run rather than with a restart.
+  CONFIDENCE_THRESHOLD: ${CONFIDENCE_THRESHOLD:-0.3}
+  ENTITY_CONFIDENCE_THRESHOLDS: ${ENTITY_CONFIDENCE_THRESHOLDS:-}
+  STRUCTURED_FIELD_THRESHOLD: ${STRUCTURED_FIELD_THRESHOLD:-0.5}
+
+  # Load and body limits.
+  MAX_CONCURRENT_MASKS: ${MAX_CONCURRENT_MASKS:-2}
+  MAX_UPLOAD_SIZE_BYTES: ${MAX_UPLOAD_SIZE_BYTES:-10485760}
+  MAX_MODEL_INPUT_BYTES: ${MAX_MODEL_INPUT_BYTES:-10485760}
+
+  # Inference window. The stride must stay below the window or the service
+  # refuses to start; change the pair together.
+  MAX_MODEL_TOKENS: ${MAX_MODEL_TOKENS:-510}
+  MODEL_STRIDE_TOKENS: ${MODEL_STRIDE_TOKENS:-192}
+
+  # Redaction rendering.
+  PDF_REDACTION_STYLE: ${PDF_REDACTION_STYLE:-invisible}
+  PDF_REDACTION_MODE: ${PDF_REDACTION_MODE:-pseudonymize}
+  PDF_LOCALE_BADGE: ${PDF_LOCALE_BADGE:-on}
+  PDF_CHIP_REFLOW: ${PDF_CHIP_REFLOW:-on}
+  MODEL_ID_SHAPE_GATE: ${MODEL_ID_SHAPE_GATE:-on}
+  ORGANIZATION_SURROGATE_POOL: ${ORGANIZATION_SURROGATE_POOL:-medical}
+
+  # OCR fallback, and the bounds that keep it affordable. PDF_OCR_MAX_PIXELS
+  # is what actually caps memory: a page box need not match the image drawn on
+  # it, so DPI alone does not bound the allocation.
+  PDF_OCR: ${PDF_OCR:-on}
+  PDF_OCR_DPI: ${PDF_OCR_DPI:-200}
+  PDF_OCR_MAX_PIXELS: ${PDF_OCR_MAX_PIXELS:-2048}
+  PDF_OCR_MIN_BLOCK_POINTS: ${PDF_OCR_MIN_BLOCK_POINTS:-16}
+  PDF_OCR_MIN_LINE_CONFIDENCE: ${PDF_OCR_MIN_LINE_CONFIDENCE:-0.0}
+  PDF_OCR_MIN_BOX_FILL: ${PDF_OCR_MIN_BOX_FILL:-0.55}
+  PDF_OCR_MAX_LINES: ${PDF_OCR_MAX_LINES:-400}
+  # Pinned on purpose: ONNX Runtime splits reductions across threads, so the
+  # count changes float accumulation order and can flip a near-tie argmax.
+  # Byte-reproducibility is what lets NiFi replay an idempotency key, so raise
+  # this only for a deployment that does not rely on replay.
+  OCR_INTRA_OP_THREADS: ${OCR_INTRA_OP_THREADS:-4}
+
+  # Threads for one masking inference. Empty means half the cores this
+  # container may actually use -- the cgroup quota, not the host's core count.
+  # Benchmarked at half on a 16-core host: the full count was slower, because
+  # each call scores one short document and the thread pool costs more to
+  # synchronise than the extra parallelism returns.
+  MODEL_INTRA_OP_THREADS: ${MODEL_INTRA_OP_THREADS:-}
+
+  # Digests of the staged OCR artifacts, verified as the engine loads.
+  OCR_MODEL_PATH: /models/ocr
+  OCR_DET_SHA256: ${OCR_DET_SHA256:-049d5107f028a88efb9c96857ab72af847f0be7aeb413285669a84cf00b8f973}
+  OCR_REC_SHA256: ${OCR_REC_SHA256:-14a9e7d184b186fe9c0551737e0bfe53d0a3afee97806a0eeafc6565fc732a1d}
+  OCR_CHARSET_SHA256: ${OCR_CHARSET_SHA256:-b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d}
+
+  # Optional audit upload. Empty disables it, which is what `.env.example`
+  # tells the operator to do and what `_upload_audit` checks for. These were
+  # `:?` -- required and non-empty -- so following that instruction made
+  # `docker compose` refuse to start, and the only way to bring the stack up
+  # was to turn the upload on.
+  PROD_LOGS_S3_ACCESS_KEY: ${PROD_LOGS_S3_ACCESS_KEY:-}
+  PROD_LOGS_S3_SECRET_KEY: ${PROD_LOGS_S3_SECRET_KEY:-}
+
+services:
+  gateway:
+    image: ${GATEWAY_IMAGE_REF:?GATEWAY_IMAGE_REF is required}
+    restart: unless-stopped
+    environment:
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN is required}
+      OCTO_MODEL_URL: http://octo-model:8080
+      SYNTHIFY_MODEL_URL: http://synthify-model:8080
+      BERTS_MODEL_URL: ${BERTS_MODEL_URL:-}
+      SERVICE_RELEASE: ${SERVICE_RELEASE:?SERVICE_RELEASE is required}
+      GIT_SHA: ${GIT_SHA:?GIT_SHA is required}
+      IMAGE_DIGEST: ${GATEWAY_IMAGE_DIGEST:?GATEWAY_IMAGE_DIGEST is required}
+      WEB_THREADS: ${GATEWAY_WEB_THREADS:-8}
+      REQUEST_TIMEOUT_SECONDS: ${REQUEST_TIMEOUT_SECONDS:-6600}
+      UPSTREAM_TIMEOUT_SECONDS: ${REQUEST_TIMEOUT_SECONDS:-6600}
+      MAX_CONCURRENT_REQUESTS_PER_TEAM: ${MAX_CONCURRENT_REQUESTS_PER_TEAM:-1}
+    ports:
+      - "127.0.0.1:${GATEWAY_PORT:?GATEWAY_PORT is required}:8080"
+    networks:
+      - edge
+      - models
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8080/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+
+  octo-model:
+    profiles: [octo]
+    image: ${MODEL_SERVICE_IMAGE_REF:?MODEL_SERVICE_IMAGE_REF is required}
+    restart: unless-stopped
+    environment:
+      <<: *model-toggles
+      TEAM_ID: octo
+      MODEL_NAME: ${OCTO_MODEL_NAME:-octo-pii-masker}
+      MODEL_VERSION: ${OCTO_MODEL_VERSION:?OCTO_MODEL_VERSION is required}
+      ONNX_MODEL_PATH: /models/octo/onnx
+      ONNX_MODEL_SHA256: ${OCTO_ONNX_MODEL_SHA256:?OCTO_ONNX_MODEL_SHA256 is required}
+      DETECTION_MODE: model_regex
+      DETECTOR_LABEL_PROFILE: octo
+      ACCELERATOR: ${ACCELERATOR:-cpu}
+    volumes:
+      - ${OCTO_MODEL_DIR:?OCTO_MODEL_DIR is required}:/models/octo:ro
+      - ${OCR_MODEL_DIR:-/nonexistent/disabled-ocr}:/models/ocr:ro
+    networks: [models, egress]
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8080/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+
+  synthify-model:
+    profiles: [synthify]
+    image: ${MODEL_SERVICE_IMAGE_REF:?MODEL_SERVICE_IMAGE_REF is required}
+    restart: unless-stopped
+    environment:
+      <<: *model-toggles
+      TEAM_ID: synthify
+      MODEL_NAME: ${SYNTHIFY_MODEL_NAME:-synthify-gliner-belgian-pii-ner}
+      MODEL_VERSION: ${SYNTHIFY_MODEL_VERSION:?SYNTHIFY_MODEL_VERSION is required}
+      ONNX_MODEL_PATH: /models/synthify/onnx
+      ONNX_MODEL_DIGEST: ${SYNTHIFY_ONNX_MODEL_DIGEST:?SYNTHIFY_ONNX_MODEL_DIGEST is required}
+      ACCELERATOR: ${ACCELERATOR:-cpu}
+    volumes:
+      - ${SYNTHIFY_MODEL_DIR:?SYNTHIFY_MODEL_DIR is required}:/models/synthify:ro
+      - ${OCR_MODEL_DIR:-/nonexistent/disabled-ocr}:/models/ocr:ro
+    networks: [models, egress]
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8080/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+
+  berts-model:
+    profiles: [berts]
+    image: ${MODEL_SERVICE_IMAGE_REF:?MODEL_SERVICE_IMAGE_REF is required}
+    restart: unless-stopped
+    environment:
+      <<: *model-toggles
+      TEAM_ID: berts
+      # Three int8 checkpoints, one per document language, staged together
+      # under BERTS_MODEL_DIR. Each subdirectory has to be present: the
+      # language a document resolves to decides which one is loaded, and a
+      # missing one fails that request rather than the whole service.
+      ONNX_MODEL_PATH: /models/berts/onnx
+      ONNX_MODEL_PATH_EN: /models/berts/onnx-en
+      ONNX_MODEL_PATH_FR: /models/berts/onnx-fr
+      # Fail closed on an unapproved artifact, per language. Left unset, each
+      # checkpoint is checked against the digest pinned in
+      # teams/berts/runtime.py:CHECKPOINTS; set one only to stage a rebuilt
+      # artifact, never to skip the check.
+      ONNX_MODEL_SHA256: ${BERTS_ONNX_MODEL_SHA256:-}
+      ONNX_MODEL_SHA256_EN: ${BERTS_ONNX_MODEL_SHA256_EN:-}
+      ONNX_MODEL_SHA256_FR: ${BERTS_ONNX_MODEL_SHA256_FR:-}
+      # The rollback for per-language routing. `off` sends every document to
+      # the Dutch checkpoint, which is what this service did before the other
+      # two existed, so a checkpoint that masks badly is backed out by an
+      # operator restarting one service rather than by a release.
+      BERTS_LANGUAGE_ROUTING: ${BERTS_LANGUAGE_ROUTING:-on}
+      # No MODEL_NAME/MODEL_VERSION: the response names the checkpoint that
+      # actually read the document, and one variable cannot name three.
+      #
+      # Pinned, not a toggle: berts ships int8 ONNX artifacts only, so the
+      # cuda path this would select does not exist for it.
+      ACCELERATOR: cpu
+    volumes:
+      - ${BERTS_MODEL_DIR:-/nonexistent/disabled-berts}:/models/berts:ro
+      - ${OCR_MODEL_DIR:-/nonexistent/disabled-ocr}:/models/ocr:ro
+    networks: [models, egress]
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8080/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+
+networks:
+  edge:
+  models:
+    internal: true
+  # Outbound-only. The model services reach the R2 logs bucket here;
+  # nothing is published into this network and no port is mapped.
+  egress:

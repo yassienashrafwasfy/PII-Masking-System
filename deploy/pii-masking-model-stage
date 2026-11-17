@@ -1,0 +1,322 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+# Stages a reviewed commit's model artifacts into an immutable, root-owned
+# release directory. Runs as root through a sudoers grant that enumerates every
+# accepted argument combination literally, so the deployment user can stage a
+# known team and nothing else.
+#
+# Every path is baked in at install time. Accepting a path -- or a remote URL --
+# from argv would let the deployment user aim root's authenticated clone at an
+# attacker-controlled host and exfiltrate the job token.
+releases_root="@MODEL_RELEASES_ROOT@"
+work_root="@MODEL_WORK_ROOT@"
+remote_url="@GIT_REMOTE_URL@"
+min_free_bytes="@MIN_FREE_BYTES@"
+
+work_dir=
+cleanup() {
+  [[ -z "$work_dir" ]] || rm -rf -- "$work_dir"
+}
+trap cleanup EXIT
+
+require_argument_count() {
+  local expected=$1 actual=$2
+  if (( actual != expected )); then
+    echo "Invalid model staging arguments." >&2
+    exit 2
+  fi
+}
+
+# The commit SHA is unbounded, so it cannot be a literal sudoers argument and
+# must not be a wildcard either. Reading it from stdin keeps the grant free of
+# wildcards, keeps the value out of `ps`/`/proc/*/cmdline`, and survives sudo's
+# env_reset. Same for the short-lived CI job token.
+read_stdin_parameters() {
+  local line key value count=0
+  release_sha=
+  git_token=
+  # `|| [[ -n "$line" ]]` matters: read reports failure on a final line with no
+  # trailing newline, which would otherwise skip the loop body and let an
+  # unrecognised trailing parameter through unvalidated.
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    (( ++count <= 4 )) || { echo "Too many staging parameters." >&2; exit 2; }
+    (( ${#line} <= 300 )) || { echo "Staging parameter is too long." >&2; exit 2; }
+    [[ -n "$line" ]] || continue
+    key=${line%%=*}
+    value=${line#*=}
+    case "$key" in
+      RELEASE_SHA) release_sha=$value ;;
+      GIT_TOKEN) git_token=$value ;;
+      *) echo "Unsupported staging parameter." >&2; exit 2 ;;
+    esac
+  done
+  [[ "$release_sha" =~ ^[0-9a-f]{40}$ ]] || {
+    echo "RELEASE_SHA must be a 40-character commit hash." >&2
+    exit 2
+  }
+  [[ "$git_token" =~ ^[A-Za-z0-9_-]{20,200}$ ]] || {
+    echo "GIT_TOKEN is missing or malformed." >&2
+    exit 2
+  }
+}
+
+team_source_dirs() {
+  # Every team ships the exported ONNX graph and nothing else. Kept as a
+  # function, not inlined, so a team that later stages a second directory
+  # (a per-language checkpoint set, say) is one row rather than a rewrite.
+  case "$1" in
+    octo|synthify|berts) printf 'onnx\n' ;;
+  esac
+}
+
+# Mirrors the required-file lists deploy-gateway.sh validates before it will
+# start a candidate. Staging something deploy-gateway.sh would later reject
+# wastes a 2 GB fetch and fails the release at a less obvious point.
+team_required_files() {
+  case "$1" in
+    octo)
+      printf '%s\n' onnx/model.onnx onnx/manifest.json onnx/config.json \
+        onnx/sentencepiece.bpe.model onnx/special_tokens_map.json \
+        onnx/tokenizer.json onnx/tokenizer_config.json
+      ;;
+    synthify)
+      printf '%s\n' onnx/model.onnx onnx/manifest.json \
+        onnx/gliner_config.json onnx/special_tokens_map.json \
+        onnx/tokenizer.json onnx/tokenizer_config.json
+      ;;
+    berts)
+      printf '%s\n' onnx/model.onnx onnx/config.json onnx/tokenizer.json \
+        onnx/tokenizer_config.json onnx/special_tokens_map.json \
+        onnx/vocab.json onnx/merges.txt onnx/manifest.json
+      ;;
+  esac
+}
+
+manifest_field() {
+  local manifest=$1 field=$2
+  python3 -c 'import json,sys
+from pathlib import Path
+print(json.loads(Path(sys.argv[1]).read_text(encoding="utf-8")).get(sys.argv[2], ""))' \
+    "$manifest" "$field"
+}
+
+# The commit is the trust anchor: artifacts are checked against the manifest
+# committed alongside them, never against a value supplied by the caller.
+expected_digests() {
+  local team=$1 manifest=$2 onnx_sha
+  # *team* is unused now that every team stages exactly one graph. It stays in
+  # the signature because the caller pairs it with the manifest, and a team
+  # that stages a second artifact belongs here rather than at the call site.
+  : "$team"
+  onnx_sha=$(manifest_field "$manifest" model_sha256)
+  [[ "$onnx_sha" =~ ^[0-9a-f]{64}$ ]] || {
+    echo "Manifest model_sha256 is missing or malformed." >&2
+    return 1
+  }
+  printf 'onnx/model.onnx %s\n' "$onnx_sha"
+}
+
+verify_tree() {
+  local root=$1 team=$2 manifest="$1/onnx/manifest.json" relative expected actual
+  local digests
+  for relative in $(team_required_files "$team"); do
+    [[ -f "$root/$relative" && ! -L "$root/$relative" ]] || {
+      echo "Staged artifact is missing or a symlink: $relative" >&2
+      return 1
+    }
+  done
+  if [[ "$team" == berts ]]; then
+    [[ "$(manifest_field "$manifest" format)" == onnx ]] || {
+      echo "Berts manifest format must be onnx." >&2
+      return 1
+    }
+    [[ "$(manifest_field "$manifest" source_revision)" =~ ^[0-9a-f]{40}$ ]] || {
+      echo "Berts manifest source_revision is missing or malformed." >&2
+      return 1
+    }
+  fi
+  # Materialise the digest list first. Reading it straight into a `while` loop
+  # would swallow a manifest failure: the loop would see no input, iterate zero
+  # times, and report success without having verified anything.
+  digests=$(expected_digests "$team" "$manifest") || return 1
+  [[ "$(printf '%s\n' "$digests" | grep -c .)" == 1 ]] || {
+    echo "Manifest did not yield the expected digest set." >&2
+    return 1
+  }
+  while read -r relative expected; do
+    actual=$(sha256sum "$root/$relative" | awk '{print $1}')
+    [[ "$actual" == "$expected" ]] || {
+      echo "Staged artifact digest mismatch: $relative" >&2
+      return 1
+    }
+  done <<< "$digests"
+}
+
+# Fetches only pointers: enough to read the manifest and the LFS sizes without
+# paying for the weights. `plan` never goes further than this.
+checkout_pointers() {
+  local team=$1 sha=$2 dir=$3 subdir
+  git init --quiet "$dir"
+  GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/bin/true GIT_LFS_SKIP_SMUDGE=1 \
+  GIT_CONFIG_COUNT=1 \
+  GIT_CONFIG_KEY_0=credential.helper \
+  GIT_CONFIG_VALUE_0='!f() { printf "username=gitlab-ci-token\npassword=%s\n" "$GIT_TOKEN"; }; f' \
+  GIT_TOKEN="$git_token" \
+    git -C "$dir" fetch --quiet --depth 1 --filter=blob:none "$remote_url" "$sha"
+  git -C "$dir" -c advice.detachedHead=false checkout --quiet FETCH_HEAD
+  [[ "$(git -C "$dir" rev-parse HEAD)" == "$sha" ]] || {
+    echo "Fetched tree does not match the requested commit." >&2
+    return 1
+  }
+  for subdir in $(team_source_dirs "$team"); do
+    [[ -d "$dir/teams/$team/$subdir" ]] || {
+      echo "Commit does not contain teams/$team/$subdir." >&2
+      return 1
+    }
+  done
+}
+
+pointer_bytes() {
+  local dir=$1 team=$2 subdir total=0 size
+  for subdir in $(team_source_dirs "$team"); do
+    while read -r size; do
+      total=$(( total + size ))
+    done < <(grep -rhoE '^size [0-9]+$' "$dir/teams/$team/$subdir" 2>/dev/null | awk '{print $2}')
+  done
+  printf '%s\n' "$total"
+}
+
+assemble_tree() {
+  local dir=$1 team=$2 target=$3 subdir
+  install -d -m 0755 "$target"
+  for subdir in $(team_source_dirs "$team"); do
+    install -d -m 0755 "$target/$subdir"
+    cp -a -- "$dir/teams/$team/$subdir/." "$target/$subdir/"
+  done
+}
+
+harden_tree() {
+  local target=$1
+  chown -R root:root "$target"
+  find "$target" -type d -exec chmod 0555 {} +
+  find "$target" -type f -exec chmod 0444 {} +
+}
+
+# An identical checkpoint already staged under another release is byte-identical
+# and immutable, so hardlinking it is safe and skips the fetch entirely. This is
+# the common case when a release changes code but not weights.
+find_identical_release() {
+  local team=$1 sha=$2 manifest=$3 candidate onnx_sha
+  onnx_sha=$(manifest_field "$manifest" model_sha256)
+  for candidate in "$releases_root"/*/"$team"; do
+    [[ -d "$candidate" && ! -L "$candidate" ]] || continue
+    [[ "$candidate" != "$releases_root/$sha/$team" ]] || continue
+    [[ -f "$candidate/onnx/model.onnx" ]] || continue
+    [[ "$(sha256sum "$candidate/onnx/model.onnx" | awk '{print $1}')" == "$onnx_sha" ]] || continue
+    if verify_tree "$candidate" "$team" >/dev/null 2>&1; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
+stage_team() {
+  local team=$1 mode=$2 target staged manifest source needed avail
+  target="$releases_root/$release_sha/$team"
+
+  if [[ -d "$target" ]]; then
+    if verify_tree "$target" "$team" >/dev/null 2>&1; then
+      printf 'unchanged %s %s %s\n' "$team" "$release_sha" "$target"
+      return 0
+    fi
+    # Never repair in place: an existing release directory is immutable, and a
+    # half-written one must be investigated rather than silently overwritten.
+    echo "Existing release directory failed verification: $target" >&2
+    return 1
+  fi
+
+  install -d -m 0700 "$work_root"
+  work_dir=$(mktemp -d -p "$work_root")
+  checkout_pointers "$team" "$release_sha" "$work_dir/src"
+  manifest="$work_dir/src/teams/$team/onnx/manifest.json"
+
+  if source=$(find_identical_release "$team" "$release_sha" "$manifest"); then
+    if [[ "$mode" == plan ]]; then
+      printf 'would-link %s %s %s\n' "$team" "$release_sha" "$source"
+      return 0
+    fi
+    staged="$work_dir/staged"
+    cp -al -- "$source" "$staged"
+    harden_tree "$staged"
+    verify_tree "$staged" "$team"
+    install -d -m 0755 "$releases_root/$release_sha"
+    mv -T -- "$staged" "$target"
+    printf 'linked %s %s %s\n' "$team" "$release_sha" "$target"
+    return 0
+  fi
+
+  needed=$(pointer_bytes "$work_dir/src" "$team")
+  # A zero total means the pointers did not parse. Continuing would skip the
+  # disk guard entirely and risk filling the volume mid-fetch.
+  (( needed > 0 )) || {
+    echo "Could not determine the LFS payload size for $team." >&2
+    return 1
+  }
+  avail=$(df --output=avail -B1 "$work_root" | tail -1 | tr -d ' ')
+  (( avail >= needed + min_free_bytes )) || {
+    echo "Insufficient disk to stage $team: need $needed bytes plus reserve, have $avail." >&2
+    return 1
+  }
+
+  if [[ "$mode" == plan ]]; then
+    printf 'would-fetch %s %s %s\n' "$team" "$release_sha" "$needed"
+    return 0
+  fi
+
+  GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/bin/true \
+  GIT_CONFIG_COUNT=1 \
+  GIT_CONFIG_KEY_0=credential.helper \
+  GIT_CONFIG_VALUE_0='!f() { printf "username=gitlab-ci-token\npassword=%s\n" "$GIT_TOKEN"; }; f' \
+  GIT_TOKEN="$git_token" \
+    git -C "$work_dir/src" lfs pull \
+      --include="$(printf 'teams/%s/*' "$team")" --exclude=''
+
+  staged="$work_dir/staged"
+  assemble_tree "$work_dir/src" "$team" "$staged"
+  harden_tree "$staged"
+  # Verify before the tree is reachable at its final path, so a bad fetch never
+  # becomes a directory deploy-gateway.sh could be pointed at.
+  verify_tree "$staged" "$team"
+  sync -f "$staged" 2>/dev/null || sync
+  install -d -m 0755 "$releases_root/$release_sha"
+  mv -T -- "$staged" "$target"
+  printf 'staged %s %s %s\n' "$team" "$release_sha" "$target"
+}
+
+command_name=${1:-}
+case "$command_name" in
+  status)
+    require_argument_count 1 "$#"
+    [[ -d "$releases_root" ]] || { echo "Model releases root is missing." >&2; exit 1; }
+    printf 'ready %s\n' "$releases_root"
+    ;;
+  plan|stage)
+    require_argument_count 2 "$#"
+    case "$2" in
+      octo|synthify|berts)
+        read_stdin_parameters
+        stage_team "$2" "$command_name"
+        ;;
+      *)
+        echo "Model staging team must be octo, synthify, or berts." >&2
+        exit 2
+        ;;
+    esac
+    ;;
+  *)
+    echo "Usage: pii-masking-model-stage {status|plan TEAM|stage TEAM}" >&2
+    exit 2
+    ;;
+esac

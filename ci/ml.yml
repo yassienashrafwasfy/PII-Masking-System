@@ -1,0 +1,81 @@
+# Fast: static checks and converter checks are defined in ci/validate.yml.
+# Mid: checks model files without loading a neural network.
+model_artifacts:
+  stage: evaluate
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - .gitattributes
+        - ci/ml.yml
+        - teams/octo/onnx/**/*
+        - teams/synthify/onnx/**/*
+        - teams/berts/onnx/**/*
+        - teams/berts/onnx-en/**/*
+        - teams/berts/onnx-fr/**/*
+        - teams/berts/tests/test_model_artifact.py
+        - teams/octo/tests/test_model_artifact.py
+        - teams/synthify/tests/test_model_artifact.py
+  before_script:
+    - apt-get update && apt-get install --yes --no-install-recommends git-lfs
+    - git lfs pull --include="teams/octo/onnx/*,teams/synthify/onnx/*,teams/berts/onnx/*,teams/berts/onnx-en/*,teams/berts/onnx-fr/*,platform/masking-gateway/src/masking_engine/src/models/ocr/artifacts/**"
+    - uv sync --locked --no-dev
+  script:
+    - uv run --no-sync python teams/octo/tests/test_model_artifact.py
+    - uv run --no-sync python teams/synthify/tests/test_model_artifact.py
+    - uv run --no-sync python teams/berts/tests/test_model_artifact.py
+
+# Mid: model smoke checks. These complete quickly on CPU and run automatically
+# whenever code, samples, weights, or ML test definitions change.
+ml_smoke_cpu:
+  stage: evaluate
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - ci/ml.yml
+        - pyproject.toml
+        - uv.lock
+        - platform/masking-gateway/src/masking_engine/**/*
+        - platform/masking-gateway/tests/test_qa_model_integration.py
+        - platform/masking-gateway/tests/test_qa_api_end_to_end.py
+        - teams/octo/adapter.py
+        - teams/octo/onnx/**/*
+        - teams/octo/samples/**/*
+        - teams/octo/tests/test_model_inference.py
+        - teams/synthify/adapter.py
+        - teams/synthify/runtime.py
+        - teams/synthify/labels.py
+        - teams/synthify/windowing.py
+        - teams/synthify/regex_detectors.py
+        - teams/synthify/onnx/**/*
+        - teams/synthify/samples/**/*
+        - teams/synthify/tests/test_model_inference.py
+        - teams/synthify/tests/test_regex_detectors.py
+        - teams/synthify/tests/test_labels.py
+        - teams/synthify/tests/test_windowing.py
+        - teams/synthify/tests/test_prepare_gliner_dataset.py
+        - teams/berts/adapter.py
+        - teams/berts/onnx/**/*
+        - teams/berts/onnx-en/**/*
+        - teams/berts/onnx-fr/**/*
+        - teams/berts/runtime.py
+        - teams/berts/spans.py
+        - teams/berts/tests/test_model_inference.py
+        - teams/berts/tests/test_spans.py
+  before_script:
+    - apt-get update && apt-get install --yes --no-install-recommends git-lfs
+    - git lfs pull --include="teams/octo/onnx/*,teams/synthify/onnx/*,teams/berts/onnx/*,teams/berts/onnx-en/*,teams/berts/onnx-fr/*,platform/masking-gateway/src/masking_engine/src/models/ocr/artifacts/**"
+    - uv sync --locked --no-dev
+  script:
+    - uv run --no-sync python teams/octo/tests/test_model_inference.py
+    - uv run --no-sync python teams/synthify/tests/test_model_inference.py
+    - uv run --no-sync python teams/synthify/tests/test_regex_detectors.py
+    # Label space and sliding window: no weights needed, but they gate whether
+    # the prompts match the checkpoint and whether long documents are truncated.
+    - uv run --no-sync python teams/synthify/tests/test_labels.py
+    - uv run --no-sync python teams/synthify/tests/test_windowing.py
+    - uv run --no-sync python teams/synthify/tests/test_prepare_gliner_dataset.py
+    - uv run --no-sync python teams/berts/tests/test_model_inference.py
+    - uv run --no-sync python teams/berts/tests/test_spans.py
+    - uv run --no-sync python platform/masking-gateway/tests/test_qa_model_integration.py
+    - uv run --no-sync python platform/masking-gateway/tests/test_qa_api_end_to_end.py
+    - QA_TEAM_ID=berts uv run --no-sync python platform/masking-gateway/tests/test_qa_api_end_to_end.py

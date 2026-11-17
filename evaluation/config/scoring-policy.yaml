@@ -1,0 +1,13 @@
+policy_version: "1.0"
+weights:
+  pii_recall: 0.40
+  macro_f1: 0.25
+  pii_precision: 0.10
+  document_success_rate: 0.10
+  latency_score: 0.10
+  throughput_score: 0.05
+normalization:
+  latency_p95_good_ms: 250
+  latency_p95_bad_ms: 3000
+  throughput_good_docs_min: 30
+  throughput_bad_docs_min: 1

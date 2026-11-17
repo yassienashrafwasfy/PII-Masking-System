@@ -1,0 +1,42 @@
+# Berts runs one int8 ONNX checkpoint per document language. The platform
+# resolves the language once per document and passes it to the adapter; the
+# checkpoint, its reported name and its approved digest all follow from it.
+#
+# The table below documents what `teams/berts/runtime.py:CHECKPOINTS` pins.
+# The name and revision have no environment override on purpose: with three
+# artifacts a single MODEL_NAME could only rename all of them at once, and
+# the point of naming one per language is that it matches the file that
+# answered. Only the path and the approved digest are overridable, which is
+# what a production mount of staged artifacts needs.
+default_locale: nl_BE
+supported_content_types: [application/pdf, text/plain]
+mlflow_experiment: REPLACE_WITH_MLFLOW_EXPERIMENT_NAME
+
+checkpoints:
+  nl_BE:
+    model_name: berts-pii-medroberta-nl-int8
+    immutable_model_version: 07f18eb53e127ed34aa77a64e1e15f24ea622be8
+    onnx_model_path: teams/berts/onnx
+    onnx_model_sha256: e6ebd6471a5fd5b8d8a5e044ba9d3aa4395ec96a35c0f4c8feb803341cb8e292
+    onnx_opset: 18
+    precision: int8
+    path_env: ONNX_MODEL_PATH
+    sha256_env: ONNX_MODEL_SHA256
+  en:
+    model_name: berts-pii-bert-en-int8
+    immutable_model_version: 45f397a28f3efc462ec89552a7b8de574f3f61dc
+    onnx_model_path: teams/berts/onnx-en
+    onnx_model_sha256: c317162cbc72aee06a4ffd8a903c7b645759da6e0ee2e4b90905bcd75b35f8cd
+    onnx_opset: 18
+    precision: int8
+    path_env: ONNX_MODEL_PATH_EN
+    sha256_env: ONNX_MODEL_SHA256_EN
+  fr_FR:
+    model_name: berts-pii-camembert-bio-fr-int8
+    immutable_model_version: 162c057100bb174252303bb350df4c47296ea5bd
+    onnx_model_path: teams/berts/onnx-fr
+    onnx_model_sha256: 2b1af7af5f455b5f623b13d0669c8085e7dd0aa20dd0156bd6d28e4cee4d12c4
+    onnx_opset: 18
+    precision: int8
+    path_env: ONNX_MODEL_PATH_FR
+    sha256_env: ONNX_MODEL_SHA256_FR

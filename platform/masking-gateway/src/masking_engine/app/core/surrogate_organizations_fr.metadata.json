@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "purpose": "French organisation-name pseudonymisation pool",
+  "source_url": "https://static.data.gouv.fr/resources/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret/20260901-083236/stock-stockunitelegale-csv.zip",
+  "source_dataset": "https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret",
+  "source_snapshot_date": "2026-09-01",
+  "source_sha256": "1399a7b0a5668f49122430e472894812856bb936e2380729dfb66370dc616eec",
+  "included_name_count": 50000,
+  "selection": "denominationUniteLegale where statutDiffusionUniteLegale is O, case-insensitive deduplication, unsafe-character exclusion, uppercase-aware person-name exclusion, personal-name exclusion including initials+surname, register-artefact exclusion (mojibake, administrative notes, placeholders, bare acronyms, non-Latin spellings), deterministic SHA-256 sample",
+  "licence_status": "Licence Ouverte / Open Licence v2.0 (Etalab)",
+  "generated_at": "2026-09-01T16:02:16.165618+00:00"
+}

@@ -1,0 +1,6 @@
+# Example only. Inject real runtime settings through the deployment environment.
+supported_teams: [octo, synthify, berts]
+adapter_registry:
+  octo: teams/octo/adapter.py
+  synthify: teams/synthify/adapter.py
+  berts: teams/berts/adapter.py

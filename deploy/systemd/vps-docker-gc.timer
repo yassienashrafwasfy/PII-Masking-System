@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Docker/BuildKit garbage collection daily
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=30min
+Persistent=true
+Unit=vps-docker-gc.service
+
+[Install]
+WantedBy=timers.target

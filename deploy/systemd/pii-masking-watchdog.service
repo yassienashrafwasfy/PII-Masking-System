@@ -1,0 +1,19 @@
+[Unit]
+Description=PII masking gateway health watchdog
+After=docker.service nginx.service network-online.target
+Requires=docker.service nginx.service
+
+[Service]
+Type=oneshot
+User=@DEPLOY_USER@
+Environment=PII_MASKING_DEPLOY_DIR=@DEPLOY_DIR@
+Environment=ENV_FILE=@ENV_FILE@
+Environment=STATE_DIR=@STATE_DIR@
+ExecStart=/bin/bash @DEPLOY_DIR@/watchdog-gateway.sh run --env-file @ENV_FILE@ --state-dir @STATE_DIR@
+StandardOutput=journal
+StandardError=journal
+NoNewPrivileges=false
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=@DEPLOY_DIR@ /run/docker.sock

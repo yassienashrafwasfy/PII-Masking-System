@@ -1,0 +1,69 @@
+services:
+  leaderboard-api:
+    build:
+      context: .
+      dockerfile: leaderboard_api/Dockerfile
+    restart: unless-stopped
+    environment:
+      # Object storage backing both the leaderboard results and the masking
+      # console. Without these the API serves demo data and the console
+      # reports itself unavailable rather than failing at request time.
+      ARENA_S3_ENDPOINT_URL: ${ARENA_S3_ENDPOINT_URL:-}
+      ARENA_S3_ACCESS_KEY_ID: ${ARENA_S3_ACCESS_KEY_ID:-}
+      ARENA_S3_SECRET_ACCESS_KEY: ${ARENA_S3_SECRET_ACCESS_KEY:-}
+      ARENA_S3_REGION: ${ARENA_S3_REGION:-auto}
+      ARENA_RESULTS_BUCKET: ${ARENA_RESULTS_BUCKET:-data}
+      ARENA_RESULTS_PREFIX: ${ARENA_RESULTS_PREFIX:-results}
+      ARENA_RANKING_BASIS: ${ARENA_RANKING_BASIS:-overlapping}
+      # `-` and not `:-`: an empty value here means "consider every run mode",
+      # which is a real setting, and `:-` would silently replace it with
+      # "release". Only a genuinely unset variable should get the default.
+      ARENA_LEADERBOARD_MODE: ${ARENA_LEADERBOARD_MODE-release}
+      ARENA_LEADERBOARD_KEY: ${ARENA_LEADERBOARD_KEY:-}
+      # The arena's own copies of the ranking documents it has seen. Off by
+      # default locally, because it writes to the results bucket and a shared
+      # dev credential should not accumulate objects there by accident.
+      ARENA_HISTORY_PREFIX: ${ARENA_HISTORY_PREFIX:-results/history}
+      ARENA_ARCHIVE_RANKINGS: ${ARENA_ARCHIVE_RANKINGS:-false}
+      ARENA_CHAMPION_FALLBACK_TEAM: ${ARENA_CHAMPION_FALLBACK_TEAM:-berts}
+      ARENA_SOURCE_BUCKET: ${ARENA_SOURCE_BUCKET:-source}
+      ARENA_INCOMING_PREFIX: ${ARENA_INCOMING_PREFIX:-incoming}
+      ARENA_INCOMING_KEY_TEMPLATE: ${ARENA_INCOMING_KEY_TEMPLATE:-}
+      ARENA_MASKED_BUCKET: ${ARENA_MASKED_BUCKET:-destination}
+      ARENA_MASKED_PREFIX: ${ARENA_MASKED_PREFIX:-masked}
+      ARENA_MANIFEST_BUCKET: ${ARENA_MANIFEST_BUCKET:-}
+      ARENA_MANIFEST_PREFIX: ${ARENA_MANIFEST_PREFIX:-manifests}
+      ARENA_TEAMS: ${ARENA_TEAMS:-octo,synthify,berts}
+      ARENA_RUN_TIMEOUT_SECONDS: ${ARENA_RUN_TIMEOUT_SECONDS:-900}
+      ARENA_MAX_UPLOAD_BYTES: ${ARENA_MAX_UPLOAD_BYTES:-10485760}
+      ARENA_MOCK_LEADERBOARD: ${ARENA_MOCK_LEADERBOARD:-false}
+      # Local sample documents the console can upload without a native file
+      # dialog (browsers do not let a page choose that dialog's folder). Fixed
+      # container path; the host folder it maps to is set by the volumes:
+      # entry below via ARENA_SAMPLE_HOST_DIRECTORY.
+      # /app/samples is baked into the image; the volumes: entry below mounts
+      # a richer host folder over it when one exists on this workstation.
+      ARENA_SAMPLE_DIRECTORY: ${ARENA_SAMPLE_DIRECTORY-/app/samples}
+      # Retained as a fallback source when no results prefix is populated.
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-}
+      MLFLOW_EXPERIMENT_NAME: ${MLFLOW_EXPERIMENT_NAME:-pii-masking-leaderboard}
+      LEADERBOARD_ALLOWED_ORIGINS: ${LEADERBOARD_ALLOWED_ORIGINS:-http://localhost:8088}
+    volumes:
+      # This machine's HealthOne NOVA sample folder, read-only. Override
+      # ARENA_SAMPLE_HOST_DIRECTORY in .env on another workstation, or unset
+      # it and remove this mount to disable the sample picker entirely.
+      - ${ARENA_SAMPLE_HOST_DIRECTORY:-/home/marwan-abdelmoneim/Documents/Cegedim/MLOps/S3-Source-Files/HealthOne_NOVA_Unmasked}:/app/samples:ro
+    networks: [arena]
+
+  leaderboard:
+    build: ./leaderboard
+    restart: unless-stopped
+    depends_on: [leaderboard-api]
+    ports:
+      # Container-side 8080: nginx runs unprivileged in this image.
+      - "127.0.0.1:8088:8080"
+    networks: [arena]
+
+networks:
+  arena:
+    driver: bridge

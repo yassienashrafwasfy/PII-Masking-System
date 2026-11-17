@@ -1,0 +1,8 @@
+model_name: octo-pii-masker
+immutable_model_version: REPLACE_WITH_IMMUTABLE_MODEL_FINGERPRINT
+onnx_model_path: teams/octo/onnx
+onnx_model_sha256: REPLACE_WITH_ONNX_SHA256
+label_schema: qa-pii-v1
+canonical_labels: [NAME, GENDER, DATE, ORGANIZATION_NAME, ADDRESS, AGE, PHONE_NUMBER, BTW_EENHEID, RIZIV_INAMI, RPPS, INSZ_NISS, NIR, URL, EMAIL, SSN, NPI, NHS_NUMBER, GMC]
+supported_content_types: [application/pdf, text/plain, text/csv, application/json]
+mlflow_experiment: REPLACE_WITH_MLFLOW_EXPERIMENT_NAME

@@ -1,0 +1,112 @@
+.trivy_image_scan:
+  stage: security
+  image:
+    name: aquasec/trivy:0.72.0
+    entrypoint: [""]
+  timeout: 25m
+  variables:
+    TRIVY_CACHE_DIR: "$CI_PROJECT_DIR/.cache/trivy"
+    TRIVY_USERNAME: "$CI_REGISTRY_USER"
+    TRIVY_PASSWORD: "$CI_REGISTRY_PASSWORD"
+  cache:
+    key: trivy-0.72.0
+    paths: [.cache/trivy/]
+  before_script:
+    - |
+      db_attempt=1
+      until trivy image --download-db-only \
+        --db-repository public.ecr.aws/aquasecurity/trivy-db:2 \
+        --db-repository ghcr.io/aquasecurity/trivy-db:2; do
+        if [ "$db_attempt" -ge 3 ]; then
+          echo "Trivy vulnerability DB download failed after $db_attempt attempts" >&2
+          exit 1
+        fi
+        db_attempt=$((db_attempt + 1))
+        sleep 5
+      done
+
+scan_gateway_image:
+  extends: [.trivy_image_scan, .release_candidate_rules]
+  needs:
+    - job: publish_gateway
+      artifacts: true
+  script:
+    - trivy image --format cyclonedx --output gateway-sbom.cdx.json "$GATEWAY_IMAGE_REF"
+    - trivy image --skip-db-update --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format json --output gateway-vulnerabilities.json "$GATEWAY_IMAGE_REF"
+  artifacts:
+    when: always
+    paths:
+      - gateway-sbom.cdx.json
+      - gateway-vulnerabilities.json
+    reports:
+      cyclonedx: gateway-sbom.cdx.json
+    expire_in: 1 month
+
+scan_model_service_image:
+  extends: [.trivy_image_scan, .release_candidate_rules]
+  needs:
+    - job: publish_model_service
+      artifacts: true
+  script:
+    - trivy image --format cyclonedx --output model-service-sbom.cdx.json "$MODEL_SERVICE_IMAGE_REF"
+    - trivy image --skip-db-update --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format json --output model-service-vulnerabilities.json "$MODEL_SERVICE_IMAGE_REF"
+  artifacts:
+    when: always
+    paths:
+      - model-service-sbom.cdx.json
+      - model-service-vulnerabilities.json
+    reports:
+      cyclonedx: model-service-sbom.cdx.json
+    expire_in: 1 month
+
+scan_arena_api_image:
+  extends: [.trivy_image_scan, .arena_scan_rules]
+  allow_failure: true
+  needs:
+    - job: publish_arena_api
+      artifacts: true
+  script:
+    - trivy image --format cyclonedx --output arena-api-sbom.cdx.json "$ARENA_API_IMAGE_REF"
+    - trivy image --skip-db-update --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format json --output arena-api-vulnerabilities.json "$ARENA_API_IMAGE_REF"
+  artifacts:
+    when: always
+    paths:
+      - arena-api-sbom.cdx.json
+      - arena-api-vulnerabilities.json
+    reports:
+      cyclonedx: arena-api-sbom.cdx.json
+    expire_in: 1 month
+
+scan_arena_ui_image:
+  extends: [.trivy_image_scan, .arena_scan_rules]
+  allow_failure: true
+  needs:
+    - job: publish_arena_ui
+      artifacts: true
+  script:
+    - trivy image --format cyclonedx --output arena-ui-sbom.cdx.json "$ARENA_UI_IMAGE_REF"
+    - trivy image --skip-db-update --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format json --output arena-ui-vulnerabilities.json "$ARENA_UI_IMAGE_REF"
+  artifacts:
+    when: always
+    paths:
+      - arena-ui-sbom.cdx.json
+      - arena-ui-vulnerabilities.json
+    reports:
+      cyclonedx: arena-ui-sbom.cdx.json
+    expire_in: 1 month
+
+repository_security:
+  stage: security
+  image:
+    name: aquasec/trivy:0.72.0
+    entrypoint: [""]
+  timeout: 25m
+  variables:
+    TRIVY_CACHE_DIR: "$CI_PROJECT_DIR/.cache/trivy"
+  cache:
+    key: trivy-0.72.0
+    paths: [.cache/trivy/]
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $SECURITY_SCAN == "weekly"'
+  script:
+    - trivy fs --scanners vuln,secret --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --skip-dirs teams/octo/samples --skip-dirs teams/synthify/samples --skip-dirs evaluation/datasets/generated --skip-dirs evaluation/leaderboard/node_modules .

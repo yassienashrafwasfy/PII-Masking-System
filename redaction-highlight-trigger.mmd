@@ -1,0 +1,116 @@
+flowchart TB
+    %% Scope: only the visual-redaction decision logic inside mask_pdf /
+    %% _render_styled_run / pdf_redaction_styles.py / pdf_line_reflow.py.
+    %% Not the gateway, NiFi, or detection pipeline — see the other micro
+    %% architecture_*.mmd files for that. This traces one already-detected span.
+    %%
+    %% Nodes marked NEW are the QA fixes for the box-overlay and
+    %% garbage-pseudonym defects; the paths they bypass are kept as the
+    %% fallback, so the old behaviour is still what runs when the new one
+    %% cannot apply.
+
+    subgraph Config["1. What selects style + mode — before mask_pdf runs"]
+        direction LR
+        EnvStyle["PDF_REDACTION_STYLE env · invisible (default) | clinical_soft | bold_chips"]
+        EnvMode["PDF_REDACTION_MODE env · pseudonymize (default) | detect"]
+        EnvReflow["PDF_CHIP_REFLOW env · on (default) | off — NEW"]
+        Guard{"mode=detect AND style=invisible?"}
+        Reject["load_settings() raises at startup · fail fast, not on first request"]
+
+        EnvStyle --> Guard
+        EnvMode --> Guard
+        Guard -->|invalid combo| Reject
+    end
+
+    Guard -->|valid| Entry["mask_pdf(..., redaction_style, redaction_mode, reflow) · per page"]
+
+    subgraph StyleTrigger["2. Does this run get a visible box at all?"]
+        direction TB
+        StyleGate{"redaction_style == invisible?"}
+        RotGate{"source glyph is rotated / vertical?"}
+        Invisible["_insert_replacement · original font, size, color · always the REAL pseudonym, horizontally compressed to fit — NEW · never the random-letter compact form"]
+
+        StyleGate -->|yes| Invisible
+        StyleGate -->|no| RotGate
+        RotGate -->|yes, v1 has no rotated-text support| Invisible
+    end
+
+    Entry --> StyleGate
+
+    subgraph Reflow["2b. Can the line make room? — NEW, runs once per visual line"]
+        direction TB
+        Group["pdf_line_reflow.plan(page_runs) · group this page's runs by baseline + direction"]
+        Natural["natural_width(chip text at its own size + chrome padding) · the box is sized by what is DRAWN, not by the token it replaces"]
+        Budget{"cumulative shift fits before the line's right text boundary?"}
+        Shift["shift every untouched glyph right of the chip by the surplus · erase + redraw each at (origin.x + delta, origin.y) in its own font/size/colour · kerning preserved because each glyph keeps its own x"]
+        NoRoom["line cannot absorb it · fall back to the shrink/truncate path below"]
+
+        Group --> Natural --> Budget
+        Budget -->|yes| Shift
+        Budget -->|no| NoRoom
+    end
+
+    RotGate -->|no| Group
+
+    subgraph HighlightTrigger["3. What the box actually shows — the 'highlight' trigger"]
+        direction TB
+        Resolve["resolve_style(label) · label_registry.canonical_label() → palette lookup · unmapped label → grey fallback keeping its own name, never raises"]
+        SafeExpand["_safe_expand(run) · nearest same-line glyph to the right bounds the box · MINUS pdf_redaction_styles.ink_bleed(variant) — NEW · a stroked border is centred on the edge, so half of it lands outside the rect and inked the neighbouring glyph"]
+        ModeGate{"redaction_mode?"}
+        FitAbbr["fit_text(abbreviation [+ rounded confidence %]) · scoreless (regex) spans keep the bare abbreviation"]
+        RunGate{"single-run span?"}
+        TryReal["fit_text(replacement, allow_truncate=false)"]
+        Fits1{"fits at some size ≥ floor?"}
+        TryTrunc["fit_text(replacement) · shrink → truncate with ellipsis · now only reachable when the line had no room"]
+        TrySlice["fit_text(compact line-slice) · shape-preserving, per wrapped line"]
+
+        Resolve --> SafeExpand --> ModeGate
+        ModeGate -->|detect| FitAbbr
+        ModeGate -->|pseudonymize| RunGate
+        RunGate -->|yes| TryReal --> Fits1
+        Fits1 -->|no| TryTrunc
+        RunGate -->|no, line-wrapped| TrySlice
+    end
+
+    Shift --> Resolve
+    NoRoom --> Resolve
+
+    Draw["draw_box(page, rect, style, mode, text, size, style_variant)"]
+    FitAbbr --> Draw
+    Fits1 -->|yes| Draw
+    TryTrunc --> Draw
+    TrySlice --> Draw
+
+    subgraph DesignTrigger["4. Which chrome gets drawn — the 'design' trigger"]
+        direction LR
+        VariantGate{"style_variant?"}
+        Soft["clinical_soft · pastel rounded box · 0.9pt stroke → 0.45pt ink bleed · detect = solid border · pseudonymize = dashed border + darker tint"]
+        Chips["bold_chips · solid pill chip, no stroke → 0pt ink bleed · detect = bold white text · pseudonymize = darker fill"]
+
+        VariantGate -->|clinical_soft| Soft
+        VariantGate -->|bold_chips| Chips
+    end
+
+    Draw --> VariantGate
+
+    Audit["router.record(span, original, drawn_text) · logs exactly what got rendered — the abbreviation in detect mode, never a computed-but-unrendered pseudonym"]
+    Soft --> Audit
+    Chips --> Audit
+    Invisible --> Audit
+
+    classDef config fill:#e8f1ff,stroke:#2563eb,color:#111827;
+    classDef gate fill:#fef3c7,stroke:#d97706,color:#111827;
+    classDef invisible fill:#f3f4f6,stroke:#6b7280,color:#111827;
+    classDef highlight fill:#dcfce7,stroke:#16a34a,color:#111827;
+    classDef design fill:#fae8ff,stroke:#a21caf,color:#111827;
+    classDef failure fill:#fee2e2,stroke:#dc2626,color:#111827;
+    classDef audit fill:#ecfeff,stroke:#0891b2,color:#111827;
+    classDef fresh fill:#fff7ed,stroke:#ea580c,color:#111827,stroke-width:2px;
+
+    class EnvStyle,EnvMode config;
+    class Guard,StyleGate,RotGate,ModeGate,RunGate,Fits1,VariantGate,Budget gate;
+    class Reject failure;
+    class Resolve,FitAbbr,TryReal,TryTrunc,TrySlice,Draw highlight;
+    class Soft,Chips design;
+    class Audit audit;
+    class EnvReflow,Group,Natural,Shift,NoRoom,SafeExpand,Invisible fresh;
