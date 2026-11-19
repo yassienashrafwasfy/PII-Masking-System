@@ -59,10 +59,13 @@ flowchart LR
 ## 快速开始
 
 ```sh
+uv run --no-project --with kagglehub python scripts/fetch_models.py --team octo   # download the weights
 cp .env.example .env              # set SERVICE_TOKEN to a long random value
-docker compose --profile octo up --detach --no-build
+docker compose --profile octo up --detach --build
 curl http://localhost:8080/health # {"status":"UP"}
 ```
+
+模型权重不在本仓库中，而是托管在 [Kaggle](https://www.kaggle.com/models/yassienwasfy/pii-masking-system)，附有模型卡和每个模型各自的许可证；`scripts/fetch_models.py` 会下载权重，并用脚本中固定的 SHA-256 校验每个文件。三个 Berts 检查点来自第三方，其许可证尚未确认，见 [NOTICE](../../NOTICE)。
 
 遮盖一个文本文件：
 

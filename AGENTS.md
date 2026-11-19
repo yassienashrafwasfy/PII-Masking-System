@@ -30,7 +30,7 @@ just launch octo                                   # SERVICE_TOKEN=... docker co
 
 - `team_id` trusted only from R2 key prefix + gateway `X-Source-Object-Key` check. Never select team/model/URL from body, filename, or other headers; never echo model URLs to callers.
 - `SERVICE_TOKEN` bearer on `POST /v1/mask`, compared with `hmac.compare_digest`.
-- Synthetic fixtures only — never commit real PII, credentials, endpoints, NiFi state, or runtime output. Only exceptions: Git-LFS model artifacts and approved synthetic samples. Use `*.example` placeholders.
+- Synthetic fixtures only — never commit real PII, credentials, endpoints, NiFi state, or runtime output. Model weights are never committed (Kaggle, `scripts/fetch_models.py`; `.gitignore` covers the fetched paths). Only exception: approved synthetic samples. Use `*.example` placeholders.
 
 ## CI (`.gitlab-ci.yml` + `ci/`, self-hosted `vps-ci` runner)
 

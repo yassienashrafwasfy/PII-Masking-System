@@ -9,7 +9,11 @@ All source code in this repository is licensed under Apache-2.0.
 
 == Models ==
 
-This public repository does not include the model weights. Apache-2.0 applies to the model artifacts (ONNX graphs, tokenizers, manifests)
+This repository does not include the model weights. They are published as
+public Kaggle models at https://www.kaggle.com/models/yassienwasfy/pii-masking-system
+(one model, one variation per artifact, each with its own license field) and
+are fetched with scripts/fetch_models.py, which verifies a pinned SHA-256 for
+every graph. Apache-2.0 applies to the model artifacts (ONNX graphs, tokenizers, manifests)
 that this project's contributors produced. It does NOT replace the licenses of
 the upstream models they were built from or downloaded from. Anyone who
 redistributes or uses a model artifact must also comply with its upstream terms:
@@ -26,6 +30,10 @@ redistributes or uses a model artifact must also comply with its upstream terms:
                    authors have not (yet) confirmed Apache-2.0 for the
                    weights; until they do, treat the Berts weights as
                    "license not confirmed" and do not assume Apache-2.0.
+                   They are mirrored UNMODIFIED on Kaggle with license
+                   "Other" so that this project works out of the box. That
+                   mirror is not a grant from the original authors and will be
+                   removed or re-licensed if an author asks.
                    Their base architectures (MedRoBERTa.nl, CamemBERT) are MIT.
   OCR (optional)   PP-OCR text detection and recognition graphs under
                    platform/masking-gateway/src/masking_engine/src/models/ocr/.

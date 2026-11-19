@@ -37,7 +37,7 @@ restoring the single-model behaviour that predates the other two. It is the
 rollback for a bad checkpoint: one restart, no release.
 
 The only supported runtime format is CPU `onnx`. All three immutable artifacts
-are committed and tracked with Git LFS; a deployment stages all three together,
+are published on Kaggle (`scripts/fetch_models.py --team berts`; upstream license not confirmed, see NOTICE); a deployment stages all three together,
 because a missing one is not noticed at startup but at the first document in
 that language. See `docs/model-card.md` for digests, graph inputs, and known
 checkpoint quality notes, and `deploy/README.md` for the staging procedure.

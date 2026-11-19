@@ -101,6 +101,7 @@ module = [
     "reportlab.*",
     "pypdf.*",
     "peft.*",
+    "kagglehub.*",  # run-time only, via `uv run --no-project --with kagglehub` (scripts/fetch_models.py)
 ]
 ignore_missing_imports = true
 

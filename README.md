@@ -61,10 +61,13 @@ All models run on CPU through ONNX Runtime.
 ## Quick start
 
 ```sh
+uv run --no-project --with kagglehub python scripts/fetch_models.py --team octo   # download the weights
 cp .env.example .env              # set SERVICE_TOKEN to a long random value
-docker compose --profile octo up --detach --no-build
+docker compose --profile octo up --detach --build
 curl http://localhost:8080/health # {"status":"UP"}
 ```
+
+The model weights are not stored in this repository. They are hosted on [Kaggle](https://www.kaggle.com/models/yassienwasfy/pii-masking-system) with a model card and a license per model; `scripts/fetch_models.py` downloads them and checks each file against a SHA-256 pinned in the script. The three Berts checkpoints come from third parties whose license is not confirmed, see [NOTICE](NOTICE).
 
 Mask a text file:
 
@@ -130,6 +133,7 @@ uv run python platform/masking-gateway/tests/test_qa_label_schema.py
 uv run python platform/masking-gateway/tests/test_pdf_line_reflow.py
 uv run python platform/masking-gateway/tests/test_pdf_unmaskable_channels.py
 uv run python tests/test_repository_layout.py
+uv run python tests/test_fetch_models.py
 PYTHONPATH=evaluation uv run python -m pytest -q evaluation/tests
 uv run pre-commit run --all-files --show-diff-on-failure
 ```

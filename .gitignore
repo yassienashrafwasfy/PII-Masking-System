@@ -61,3 +61,14 @@ platform/nifi/provenance_repository/
 .gitlab-ci-local
 build-artifacts
 mutants/
+
+# Model weights are not in this repository: scripts/fetch_models.py downloads
+# them from Kaggle into the directories below. Without these rules a fetched
+# 1 GB model.onnx is an ordinary untracked file that `git add -A` would commit.
+# The small configs, manifests and charset beside them stay tracked.
+teams/*/onnx*/model.onnx
+teams/*/onnx*/tokenizer.json
+teams/*/onnx*/sentencepiece.bpe.model
+teams/*/onnx*/NOTICE.txt
+platform/masking-gateway/src/masking_engine/src/models/ocr/artifacts/*/model.onnx
+platform/masking-gateway/src/masking_engine/src/models/ocr/artifacts/**/NOTICE.txt

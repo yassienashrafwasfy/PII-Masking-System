@@ -1,6 +1,6 @@
 # Synthify
 
-Synthify owns a migrated GLiNER Belgian PII NER artifact, exported to `onnx/`. It is stored with Git LFS and documented in [the model card](docs/model-card.md).
+Synthify owns a migrated GLiNER Belgian PII NER artifact, exported to `onnx/`. It is published on Kaggle (`scripts/fetch_models.py --team synthify`) and documented in [the model card](docs/model-card.md).
 
 `adapter.py` exports the private Synthify GLiNER detector. The platform-owned
 document pipeline extracts `application/pdf` with recursive XY-cut reading order

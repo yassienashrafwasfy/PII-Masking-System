@@ -61,10 +61,13 @@ flowchart LR
 ## بداية سريعة
 
 ```sh
+uv run --no-project --with kagglehub python scripts/fetch_models.py --team octo   # download the weights
 cp .env.example .env              # set SERVICE_TOKEN to a long random value
-docker compose --profile octo up --detach --no-build
+docker compose --profile octo up --detach --build
 curl http://localhost:8080/health # {"status":"UP"}
 ```
+
+أوزان النماذج غير موجودة في هذا المستودع. فهي مستضافة على [Kaggle](https://www.kaggle.com/models/yassienwasfy/pii-masking-system) مع بطاقة نموذج ورخصة لكل نموذج؛ ويقوم `scripts/fetch_models.py` بتنزيلها والتحقق من كل ملف مقابل قيمة SHA-256 مثبّتة في السكربت. نقاط التحقق الثلاث لـ Berts مصدرها أطراف ثالثة لم يتم تأكيد رخصتها، راجع [NOTICE](../../NOTICE).
 
 إخفاء بيانات ملف نصي:
 

@@ -59,10 +59,13 @@ Todos los modelos se ejecutan en CPU mediante ONNX Runtime.
 ## Inicio rápido
 
 ```sh
+uv run --no-project --with kagglehub python scripts/fetch_models.py --team octo   # download the weights
 cp .env.example .env              # set SERVICE_TOKEN to a long random value
-docker compose --profile octo up --detach --no-build
+docker compose --profile octo up --detach --build
 curl http://localhost:8080/health # {"status":"UP"}
 ```
+
+Los pesos de los modelos no están en este repositorio. Se alojan en [Kaggle](https://www.kaggle.com/models/yassienwasfy/pii-masking-system) con una ficha de modelo y una licencia por modelo; `scripts/fetch_models.py` los descarga y comprueba cada archivo con un SHA-256 fijado en el script. Los tres checkpoints de Berts provienen de terceros cuya licencia no está confirmada, véase [NOTICE](../../NOTICE).
 
 Enmascarar un archivo de texto:
 
