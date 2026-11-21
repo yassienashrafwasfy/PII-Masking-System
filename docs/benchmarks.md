@@ -15,7 +15,7 @@ the results and how to read them.
 * **Hardware:** a Kaggle CPU session, 4 vCPU, no accelerator, one session per
   configuration. The GPUs were deliberately not used: the platform serves ONNX on CPU
   (ADR 005), and these are the numbers that path produces. `s/doc` is wall time per
-  document on that session, including the platform's extraction and redaction work.
+  document on that session, covering the platform's text extraction, language detection and span detection (masking and rendering of the output file are not included).
 * **Commits:** predictions came from `c4b890f` (`run.json` in each kernel records it);
   the scorer is `061f062`, whose label maps differ from `c4b890f` in two ways that change
   no type-agnostic number (see "Scoring changes" below).
