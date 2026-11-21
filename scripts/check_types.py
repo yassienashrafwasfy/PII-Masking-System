@@ -30,6 +30,7 @@ GROUPS: dict[str, list[str]] = {
         "evaluation/leaderboard_api",
         "evaluation/evaluator",
         "evaluation/scripts",
+        "evaluation/public_benchmarks",
         "evaluation/datasets/generate_synthetic.py",
     ],
     "evaluation-tests": ["evaluation/tests"],

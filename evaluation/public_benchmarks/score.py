@@ -73,10 +73,10 @@ def score(data: Path, predictions: Path, rounds: int) -> dict:
             locales[f"{group}:{row['locale']}"] += 1
             seconds.setdefault(group, []).append(row["seconds"])
         groups = {}
-        for group, counts in sorted(by_group.items()):
+        for group, per_document in sorted(by_group.items()):
             groups[group] = {
-                **scoring.metrics(scoring.aggregate(counts)),
-                "ci95": scoring.bootstrap(counts, rounds),
+                **scoring.metrics(scoring.aggregate(per_document)),
+                "ci95": scoring.bootstrap(per_document, rounds),
                 "seconds_per_document": sum(seconds[group]) / len(seconds[group]),
             }
         results["configs"][run["config"]] = {
