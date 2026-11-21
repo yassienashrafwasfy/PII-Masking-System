@@ -1,0 +1,10 @@
+{
+  "format": "onnx",
+  "model_sha256": "b561e1fd1ac8a46e139c94744ec49dfda3b46aee63a8cfe2bf4ec1d5a975b120",
+  "opset": 17,
+  "precision": "float32",
+  "runtime": "onnxruntime-cpu",
+  "source_model": "masterofaudio2077/medical-pii-ner-mdeberta-v3",
+  "source_model_sha256": "131db8ef1aa4980e93a753a70690d3721df3644597fce2e5a8797d3258262917",
+  "source_revision": "e93f0cceae9287062456c7058a1bb5d204550998"
+}

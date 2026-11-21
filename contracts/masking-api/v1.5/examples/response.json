@@ -1,0 +1,1 @@
+{"status":200,"headers":{"X-Team-ID":"octo","X-Model-Name":"example-masker","X-Model-Version":"sha256:example-immutable-fingerprint","X-Model-Format":"onnx","X-Request-ID":"request-123","X-Processing-Latency-Ms":"12"},"body":"SYNTHETIC_MASKED_CONTENT_ONLY"}

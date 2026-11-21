@@ -91,21 +91,23 @@ def test_clinical_phi_survives_conversion_for_every_team_that_emits_it() -> None
     Octo's checkpoint emits the canonical spelling directly. Berts' three
     checkpoints emit `DISEASE`, which the `berts` profile aliases onto the
     taxonomy's `DIAGNOSIS` -- the same per-profile alias pattern as
-    `PROVIDER_ID -> RIZIV_INAMI`. Neither team's PROCEDURE class has a
-    canonical target, so it stays dropped like any other unmapped label.
+    `PROVIDER_ID -> RIZIV_INAMI`. PROCEDURE and Octo's LAB_RESULT were
+    dropped until ADR 007 gave them canonical targets (PROCEDURE and
+    TESTRESULTS) so every team that emits a clinical class masks the same set.
     """
     assert convert("octo", "MEDICATION") == ["MEDICATION"]
     assert convert("octo", "SYMPTOM") == ["SYMPTOM"]
     assert convert("octo", "DIAGNOSIS") == ["DIAGNOSIS"]
-    assert convert("octo", "PROCEDURE") == []
+    assert convert("octo", "PROCEDURE") == ["PROCEDURE"]
+    assert convert("octo", "LAB_RESULT") == ["TESTRESULTS"]
 
     assert convert("berts", "MEDICATION") == ["MEDICATION"]
     assert convert("berts", "SYMPTOM") == ["SYMPTOM"]
     assert convert("berts", "DISEASE") == ["DIAGNOSIS"]
-    assert convert("berts", "PROCEDURE") == []
+    assert convert("berts", "PROCEDURE") == ["PROCEDURE"]
 
 
-def test_berts_artifact_labels_are_exactly_three_phi_classes_and_six_fields() -> None:
+def test_berts_artifact_labels_are_exactly_four_phi_classes_and_six_fields() -> None:
     """Drive the mapping off the committed checkpoints, not a hand-kept list.
 
     Berts is the team whose clinical head decides whether a medication, a
@@ -137,13 +139,11 @@ def test_berts_artifact_labels_are_exactly_three_phi_classes_and_six_fields() ->
         "ORGANIZATION_NAME",
         "PHONE_NUMBER",
     }
-    phi = {"MEDICATION", "SYMPTOM", "DIAGNOSIS"}
+    phi = {"MEDICATION", "SYMPTOM", "DIAGNOSIS", "PROCEDURE"}
     assert converted == identity | phi, sorted(converted)
-    # Not merely "these survive": nothing else may. PROCEDURE is the fourth
-    # clinical class in the checkpoints and has to stay dropped, and a fifth
-    # one added later must land here rather than at a masked document.
+    # Not merely "these survive": nothing else may. A fifth clinical class added
+    # to a checkpoint later must land here rather than at a masked document.
     assert converted & set(label_registry.profiles()["routing_only_labels"]) == phi
-    assert "PROCEDURE" not in converted
 
 
 def test_octo_locale_identifiers_survive_conversion() -> None:

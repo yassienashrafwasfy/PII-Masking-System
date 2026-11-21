@@ -8,6 +8,7 @@ services:
       OCTO_MODEL_URL: http://octo-model:8080
       SYNTHIFY_MODEL_URL: http://synthify-model:8080
       BERTS_MODEL_URL: http://berts-model:8080
+      MDEBERTA_MODEL_URL: http://mdeberta-model:8080
       SERVICE_RELEASE: demo
     ports:
       - "8080:8080"
@@ -55,6 +56,57 @@ services:
       PROD_LOGS_S3_SECRET_KEY: ${PROD_LOGS_S3_SECRET_KEY:-}
     volumes:
       - ./teams/octo/onnx:/models/onnx:ro
+    networks:
+      - models
+      - public
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://localhost:8080/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  mdeberta-model:
+    profiles: ["mdeberta"]
+    build:
+      context: .
+      dockerfile: platform/model-service/Dockerfile
+      args:
+        TEAM: mdeberta
+    environment:
+      TEAM_ID: mdeberta
+      ONNX_MODEL_PATH: /models/onnx
+      DETECTION_MODE: model_regex
+      DETECTOR_LABEL_PROFILE: mdeberta
+      MODEL_VERSION: sha256:b561e1fd1ac8a46e139c94744ec49dfda3b46aee63a8cfe2bf4ec1d5a975b120
+      MODEL_NAME: mdeberta-medical-pii-ner
+      SERVICE_NAME: mdeberta-medical-pii-ner
+      ONNX_MODEL_SHA256: b561e1fd1ac8a46e139c94744ec49dfda3b46aee63a8cfe2bf4ec1d5a975b120
+      ACCELERATOR: cpu
+      PDF_REDACTION_STYLE: ${PDF_REDACTION_STYLE:-invisible}
+      PDF_REDACTION_MODE: ${PDF_REDACTION_MODE:-pseudonymize}
+      PDF_OCR: ${PDF_OCR:-on}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PDF_LOCALE_BADGE: ${PDF_LOCALE_BADGE:-on}
+      PDF_CHIP_REFLOW: ${PDF_CHIP_REFLOW:-on}
+      MODEL_ID_SHAPE_GATE: ${MODEL_ID_SHAPE_GATE:-on}
+      ORGANIZATION_SURROGATE_POOL: ${ORGANIZATION_SURROGATE_POOL:-medical}
+      SERVICE_RELEASE: demo
+      # Unset means the per-request audit object is not written at all, which
+      # is what `_upload_audit` already does -- it logs audit_upload_disabled
+      # and returns. deploy/compose.yml has always defaulted these to empty;
+      # only this file demanded them, so running the demo meant holding the
+      # production logs bucket's credentials.
+      PROD_LOGS_S3_ACCESS_KEY: ${PROD_LOGS_S3_ACCESS_KEY:-}
+      PROD_LOGS_S3_SECRET_KEY: ${PROD_LOGS_S3_SECRET_KEY:-}
+    volumes:
+      - ./teams/mdeberta/onnx:/models/onnx:ro
     networks:
       - models
       - public

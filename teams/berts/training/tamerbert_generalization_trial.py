@@ -29,6 +29,7 @@ recomputations from the same raw predictions, no extra GPU cost):
 Self-contained: Kaggle script kernels don't reliably put sibling .py files on
 sys.path, so patterns.py is inlined below rather than imported.
 """
+
 from __future__ import annotations
 
 import glob
@@ -88,7 +89,12 @@ from transformers import (  # noqa: E402
 )
 from transformers.trainer_utils import get_last_checkpoint  # noqa: E402
 
-print("CUDA available:", torch.cuda.is_available(), "device_count:", torch.cuda.device_count())
+print(
+    "CUDA available:",
+    torch.cuda.is_available(),
+    "device_count:",
+    torch.cuda.device_count(),
+)
 
 
 # =========================================================================== #
@@ -126,20 +132,25 @@ P = {}
 # single most common way a number ends in real prose. Only a following
 # DIGIT should be rejected (it means this was a truncated prefix of a
 # longer run); trailing punctuation is not part of the number.
-P["INSZ"] = re.compile(r"(?<![\d.\-/])(\d{2})[.\-/ ]?(\d{2})[.\-/ ]?(\d{2})"
-                       r"[-.\s]?(\d{3})[.\-/ ]?(\d{2})(?!\d)")
-P["RIZIV"] = re.compile(r"(?<![\d.\-/])(\d)[-.\s]?(\d{5})[-.\s]?(\d{2})"
-                        r"[-.\s]?(\d{3})(?!\d)")
+P["INSZ"] = re.compile(
+    r"(?<![\d.\-/])(\d{2})[.\-/ ]?(\d{2})[.\-/ ]?(\d{2})"
+    r"[-.\s]?(\d{3})[.\-/ ]?(\d{2})(?!\d)"
+)
+P["RIZIV"] = re.compile(
+    r"(?<![\d.\-/])(\d)[-.\s]?(\d{5})[-.\s]?(\d{2})" r"[-.\s]?(\d{3})(?!\d)"
+)
 # Belgian VAT / enterprise number (KBO/BCE): "BE" + 10 digits, first digit
 # 0 or 1, mod-97 checksum on the last 2 digits vs the first 8 -- same family
 # of check as RIZIV/INSZ. Common formattings: "BE0123.456.749",
 # "BE 0123 456 749", plain "BE0123456749".
 P["BTW_EENHEID"] = re.compile(
-    r"\bBE\s?([01])[.\s]?(\d{3})[.\s]?(\d{3})[.\s]?(\d{3})(?!\d)", re.I)
+    r"\bBE\s?([01])[.\s]?(\d{3})[.\s]?(\d{3})[.\s]?(\d{3})(?!\d)", re.I
+)
 P["EMAIL"] = re.compile(r"\b[\w.+-]+@[\w-]+(?:\.[\w-]+)+\b")
 P["URL"] = re.compile(
     r"\bhttps?://[^\s<>\"'\])]+|\bwww\.[\w-]+(?:\.[\w-]+)+(?:/[^\s<>\"'\])]*)?"
-    r"|(?<![@\w.])\b[\w-]{2,}\.(?:be|nl|com|org|net|eu)(?:/[^\s<>\"'\])]*)?")
+    r"|(?<![@\w.])\b[\w-]{2,}\.(?:be|nl|com|org|net|eu)(?:/[^\s<>\"'\])]*)?"
+)
 P["TELEFOON"] = re.compile(
     r"(?<!\d)(?:(?:\+32|0032|32)[\s./-]?(?:\(0\)[\s./-]?)?)?"
     r"(?:0?(?:4[5-9]\d(?:[\s./-]?\d){6}"
@@ -148,41 +159,60 @@ P["TELEFOON"] = re.compile(
     r"|800(?:[\s./-]?\d){5}"
     r"|(?:70|78|900)(?:[\s./-]?\d){6}))"
     r"(?!\d)",
-    re.IGNORECASE)
-_MONTHS = (r"jan(?:uari)?|feb(?:ruari)?|m(?:rt|aa|aart)|apr(?:il)?|mei|jun(?:i)?"
-           r"|jul(?:i)?|aug(?:ustus)?|sep(?:t|tember)?|okt(?:ober)?"
-           r"|nov(?:ember)?|dec(?:ember)?")
+    re.IGNORECASE,
+)
+_MONTHS = (
+    r"jan(?:uari)?|feb(?:ruari)?|m(?:rt|aa|aart)|apr(?:il)?|mei|jun(?:i)?"
+    r"|jul(?:i)?|aug(?:ustus)?|sep(?:t|tember)?|okt(?:ober)?"
+    r"|nov(?:ember)?|dec(?:ember)?"
+)
 _DATE_ANCHOR = r"\b(?:op|d\.d\.|datum:?)\s+"
 P["DOB"] = re.compile(
     rf"[{RING}]\s?(\d{{1,2}})[-/.](\d{{1,2}})[-/.]((?:19|20)?\d{{2}})"
     rf"|[{RING}]\s?((?:19|20)\d{{2}})-(\d{{1,2}})-(\d{{1,2}})(?!\d)"
     rf"|[{RING}]\s?((?:19|20)\d{{2}})\b"
-    rf"|[{RING}]\s?(\d{{1,2}})\s+({_MONTHS})\s+((?:19|20)\d{{2}})", re.I)
+    rf"|[{RING}]\s?(\d{{1,2}})\s+({_MONTHS})\s+((?:19|20)\d{{2}})",
+    re.I,
+)
 P["DATE_DMY"] = re.compile(
-    r"(?<![\d/.\-])(0?[1-9]|[12]\d|3[01])([/.\-])(0?[1-9]|1[0-2])\2((?:19|20)\d{2})(?![\d])")
+    r"(?<![\d/.\-])(0?[1-9]|[12]\d|3[01])([/.\-])(0?[1-9]|1[0-2])\2((?:19|20)\d{2})(?![\d])"
+)
 P["DATE_DMY_2YR"] = re.compile(
-    r"(?<![\d/.\-])(0?[1-9]|[12]\d|3[01])([/.\-])(0?[1-9]|1[0-2])\2(\d{2})(?![\d])")
-P["DATE_ISO"] = re.compile(r"(?<![\d\-])((?:19|20)\d{2})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])(?![\d\-])")
+    r"(?<![\d/.\-])(0?[1-9]|[12]\d|3[01])([/.\-])(0?[1-9]|1[0-2])\2(\d{2})(?![\d])"
+)
+P["DATE_ISO"] = re.compile(
+    r"(?<![\d\-])((?:19|20)\d{2})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])(?![\d\-])"
+)
 # Same YYYY-MM-DD structure but slash-separated (e.g. "1962/07/30") -- never
 # covered by any prior pattern; confirmed missing on the OOD stress set.
-P["DATE_ISO_SLASH"] = re.compile(r"(?<![\d/])((?:19|20)\d{2})/(0[1-9]|1[0-2])/(0[1-9]|[12]\d|3[01])(?![\d/])")
+P["DATE_ISO_SLASH"] = re.compile(
+    r"(?<![\d/])((?:19|20)\d{2})/(0[1-9]|1[0-2])/(0[1-9]|[12]\d|3[01])(?![\d/])"
+)
 P["DATE_YM_REV"] = re.compile(
-    r"(?<![\d/.\-])((?:19|20)\d{2})([/.\-])(0?[1-9]|1[0-2])(?!\d)(?![/.\-]\d)")
-P["DATE_MY"] = re.compile(r"(?<![\d/.\-])(0?[1-9]|1[0-2])[/.\-]((?:19|20)\d{2})(?![\d])")
+    r"(?<![\d/.\-])((?:19|20)\d{2})([/.\-])(0?[1-9]|1[0-2])(?!\d)(?![/.\-]\d)"
+)
+P["DATE_MY"] = re.compile(
+    r"(?<![\d/.\-])(0?[1-9]|1[0-2])[/.\-]((?:19|20)\d{2})(?![\d])"
+)
 P["DATE_TEXT"] = re.compile(
-    rf"\b(?:(0?[1-9]|[12]\d|3[01])\s+)?({_MONTHS})\s+'?((?:19|20)?\d{{2}})\b", re.I)
+    rf"\b(?:(0?[1-9]|[12]\d|3[01])\s+)?({_MONTHS})\s+'?((?:19|20)?\d{{2}})\b", re.I
+)
 P["DATE_NOYEAR"] = re.compile(
     _DATE_ANCHOR + r"(0?[1-9]|[12]\d|3[01])([/.\-])(0?[1-9]|1[0-2])(?!\d)(?![/.\-]\d)",
-    re.I)
+    re.I,
+)
 P["DATE_COMPACT"] = re.compile(
     _DATE_ANCHOR + r"((?:19|20)\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])(?!\d)"
     r"|" + _DATE_ANCHOR + r"(\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])(?!\d)",
-    re.I)
+    re.I,
+)
 P["AGE"] = re.compile(
     r"\b(\d{1,3})\s*(?:jaar|jr\.?|j\.)(?!\w)"
     r"|\b(\d{1,3})\s?-?\s?jarig[e]?\b"
     r"|(?<=leeftijd:)\s?(\d{1,3})\b"
-    r"|(?<=leeftijd)\s(\d{1,3})\b", re.I)
+    r"|(?<=leeftijd)\s(\d{1,3})\b",
+    re.I,
+)
 
 
 def valid_insz(digits):
@@ -251,8 +281,20 @@ def valid_date_parts(d, m, y):
         y += 1900 if y > 30 else 2000
     if not (1 <= m <= 12 and 1 <= d <= 31 and 1900 <= y <= 2100):
         return False
-    dim = [31, 29 if (y % 4 == 0 and (y % 100 or y % 400 == 0)) else 28,
-           31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    dim = [
+        31,
+        29 if (y % 4 == 0 and (y % 100 or y % 400 == 0)) else 28,
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    ]
     return d <= dim[m - 1]
 
 
@@ -268,7 +310,9 @@ NEGATIVE_CONTEXT = [
     re.compile(r"\b(?:BD|RR|HR|HF|SpO2|spo2|pols|temp|T)\s*[:=]\s*$", re.I),
     re.compile(r"\b\d+\s*(?:mg|mcg|g|ml|cc|ie|E|IU|kg|cm|mmHg)\s*$", re.I),
     re.compile(r"\b(?:as|axis|hoek|flexie|extensie|abductie|rotatie|ROM)\s*$", re.I),
-    re.compile(r"\b(?:FEV1|FVC|PEF|FEF|TLC|RV|VC|TGV|Raw|sGaw|TLco|Kco|Va)\b[^\n]{0,20}$"),
+    re.compile(
+        r"\b(?:FEV1|FVC|PEF|FEF|TLC|RV|VC|TGV|Raw|sGaw|TLco|Kco|Va)\b[^\n]{0,20}$"
+    ),
     # reference-range disclaimer phrasing ("niet gevalideerd/geëxtrapoleerd
     # boven/onder de N jaar") -- the number is a threshold in a boilerplate
     # sentence, not a patient's age. Confirmed on real docs and OOD stress
@@ -279,7 +323,8 @@ NEGATIVE_SURFACE = re.compile(
     r"^(?:\d{1,2}/\d{1,2}(?:/\d{1,2})?$"
     r"|\d+\s?[xX]$"
     r"|\d+\s?(?:mg|mcg|g|ml|cc|ie|E|IU|kg|cm|mmHg|%)$"
-    r")")
+    r")"
+)
 FREQ_RE = re.compile(r"^\d{1,2}\s*/\s*[dwmj]$", re.I)
 BP_RE = re.compile(r"^\d{2,3}\s*/\s*\d{2,3}$")
 
@@ -293,12 +338,12 @@ def is_hard_negative(text, start, end, label=None):
             return "blood pressure"
         if NEGATIVE_SURFACE.match(surface):
             return "dose/count"
-    left = text[max(0, start - 24):start]
+    left = text[max(0, start - 24) : start]
     if label != "DATE":
         for pat in NEGATIVE_CONTEXT:
             if pat.search(left):
                 return f"negative context: {left.strip()[-16:]!r}"
-    right = text[end:end + 8]
+    right = text[end : end + 8]
     if re.match(r"\s*(?:mg|mcg|ml|cc|kg|cm|mmHg|%|ie\b|E\b|graden)", right, re.I):
         return "followed by unit"
     return None
@@ -317,13 +362,22 @@ class Hit:
 # Most specific first; DOB remapped to DATE (our taxonomy has no separate
 # DOB label -- gold data tags birth dates as DATE).
 ORDER = [
-    ("INSZ", "INSZ"), ("RIZIV", "RIZIV"), ("BTW_EENHEID", "BTW_EENHEID"),
-    ("EMAIL", "EMAIL"), ("URL", "URL"),
+    ("INSZ", "INSZ"),
+    ("RIZIV", "RIZIV"),
+    ("BTW_EENHEID", "BTW_EENHEID"),
+    ("EMAIL", "EMAIL"),
+    ("URL", "URL"),
     ("TELEFOON", "PHONE"),
     ("DOB", "DATE"),
-    ("DATE_ISO", "DATE"), ("DATE_ISO_SLASH", "DATE"), ("DATE_DMY", "DATE"), ("DATE_DMY_2YR", "DATE"),
-    ("DATE_TEXT", "DATE"), ("DATE_YM_REV", "DATE"), ("DATE_MY", "DATE"),
-    ("DATE_COMPACT", "DATE"), ("DATE_NOYEAR", "DATE"),
+    ("DATE_ISO", "DATE"),
+    ("DATE_ISO_SLASH", "DATE"),
+    ("DATE_DMY", "DATE"),
+    ("DATE_DMY_2YR", "DATE"),
+    ("DATE_TEXT", "DATE"),
+    ("DATE_YM_REV", "DATE"),
+    ("DATE_MY", "DATE"),
+    ("DATE_COMPACT", "DATE"),
+    ("DATE_NOYEAR", "DATE"),
     ("AGE", "AGE"),
 ]
 
@@ -380,7 +434,9 @@ def patterns_detect(text):
                 gi = next((i for i, g in enumerate(m.groups(), 1) if g), None)
                 if gi and m.start(gi) >= 0:
                     gs, ge = m.span(gi)
-                    tail = re.match(r"\s*(?:jaar|jr\.?|j\.|-?\s?jarige?)", src[ge:ge + 10], re.I)
+                    tail = re.match(
+                        r"\s*(?:jaar|jr\.?|j\.|-?\s?jarige?)", src[ge : ge + 10], re.I
+                    )
                     s, e = gs, (ge + tail.end() if tail else ge)
             elif pat_name in ("DATE_NOYEAR", "DATE_COMPACT"):
                 populated = [i for i, g in enumerate(m.groups(), 1) if g]
@@ -531,21 +587,34 @@ def run_eval(golds, preds, surface, mode="strict", compute_ci=True):
     totals = em_aggregate(doc_scores)
     cis = {lab: bootstrap_ci(doc_scores, lab) for lab in totals} if compute_ci else {}
     matrices = [confusion_matrix(g, p) for g, p in zip(golds, preds)]
-    return EvalReport(surface=surface, mode=mode, per_label=totals, overall_score=em_overall(totals),
-                       unreliable_labels=flag_unreliable(totals), confusion=aggregate_confusion(matrices), cis=cis)
+    return EvalReport(
+        surface=surface,
+        mode=mode,
+        per_label=totals,
+        overall_score=em_overall(totals),
+        unreliable_labels=flag_unreliable(totals),
+        confusion=aggregate_confusion(matrices),
+        cis=cis,
+    )
 
 
 def print_report(report):
     o = report.overall_score
     print(f"=== {report.surface} ({report.mode}) ===")
-    print(f"overall  P={o.precision:.3f}  R={o.recall:.3f}  F1={o.f1:.3f}  (tp={o.tp} fp={o.fp} fn={o.fn})")
+    print(
+        f"overall  P={o.precision:.3f}  R={o.recall:.3f}  F1={o.f1:.3f}  (tp={o.tp} fp={o.fp} fn={o.fn})"
+    )
     if report.unreliable_labels:
-        print(f"UNRELIABLE (support<{MIN_RELIABLE_SUPPORT}): {report.unreliable_labels}")
+        print(
+            f"UNRELIABLE (support<{MIN_RELIABLE_SUPPORT}): {report.unreliable_labels}"
+        )
     print("per-label:")
     for lab, sc in sorted(report.per_label.items(), key=lambda kv: -kv[1].support):
         ci = report.cis.get(lab)
         ci_str = f"  95% CI=[{ci[1]:.3f},{ci[2]:.3f}]" if ci else ""
-        print(f"  {lab:16s} P={sc.precision:.3f} R={sc.recall:.3f} F1={sc.f1:.3f} n={sc.support}{ci_str}")
+        print(
+            f"  {lab:16s} P={sc.precision:.3f} R={sc.recall:.3f} F1={sc.f1:.3f} n={sc.support}{ci_str}"
+        )
     if report.confusion:
         print("confusion (gold -> pred, top 10 non-diagonal):")
         non_diag = [(k, v) for k, v in report.confusion.items() if k[0] != k[1]]
@@ -566,8 +635,19 @@ HYBRID_LABELS = {"AGE", "DATE", "PHONE"}
 # (fired early just to stop URL/other patterns misfiring inside an email
 # address) -- never a real scored label until now. BTW_EENHEID is new.
 REGEX_PERMANENT_LABELS = ("INSZ", "RIZIV", "URL", "EMAIL", "BTW_EENHEID")
-_LABEL_PRIORITY = {"INSZ": 9, "RIZIV": 9, "URL": 10, "EMAIL": 10, "BTW_EENHEID": 9,
-                    "DATE": 8, "PHONE": 7, "AGE": 5, "NAME": 4, "ORGANIZATION": 4, "ADDRESS": 6}
+_LABEL_PRIORITY = {
+    "INSZ": 9,
+    "RIZIV": 9,
+    "URL": 10,
+    "EMAIL": 10,
+    "BTW_EENHEID": 9,
+    "DATE": 8,
+    "PHONE": 7,
+    "AGE": 5,
+    "NAME": 4,
+    "ORGANIZATION": 4,
+    "ADDRESS": 6,
+}
 
 
 def merge_drop_all(model_spans, regex_spans):
@@ -618,9 +698,15 @@ def load_split(fname):
     with open(path, encoding="utf-8") as f:
         for line in f:
             d = json.loads(line)
-            out.append({"text": d["text"], "entities": [
-                {"start": s["start"], "end": s["end"], "label": s["label"]} for s in d["spans"]
-            ]})
+            out.append(
+                {
+                    "text": d["text"],
+                    "entities": [
+                        {"start": s["start"], "end": s["end"], "label": s["label"]}
+                        for s in d["spans"]
+                    ],
+                }
+            )
     return out
 
 
@@ -648,9 +734,11 @@ eval_sets = {
 
 if DOC_LIMIT:
     train_recs_full = train_recs_full[:DOC_LIMIT]
-    eval_sets = {k: v[:max(1, DOC_LIMIT // 10)] for k, v in eval_sets.items()}
-    print(f"DRY RUN: capped train={len(train_recs_full)}  " +
-          "  ".join(f"{k}={len(v)}" for k, v in eval_sets.items()))
+    eval_sets = {k: v[: max(1, DOC_LIMIT // 10)] for k, v in eval_sets.items()}
+    print(
+        f"DRY RUN: capped train={len(train_recs_full)}  "
+        + "  ".join(f"{k}={len(v)}" for k, v in eval_sets.items())
+    )
 
 
 def strip_for_training(records):
@@ -666,13 +754,25 @@ model_labels = sorted({e["label"] for r in train_recs for e in r["entities"]})
 label_list = ["O"] + [f"{p}-{c}" for c in model_labels for p in ("B", "I")]
 label2id = {l: i for i, l in enumerate(label_list)}
 id2label = {i: l for i, l in enumerate(label_list)}
-print(f"train={len(train_recs)}  " + "  ".join(f"{k}={len(v)}" for k, v in eval_sets.items()))
+print(
+    f"train={len(train_recs)}  "
+    + "  ".join(f"{k}={len(v)}" for k, v in eval_sets.items())
+)
 print(f"model_labels ({len(model_labels)}): {model_labels}")
 
 with open(os.path.join(REPORT_DIR, "trial_config.json"), "w") as f:
-    json.dump({"trial_id": TRIAL_ID, "seed": SEED, "model_labels": model_labels,
-               "max_steps": MAX_STEPS, "n_train": len(train_recs),
-               "n_eval": {k: len(v) for k, v in eval_sets.items()}}, f, indent=2)
+    json.dump(
+        {
+            "trial_id": TRIAL_ID,
+            "seed": SEED,
+            "model_labels": model_labels,
+            "max_steps": MAX_STEPS,
+            "n_train": len(train_recs),
+            "n_eval": {k: len(v) for k, v in eval_sets.items()},
+        },
+        f,
+        indent=2,
+    )
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_HF_ID, add_prefix_space=True)
 assert tokenizer.is_fast
@@ -690,8 +790,15 @@ def char_bio(text, entities):
 
 def tokenize_split(recs, for_training):
     texts = [r["text"] for r in recs]
-    tok = tokenizer(texts, truncation=True, max_length=MAX_LEN, stride=STRIDE,
-                     return_overflowing_tokens=True, return_offsets_mapping=True, padding="max_length")
+    tok = tokenizer(
+        texts,
+        truncation=True,
+        max_length=MAX_LEN,
+        stride=STRIDE,
+        return_overflowing_tokens=True,
+        return_offsets_mapping=True,
+        padding="max_length",
+    )
     sample_map = tok.pop("overflow_to_sample_mapping")
     offset_batch = tok.pop("offset_mapping")
     window_meta = [(sample_map[i], offset_batch[i]) for i in range(len(sample_map))]
@@ -699,10 +806,12 @@ def tokenize_split(recs, for_training):
         char_cache, all_labels = {}, []
         for i, (doc_idx, offsets) in enumerate(window_meta):
             if doc_idx not in char_cache:
-                char_cache[doc_idx] = char_bio(recs[doc_idx]["text"], recs[doc_idx]["entities"])
+                char_cache[doc_idx] = char_bio(
+                    recs[doc_idx]["text"], recs[doc_idx]["entities"]
+                )
             ch = char_cache[doc_idx]
             lab_ids = []
-            for (a, b) in offsets:
+            for a, b in offsets:
                 # (0,0) is the padding-token marker; a token can ALSO land exactly at
                 # end-of-string (trailing whitespace in the source text -- every doc in
                 # this corpus has one), giving offset (len(text), len(text)) which is
@@ -746,34 +855,55 @@ eval_key = "eval_strategy" if "eval_strategy" in ta_params else "evaluation_stra
 SAVE_STEPS = 250
 N_CHECKPOINTS = MAX_STEPS // SAVE_STEPS + 2
 ta_kwargs = dict(
-    output_dir=OUTPUT_DIR, learning_rate=2e-5, per_device_train_batch_size=16,
-    max_steps=MAX_STEPS, save_strategy="steps", save_steps=SAVE_STEPS, save_total_limit=N_CHECKPOINTS,
-    logging_steps=50, fp16=torch.cuda.is_available(), report_to="none", push_to_hub=False,
+    output_dir=OUTPUT_DIR,
+    learning_rate=2e-5,
+    per_device_train_batch_size=16,
+    max_steps=MAX_STEPS,
+    save_strategy="steps",
+    save_steps=SAVE_STEPS,
+    save_total_limit=N_CHECKPOINTS,
+    logging_steps=50,
+    fp16=torch.cuda.is_available(),
+    report_to="none",
+    push_to_hub=False,
     seed=SEED,
 )
 ta_kwargs[eval_key] = "no"
 training_args = TrainingArguments(**ta_kwargs)
 tr_params = inspect.signature(Trainer.__init__).parameters
-tok_kwarg = {"processing_class": tokenizer} if "processing_class" in tr_params else {"tokenizer": tokenizer}
+tok_kwarg = (
+    {"processing_class": tokenizer}
+    if "processing_class" in tr_params
+    else {"tokenizer": tokenizer}
+)
 
 if SKIP_TRAINING:
-    assert PRETRAINED_MODEL_DIR and os.path.isdir(PRETRAINED_MODEL_DIR), \
-        "SKIP_TRAINING=1 requires PRETRAINED_MODEL_DIR to point at a saved final_model/ dir"
-    print(f"SKIP_TRAINING: loading finished model from {PRETRAINED_MODEL_DIR} -- no GPU training this run.")
+    assert PRETRAINED_MODEL_DIR and os.path.isdir(
+        PRETRAINED_MODEL_DIR
+    ), "SKIP_TRAINING=1 requires PRETRAINED_MODEL_DIR to point at a saved final_model/ dir"
+    print(
+        f"SKIP_TRAINING: loading finished model from {PRETRAINED_MODEL_DIR} -- no GPU training this run."
+    )
     model = AutoModelForTokenClassification.from_pretrained(PRETRAINED_MODEL_DIR)
     trainer = Trainer(model=model, args=training_args, **tok_kwarg)
 else:
     model = AutoModelForTokenClassification.from_pretrained(
         MODEL_HF_ID, num_labels=len(label_list), id2label=id2label, label2id=label2id
     )
-    trainer = Trainer(model=model, args=training_args, train_dataset=train_dataset, **tok_kwarg)
-    last_checkpoint = get_last_checkpoint(OUTPUT_DIR) if os.path.isdir(OUTPUT_DIR) else None
+    trainer = Trainer(
+        model=model, args=training_args, train_dataset=train_dataset, **tok_kwarg
+    )
+    last_checkpoint = (
+        get_last_checkpoint(OUTPUT_DIR) if os.path.isdir(OUTPUT_DIR) else None
+    )
     if last_checkpoint:
         print(f"Resuming from checkpoint: {last_checkpoint}")
     trainer.train(resume_from_checkpoint=last_checkpoint)
     trainer.save_model(FINAL_MODEL_DIR)
     tokenizer.save_pretrained(FINAL_MODEL_DIR)
-    print(f"Saved final model to {FINAL_MODEL_DIR} (persists as this kernel version's output).")
+    print(
+        f"Saved final model to {FINAL_MODEL_DIR} (persists as this kernel version's output)."
+    )
 
 
 def decode_model_preds(pred_ids, window_meta, n_docs):
@@ -814,15 +944,29 @@ def decode_model_preds(pred_ids, window_meta, n_docs):
     return [resolve_overlaps(per_doc_spans[i]) for i in range(n_docs)]
 
 
-print("Building per-checkpoint overfitting curve on eval_indist (model_only, strict)...")
+print(
+    "Building per-checkpoint overfitting curve on eval_indist (model_only, strict)..."
+)
 model_gold_by_set = {}
 for name, recs in eval_sets.items():
-    model_gold_by_set[name] = [[(e["start"], e["end"], e["label"]) for e in r["entities"] if e["label"] in model_labels]
-                                for r in recs]
+    model_gold_by_set[name] = [
+        [
+            (e["start"], e["end"], e["label"])
+            for e in r["entities"]
+            if e["label"] in model_labels
+        ]
+        for r in recs
+    ]
 
 checkpoint_curve = []
-ckpt_dirs = [] if SKIP_TRAINING else sorted(
-    glob.glob(os.path.join(OUTPUT_DIR, "checkpoint-*")), key=lambda p: int(p.rsplit("-", 1)[-1]))
+ckpt_dirs = (
+    []
+    if SKIP_TRAINING
+    else sorted(
+        glob.glob(os.path.join(OUTPUT_DIR, "checkpoint-*")),
+        key=lambda p: int(p.rsplit("-", 1)[-1]),
+    )
+)
 if SKIP_TRAINING:
     print("SKIP_TRAINING: no intermediate checkpoints this run, curve left empty.")
 indist_enc, indist_meta = eval_encs["indist"]
@@ -832,10 +976,24 @@ for ckpt_dir in ckpt_dirs:
     ckpt_model = AutoModelForTokenClassification.from_pretrained(ckpt_dir)
     ckpt_trainer = Trainer(model=ckpt_model, args=training_args, **tok_kwarg)
     ckpt_pred_ids = np.argmax(ckpt_trainer.predict(indist_dataset).predictions, axis=2)
-    ckpt_preds = decode_model_preds(ckpt_pred_ids, indist_meta, len(eval_sets["indist"]))
-    r = run_eval(model_gold_by_set["indist"], ckpt_preds, "model_only", "strict", compute_ci=False)
-    checkpoint_curve.append({"step": step, "f1": r.overall_score.f1,
-                              "precision": r.overall_score.precision, "recall": r.overall_score.recall})
+    ckpt_preds = decode_model_preds(
+        ckpt_pred_ids, indist_meta, len(eval_sets["indist"])
+    )
+    r = run_eval(
+        model_gold_by_set["indist"],
+        ckpt_preds,
+        "model_only",
+        "strict",
+        compute_ci=False,
+    )
+    checkpoint_curve.append(
+        {
+            "step": step,
+            "f1": r.overall_score.f1,
+            "precision": r.overall_score.precision,
+            "recall": r.overall_score.recall,
+        }
+    )
     print(f"  step={step}  strict_f1={r.overall_score.f1:.3f}")
     del ckpt_model, ckpt_trainer
 with open(os.path.join(REPORT_DIR, "checkpoint_curve.json"), "w") as f:
@@ -862,18 +1020,28 @@ for name, recs in eval_sets.items():
     model_preds = decode_model_preds(pred_ids, window_meta, len(recs))
     regex_preds = [patterns_detect(r["text"]) for r in recs]
 
-    all_gold = [[(e["start"], e["end"], e["label"]) for e in r["entities"]] for r in recs]
+    all_gold = [
+        [(e["start"], e["end"], e["label"]) for e in r["entities"]] for r in recs
+    ]
     model_gold = model_gold_by_set[name]
     regex_gold_labels = set(REGEX_PERMANENT_LABELS) | HYBRID_LABELS
     regex_gold = [[s for s in g if s[2] in regex_gold_labels] for g in all_gold]
 
-    full_preds_dropall = [merge_drop_all(model_preds[i], regex_preds[i]) for i in range(len(recs))]
+    full_preds_dropall = [
+        merge_drop_all(model_preds[i], regex_preds[i]) for i in range(len(recs))
+    ]
 
     reports = {}
     for mode in ("strict", "relaxed"):
-        reports[f"model_only_{mode}"] = run_eval(model_gold, model_preds, "model_only", mode)
-        reports[f"regex_only_{mode}"] = run_eval(regex_gold, regex_preds, "regex_only", mode)
-        reports[f"full_pipeline_dropall_{mode}"] = run_eval(all_gold, full_preds_dropall, "full_pipeline_dropall", mode)
+        reports[f"model_only_{mode}"] = run_eval(
+            model_gold, model_preds, "model_only", mode
+        )
+        reports[f"regex_only_{mode}"] = run_eval(
+            regex_gold, regex_preds, "regex_only", mode
+        )
+        reports[f"full_pipeline_dropall_{mode}"] = run_eval(
+            all_gold, full_preds_dropall, "full_pipeline_dropall", mode
+        )
     for r in reports.values():
         print_report(r)
         print()
@@ -888,23 +1056,44 @@ for name, recs in eval_sets.items():
 
 def report_to_json(r):
     return {
-        "surface": r.surface, "mode": r.mode,
-        "overall": {"precision": r.overall_score.precision, "recall": r.overall_score.recall,
-                    "f1": r.overall_score.f1, "tp": r.overall_score.tp, "fp": r.overall_score.fp,
-                    "fn": r.overall_score.fn},
-        "per_label": {lab: {"precision": sc.precision, "recall": sc.recall, "f1": sc.f1,
-                             "support": sc.support} for lab, sc in r.per_label.items()},
+        "surface": r.surface,
+        "mode": r.mode,
+        "overall": {
+            "precision": r.overall_score.precision,
+            "recall": r.overall_score.recall,
+            "f1": r.overall_score.f1,
+            "tp": r.overall_score.tp,
+            "fp": r.overall_score.fp,
+            "fn": r.overall_score.fn,
+        },
+        "per_label": {
+            lab: {
+                "precision": sc.precision,
+                "recall": sc.recall,
+                "f1": sc.f1,
+                "support": sc.support,
+            }
+            for lab, sc in r.per_label.items()
+        },
         "unreliable_labels": r.unreliable_labels,
         "cis": r.cis,
     }
 
 
 with open(os.path.join(REPORT_DIR, "eval_report.json"), "w") as f:
-    json.dump({name: {k: report_to_json(v) for k, v in reports.items()} for name, reports in all_reports.items()},
-               f, indent=2)
+    json.dump(
+        {
+            name: {k: report_to_json(v) for k, v in reports.items()}
+            for name, reports in all_reports.items()
+        },
+        f,
+        indent=2,
+    )
 
 with open(os.path.join(REPORT_DIR, "raw_predictions.json"), "w") as f:
     json.dump(all_raw, f)
 
-shutil.rmtree(OUTPUT_DIR, ignore_errors=True)  # intermediate step-checkpoints only; FINAL_MODEL_DIR is untouched
+shutil.rmtree(
+    OUTPUT_DIR, ignore_errors=True
+)  # intermediate step-checkpoints only; FINAL_MODEL_DIR is untouched
 print("\nDONE.")

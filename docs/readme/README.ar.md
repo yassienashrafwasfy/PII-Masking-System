@@ -55,6 +55,7 @@ flowchart LR
 | **Octo** | XLM-RoBERTa + قواعد بمجموع اختباري | PDF، نص، CSV، JSON | جاهز للعرض التجريبي |
 | **Synthify** | GLiNER | PDF، نص | عرض تجريبي فقط |
 | **Berts** | int8 ONNX MedRoBERTa / BERT / CamemBERT + قواعد مشتركة | PDF، نص | موصول بالإنتاج، يتطلب موافقة بيئة staging |
+| **mDeBERTa** | mDeBERTa-v3 (36 labels, PII + clinical) + قواعد مشتركة | PDF، نص، CSV، JSON | عرض تجريبي فقط |
 
 تعمل جميع النماذج على المعالج (CPU) عبر ONNX Runtime.
 

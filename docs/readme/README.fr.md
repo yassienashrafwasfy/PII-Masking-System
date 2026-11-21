@@ -53,6 +53,7 @@ Un seul point d'accès HTTP public (`POST /v1/mask`) devant chaque modèle. L'ap
 | **Octo** | XLM-RoBERTa + règles à somme de contrôle | PDF, texte, CSV, JSON | Prêt pour la démo |
 | **Synthify** | GLiNER | PDF, texte | Démo uniquement |
 | **Berts** | int8 ONNX MedRoBERTa / BERT / CamemBERT + règles partagées | PDF, texte | Câblé pour la production, validation du staging requise |
+| **mDeBERTa** | mDeBERTa-v3 (36 labels, PII + clinical) + règles partagées | PDF, texte, CSV, JSON | Démo uniquement |
 
 Tous les modèles s'exécutent sur CPU via ONNX Runtime.
 

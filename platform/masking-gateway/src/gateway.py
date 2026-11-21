@@ -1,4 +1,4 @@
-"""Platform gateway implementing PII Masking API contract v1.4."""
+"""Platform gateway implementing PII Masking API contract v1.5."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from common import http
 
 _T = TypeVar("_T")
 
-SUPPORTED_TEAMS = ("octo", "synthify", "berts")
+SUPPORTED_TEAMS = ("octo", "synthify", "berts", "mdeberta")
 SUPPORTED_MEDIA_TYPES = frozenset(
     {"application/pdf", "text/plain", "text/csv", "application/json"}
 )
@@ -561,7 +561,7 @@ _ROUTES: dict[tuple[str, str], Callable[[Any, dict[str, object]], list[bytes]]] 
 
 
 def application(environ: dict[str, object], start_response: Any) -> list[bytes]:
-    """Serve the required v1.4 endpoints without logging document content."""
+    """Serve the required v1.5 endpoints without logging document content."""
     route = (str(environ.get("REQUEST_METHOD")), str(environ.get("PATH_INFO")))
     handler = _ROUTES.get(route)
     if handler is None:

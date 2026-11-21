@@ -2,7 +2,9 @@
   "schema_version": 2,
   "default_profile": "octo",
   "note": "Profiles convert detector output to qa-pii-v1. Legacy model labels remain mapped so the deployed checkpoint can mask safely until it is retrained. routing_only_labels are masked alongside the qa-pii-v1 identity taxonomy but are not identity PII themselves -- Octo's checkpoint natively emits these as clinical/administrative PHI classes, and this list lets it mask them without expanding qa-pii-v1 itself, or scoring them: the evaluation taxonomy only ever mirrors entity_labels. See ADR 006.",
-  "routing_only_labels": ["MEDICATION", "SYMPTOM", "DIAGNOSIS", "CNP", "COLEGIADO", "DNI", "LANR", "NIE", "PARAFA", "STEUER_ID"],
+  "routing_only_labels": ["MEDICATION", "SYMPTOM", "DIAGNOSIS", "CNP", "COLEGIADO", "DNI", "LANR", "NIE", "PARAFA", "STEUER_ID",
+    "ALLERGIES", "PRESCRIPTIONINFO", "TREATMENTINFO", "TESTRESULTS", "PROCEDURE",
+    "BSN", "KVNR", "IBAN", "MEDICALRECORDNUM", "NATIONAL_ID"],
   "profiles": {
     "octo": {
       "note": "The deployed Octo checkpoint uses legacy labels; qa-pii-v1 training emits canonical labels directly.",
@@ -10,7 +12,8 @@
         "BUILDINGNUM": "ADDRESS", "CITY": "ADDRESS", "HOSPITAL_NAME": "ORGANIZATION_NAME",
         "INSZ": "INSZ_NISS", "ORGANIZATION_ID": "BTW_EENHEID", "RIZIV": "RIZIV_INAMI",
         "SEX": "GENDER", "STREET": "ADDRESS",
-        "TELEFOON": "PHONE_NUMBER", "ZIPCODE": "ADDRESS"
+        "TELEFOON": "PHONE_NUMBER", "ZIPCODE": "ADDRESS",
+        "LAB_RESULT": "TESTRESULTS"
       },
       "composite_address_labels": ["ADDRESS"]
     },
@@ -29,6 +32,15 @@
         "NATIONAL_ID": "INSZ_NISS", "ORG": "ORGANIZATION_NAME", "ORGANIZATION": "ORGANIZATION_NAME",
         "PATIEN_NAME": "NAME", "PATIENT_NAME": "NAME", "PHONE": "PHONE_NUMBER",
         "PROVIDER_ID": "RIZIV_INAMI", "WEBSITE": "URL"
+      },
+      "composite_address_labels": ["ADDRESS"]
+    },
+    "mdeberta": {
+      "note": "mDeBERTa's 36 labels (teams/mdeberta). STREET, ZIPCODE and CITY are separate spans that the composite-address rule merges. Clinical labels keep the platform's names (ADR 006 and 007); NATIONAL_ID is a merge of Steuer-ID and SSN in this checkpoint, so it stays its own routing-only label instead of taking the global NATIONAL_ID to INSZ_NISS alias.",
+      "aliases": {
+        "BTW": "BTW_EENHEID", "CITY": "ADDRESS", "INSZ": "INSZ_NISS", "NATIONAL_ID": "NATIONAL_ID",
+        "ORGANIZATION": "ORGANIZATION_NAME", "PHONE": "PHONE_NUMBER", "RIZIV": "RIZIV_INAMI",
+        "STREET": "ADDRESS", "ZIPCODE": "ADDRESS"
       },
       "composite_address_labels": ["ADDRESS"]
     }

@@ -33,7 +33,7 @@ from masking_engine import (
 
 log = logging.getLogger(__name__)
 TEAM_ID = os.getenv("TEAM_ID", "")
-SUPPORTED_TEAMS = frozenset({"octo", "synthify", "berts"})
+SUPPORTED_TEAMS = frozenset({"octo", "synthify", "berts", "mdeberta"})
 MAX_FILE_BYTES = http.MAX_UPLOAD_BYTES
 BLOCKED_NAME_VALUES = frozenset({"anamnese", "collega", "nicht", "patient", "patiënt"})
 ROOT = Path(os.getenv("REPOSITORY_ROOT", ""))

@@ -55,6 +55,7 @@ One public HTTP endpoint (`POST /v1/mask`) fronts every model. The caller never 
 | **Octo** | XLM-RoBERTa + checksum-gated rules | PDF, text, CSV, JSON | Demo-ready |
 | **Synthify** | GLiNER | PDF, text | Demo only |
 | **Berts** | int8 ONNX MedRoBERTa / BERT / CamemBERT + shared rules | PDF, text | Wired for production, staging approval required |
+| **mDeBERTa** | mDeBERTa-v3 (36 labels, PII + clinical) + shared rules | PDF, text, CSV, JSON | Demo only |
 
 All models run on CPU through ONNX Runtime.
 
@@ -67,7 +68,7 @@ docker compose --profile octo up --detach --build
 curl http://localhost:8080/health # {"status":"UP"}
 ```
 
-The model weights are not stored in this repository. They are hosted on [Kaggle](https://www.kaggle.com/models/yassienwasfy/pii-masking-system) with a model card and a license per model; `scripts/fetch_models.py` downloads them and checks each file against a SHA-256 pinned in the script. The three Berts checkpoints come from third parties whose license is not confirmed, see [NOTICE](NOTICE).
+The model weights are not stored in this repository. They are hosted on [Kaggle](https://www.kaggle.com/models/yassienwasfy/pii-masking-system) with a model card and a license per model; `scripts/fetch_models.py` downloads them and checks each file against a SHA-256 pinned in the script. The three Berts checkpoints come from third parties whose license is not confirmed, see [NOTICE](NOTICE). The mDeBERTa graph is also on [Hugging Face](https://huggingface.co/masterofaudio2077/medical-pii-ner-mdeberta-v3-onnx); fetch it from there with `--team mdeberta --source hub`.
 
 Mask a text file:
 

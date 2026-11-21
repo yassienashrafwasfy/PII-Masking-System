@@ -12,13 +12,14 @@ import octoLogo from './assets/octo-logo.png'
 
 export const CHAMPION_LABEL = 'Cegedim Egypte Model'
 
-export const TEAM_DISPLAY_NAMES = ['Team Synthify', 'Team Octo', 'Team Berts']
+export const TEAM_DISPLAY_NAMES = ['Team Synthify', 'Team Octo', 'Team Berts', 'Team mDeBERTa']
 
 export const TEAM_DISPLAY_NAME_BY_ID = Object.freeze({
   // Canonical ids emitted by QA and validated by the gateway.
   synthify: TEAM_DISPLAY_NAMES[0],
   octo: TEAM_DISPLAY_NAMES[1],
   berts: TEAM_DISPLAY_NAMES[2],
+  mdeberta: TEAM_DISPLAY_NAMES[3],
   // Retained so older MLflow runs still resolve to a name.
   'team-1': TEAM_DISPLAY_NAMES[0],
   'team-2': TEAM_DISPLAY_NAMES[1],

@@ -6,6 +6,12 @@ and this script puts each variation where its team's adapter expects it:
 
     uv run --no-project --with kagglehub python scripts/fetch_models.py --team octo
     uv run --no-project --with kagglehub python scripts/fetch_models.py --team all
+    uv run --no-project --with huggingface-hub python scripts/fetch_models.py \\
+        --team mdeberta --source hub
+
+``--source hub`` downloads from Hugging Face instead of Kaggle. Only the
+mdeberta graph is published there (its own model repo, a quantized-relation child
+of the checkpoint it was exported from); the Kaggle model holds every variation.
 
 `kagglehub` is fetched for the run by ``uv --with`` and is deliberately not a
 project dependency: it is only needed once, and adding it would change the
@@ -39,7 +45,12 @@ ROOT = Path(__file__).resolve().parents[1]
 OCR_DIR = ROOT / "platform/masking-gateway/src/masking_engine/src/models/ocr/artifacts"
 
 # Files that describe the upload rather than the model. They are not copied.
-_NOT_COPIED = {"model-instance-metadata.json"}
+_NOT_COPIED = {"model-instance-metadata.json", "README.md", ".gitattributes"}
+
+HUB_REPO = "masterofaudio2077/medical-pii-ner-mdeberta-v3-onnx"
+# Pinned for the same reason KAGGLE_VERSION is: a later push to the hub repo
+# cannot change what this commit downloads. The digest below catches it anyway.
+HUB_REVISION = "2bb8de51d41ab1b1a14764282e24dd40b77510b0"
 
 
 @dataclass(frozen=True)
@@ -52,6 +63,8 @@ class Variation:
     # Path of each verified graph, relative to the destination, with its SHA-256.
     graphs: dict[str, str]
     license_note: str = ""
+    # Hub repo holding this variation at its root; empty when Kaggle is the only home.
+    hub_repo: str = ""
 
 
 UNCONFIRMED = (
@@ -102,6 +115,15 @@ VARIATIONS: tuple[Variation, ...] = (
             "model.onnx": "2b1af7af5f455b5f623b13d0669c8085e7dd0aa20dd0156bd6d28e4cee4d12c4"
         },
         UNCONFIRMED,
+    ),
+    Variation(
+        "mdeberta",
+        "mdeberta-medical-onnx",
+        ROOT / "teams/mdeberta/onnx",
+        {
+            "model.onnx": "b561e1fd1ac8a46e139c94744ec49dfda3b46aee63a8cfe2bf4ec1d5a975b120"
+        },
+        hub_repo=HUB_REPO,
     ),
     Variation(
         "ocr",
@@ -160,19 +182,37 @@ def copy_into(source: Path, destination: Path) -> None:
         shutil.copy2(item, target)
 
 
-def fetch(variation: Variation, *, force: bool) -> list[str]:
-    if not force and is_installed(variation):
-        print(f"ok       {variation.slug} (already installed, digest matches)")
-        return []
+def download(variation: Variation, source: str, *, force: bool) -> Path | str:
+    """Return the downloaded folder, or a message when this source cannot serve it."""
+    if source == "hub":
+        if not variation.hub_repo:
+            return f"{variation.slug} is not published on the hub; use --source kaggle"
+        try:
+            from huggingface_hub import snapshot_download
+        except ImportError:
+            return "huggingface-hub is missing: run with `uv run --no-project --with huggingface-hub python scripts/fetch_models.py --source hub`"
+        print(f"download hf:{variation.hub_repo}@{HUB_REVISION[:10]}")
+        return Path(
+            snapshot_download(
+                variation.hub_repo, revision=HUB_REVISION, force_download=force
+            )
+        )
     try:
         import kagglehub
     except ImportError:
-        return [
-            "kagglehub is missing: run with `uv run --no-project --with kagglehub python scripts/fetch_models.py`"
-        ]
+        return "kagglehub is missing: run with `uv run --no-project --with kagglehub python scripts/fetch_models.py`"
     handle = f"{KAGGLE_MODEL}/{variation.slug}/{KAGGLE_VERSION}"
     print(f"download {handle}")
-    cached = Path(kagglehub.model_download(handle, force_download=force))
+    return Path(kagglehub.model_download(handle, force_download=force))
+
+
+def fetch(variation: Variation, *, force: bool, source: str = "kaggle") -> list[str]:
+    if not force and is_installed(variation):
+        print(f"ok       {variation.slug} (already installed, digest matches)")
+        return []
+    cached = download(variation, source, force=force)
+    if isinstance(cached, str):
+        return [cached]
     copy_into(cached, variation.destination)
     problems = verify(variation)
     if not problems:
@@ -190,13 +230,26 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="download again even if the files already match",
     )
+    parser.add_argument(
+        "--source",
+        choices=("kaggle", "hub"),
+        default="kaggle",
+        help="where to download from (hub: Hugging Face, mdeberta only)",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     chosen = [v for v in VARIATIONS if args.team in ("all", v.team)]
-    problems = [problem for v in chosen for problem in fetch(v, force=args.force)]
+    if args.source == "hub" and args.team == "all":
+        # `all` means everything the hub has, not an error for each Kaggle-only graph.
+        chosen = [v for v in chosen if v.hub_repo]
+    problems = [
+        problem
+        for v in chosen
+        for problem in fetch(v, force=args.force, source=args.source)
+    ]
     for problem in problems:
         print(f"FAILED   {problem}", file=sys.stderr)
     return 1 if problems else 0

@@ -34,7 +34,7 @@ def test_config_reports_storage_as_unconfigured_by_default(client, monkeypatch):
     monkeypatch.delenv("ARENA_S3_ENDPOINT_URL", raising=False)
     body = client.get("/api/v1/config").json()
     assert body["storage_configured"] is False
-    assert body["teams"] == ["octo", "synthify", "berts"]
+    assert body["teams"] == ["octo", "synthify", "berts", "mdeberta"]
     assert "application/pdf" in body["allowed_content_types"]
 
 

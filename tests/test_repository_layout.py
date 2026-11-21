@@ -25,9 +25,9 @@ def check_team(team: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--team", choices=("octo", "synthify", "berts"))
+    parser.add_argument("--team", choices=("octo", "synthify", "berts", "mdeberta"))
     args = parser.parse_args()
-    teams = (args.team,) if args.team else ("octo", "synthify", "berts")
+    teams = (args.team,) if args.team else ("octo", "synthify", "berts", "mdeberta")
     for team in teams:
         check_team(team)
     print(f"Validated team integration files for: {', '.join(teams)}")

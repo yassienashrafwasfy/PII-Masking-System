@@ -42,6 +42,7 @@ GROUPS: dict[str, list[str]] = {
         "teams/synthify/tests/test_prepare_gliner_dataset.py",
     ],
     "team-berts": ["teams/berts"],
+    "team-mdeberta": ["teams/mdeberta"],
     "scripts": ["scripts"],
     "repo-tests": ["tests"],
     "deploy": ["deploy/migrate-env.py"],

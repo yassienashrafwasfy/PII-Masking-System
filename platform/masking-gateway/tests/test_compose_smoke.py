@@ -80,6 +80,7 @@ def main() -> None:
         ("octo", "octo-pii-masker"),
         ("synthify", "synthify-gliner-belgian-pii-ner"),
         ("berts", "berts-pii-medroberta-nl-int8"),
+        ("mdeberta", "mdeberta-medical-pii-ner"),
     )
     if TEAM_ID:
         teams = tuple(team for team in teams if team[0] == TEAM_ID)

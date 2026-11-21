@@ -53,6 +53,7 @@ Ein einziger öffentlicher HTTP-Endpunkt (`POST /v1/mask`) steht vor jedem Model
 | **Octo** | XLM-RoBERTa + prüfsummengeprüfte Regeln | PDF, Text, CSV, JSON | Demo-bereit |
 | **Synthify** | GLiNER | PDF, Text | Nur Demo |
 | **Berts** | int8 ONNX MedRoBERTa / BERT / CamemBERT + gemeinsame Regeln | PDF, Text | Für Produktion angebunden, Staging-Freigabe nötig |
+| **mDeBERTa** | mDeBERTa-v3 (36 labels, PII + clinical) + gemeinsame Regeln | PDF, Text, CSV, JSON | Nur Demo |
 
 Alle Modelle laufen über ONNX Runtime auf der CPU.
 

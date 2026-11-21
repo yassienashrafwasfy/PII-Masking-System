@@ -238,7 +238,7 @@ REFUSED: tuple[tuple[dict[str, str], str], ...] = (
     ),
     (
         {"DETECTOR_LABEL_PROFILE": "nobody"},
-        "DETECTOR_LABEL_PROFILE must be one of: berts, octo, synthify.",
+        "DETECTOR_LABEL_PROFILE must be one of: berts, mdeberta, octo, synthify.",
     ),
     (
         {"ORGANIZATION_SURROGATE_POOL": "legal"},

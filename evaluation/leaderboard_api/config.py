@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 
-DEFAULT_TEAMS = ("octo", "synthify", "berts")
+DEFAULT_TEAMS = ("octo", "synthify", "berts", "mdeberta")
 
 
 def _clean(value: str) -> str:

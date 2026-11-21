@@ -12,7 +12,7 @@ from pathlib import Path
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--team-id", required=True, choices=("octo", "synthify", "berts")
+        "--team-id", required=True, choices=("octo", "synthify", "berts", "mdeberta")
     )
     parser.add_argument("--model-version", required=True)
     parser.add_argument("--results", type=Path, required=True)

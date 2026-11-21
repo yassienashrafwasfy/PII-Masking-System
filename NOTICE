@@ -35,6 +35,9 @@ redistributes or uses a model artifact must also comply with its upstream terms:
                    mirror is not a grant from the original authors and will be
                    removed or re-licensed if an author asks.
                    Their base architectures (MedRoBERTa.nl, CamemBERT) are MIT.
+  teams/mdeberta   ONNX (fp32) export of masterofaudio2077/medical-pii-ner-mdeberta-v3
+                   (Apache-2.0), fine-tuned from microsoft/mdeberta-v3-base.
+                   Upstream license: MIT (c) Microsoft. Both notices apply.
   OCR (optional)   PP-OCR text detection and recognition graphs under
                    platform/masking-gateway/src/masking_engine/src/models/ocr/.
                    Upstream (PaddleOCR) license: Apache-2.0.

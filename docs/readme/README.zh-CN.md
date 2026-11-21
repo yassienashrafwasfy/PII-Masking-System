@@ -53,6 +53,7 @@ flowchart LR
 | **Octo** | XLM-RoBERTa + 校验和规则 | PDF、文本、CSV、JSON | 可演示 |
 | **Synthify** | GLiNER | PDF、文本 | 仅演示 |
 | **Berts** | int8 ONNX MedRoBERTa / BERT / CamemBERT + 共享规则 | PDF、文本 | 已接入生产，需 staging 审批 |
+| **mDeBERTa** | mDeBERTa-v3 (36 labels, PII + clinical) + 共享规则 | PDF、文本、CSV、JSON | 仅演示 |
 
 所有模型都通过 ONNX Runtime 在 CPU 上运行。
 

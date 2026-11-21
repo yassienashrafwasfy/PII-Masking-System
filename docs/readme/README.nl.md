@@ -53,6 +53,7 @@ Eén publiek HTTP-eindpunt (`POST /v1/mask`) staat voor elk model. De aanroeper 
 | **Octo** | XLM-RoBERTa + regels met checksum | PDF, tekst, CSV, JSON | Demo-klaar |
 | **Synthify** | GLiNER | PDF, tekst | Alleen demo |
 | **Berts** | int8 ONNX MedRoBERTa / BERT / CamemBERT + gedeelde regels | PDF, tekst | Productie-aangesloten, staging-goedkeuring vereist |
+| **mDeBERTa** | mDeBERTa-v3 (36 labels, PII + clinical) + gedeelde regels | PDF, tekst, CSV, JSON | Alleen demo |
 
 Alle modellen draaien op CPU via ONNX Runtime.
 

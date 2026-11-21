@@ -48,7 +48,7 @@ def test_pinned_digests_match_the_tracked_manifests() -> None:
 def test_every_team_has_a_variation_and_every_slug_is_unique() -> None:
     slugs = [variation.slug for variation in fetch_models.VARIATIONS]
     assert len(slugs) == len(set(slugs))
-    assert {"octo", "synthify", "berts", "ocr"} <= set(fetch_models.TEAMS)
+    assert {"octo", "synthify", "berts", "mdeberta", "ocr"} <= set(fetch_models.TEAMS)
 
 
 def test_the_unconfirmed_licenses_are_flagged_on_every_berts_variation() -> None:
@@ -56,6 +56,30 @@ def test_the_unconfirmed_licenses_are_flagged_on_every_berts_variation() -> None
     assert len(berts) == 3
     assert all("NOT CONFIRMED" in v.license_note for v in berts)
     assert not any(v.license_note for v in fetch_models.VARIATIONS if v.team != "berts")
+
+
+def test_only_mdeberta_is_on_the_hub_and_others_say_so() -> None:
+    on_hub = [v for v in fetch_models.VARIATIONS if v.hub_repo]
+    assert [v.team for v in on_hub] == ["mdeberta"]
+    octo = next(v for v in fetch_models.VARIATIONS if v.team == "octo")
+    problems = fetch_models.fetch(octo, force=True, source="hub")
+    assert len(problems) == 1 and "not published on the hub" in problems[0]
+
+
+def test_team_all_from_the_hub_means_what_the_hub_has() -> None:
+    seen: list[str] = []
+    original = fetch_models.fetch
+
+    def record(variation, *, force, source="kaggle"):
+        seen.append(variation.team)
+        return []
+
+    fetch_models.fetch = record
+    try:
+        assert fetch_models.main(["--team", "all", "--source", "hub"]) == 0
+    finally:
+        fetch_models.fetch = original
+    assert seen == ["mdeberta"]
 
 
 def _variation(root: Path, content: bytes, pinned: bytes):

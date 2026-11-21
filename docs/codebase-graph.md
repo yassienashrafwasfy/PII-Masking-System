@@ -30,7 +30,7 @@ flowchart LR
   GW --> NIFI
   NIFI --> R2OUT[(R2 masked object + terminal manifest)]
 
-  CONTRACT[contracts/masking-api/v1.4<br/>OpenAPI, examples] -.defines.-> GW
+  CONTRACT[contracts/masking-api/v1.5<br/>OpenAPI, examples] -.defines.-> GW
   TEAMCFG[teams/*/config + model artifacts] -.configures.-> ADAPTERS
 ```
 

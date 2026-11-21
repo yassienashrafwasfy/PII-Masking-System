@@ -238,5 +238,5 @@ NiFi -> 18080 (Nginx, on 127.0.0.1 and the NiFi Docker bridge IP)
 - `deploy/compose.yml`, `deploy/nginx.conf.example`, `deploy/.env.example`, `deploy/vps-common.sh`
 - `evaluation/docker-compose.yml`
 - `evaluation/leaderboard/nginx.conf`
-- `contracts/masking-api/v1.4/openapi.json`
+- `contracts/masking-api/v1.5/openapi.json`
 - Gateway and model-service contract tests

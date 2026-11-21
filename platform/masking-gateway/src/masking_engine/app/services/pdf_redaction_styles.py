@@ -91,6 +91,18 @@ _PALETTE: dict[str, tuple[float, float, float, str]] = {
     "MEDICATION": (0.45, 0.55, 0.16, "MED"),
     "SYMPTOM": (0.58, 0.60, 0.20, "SYMP"),
     "DIAGNOSIS": (0.36, 0.48, 0.14, "DIAG"),
+    "ALLERGIES": (0.50, 0.52, 0.12, "ALLERGY"),
+    "PRESCRIPTIONINFO": (0.42, 0.58, 0.18, "RX"),
+    "TREATMENTINFO": (0.40, 0.52, 0.22, "TREAT"),
+    "TESTRESULTS": (0.34, 0.54, 0.26, "TEST"),
+    "PROCEDURE": (0.30, 0.46, 0.18, "PROC"),
+    # Identifiers only the mDeBERTa checkpoint emits (ADR 007), in the same
+    # red/magenta families as the national and provider numbers above.
+    "BSN": (0.84, 0.25, 0.22, "BSN"),
+    "KVNR": (0.84, 0.25, 0.22, "KVNR"),
+    "NATIONAL_ID": (0.84, 0.25, 0.22, "NATID"),
+    "IBAN": (0.60, 0.30, 0.45, "IBAN"),
+    "MEDICALRECORDNUM": (0.66, 0.28, 0.56, "MRN"),
 }
 
 FALLBACK = EntityStyle(color=(0.55, 0.55, 0.55), abbreviation=FALLBACK_LABEL)
