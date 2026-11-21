@@ -128,6 +128,12 @@ baseline table in MedDeID's dataset card.**
 * **Not comparable to published scores.** The systems reported beside these benchmarks
   trained on their train splits and were scored with the benchmarks' own scripts; these
   are zero-shot and scored with this repository's scorer.
+* **PyTorch and ONNX give the same spans.** All numbers were measured on the ONNX path. To
+  check that they hold for the PyTorch checkpoint the Hugging Face model cards also
+  describe, both engines of the demo Space were run side by side on 78 sampled documents
+  (20 MEDDOCAN, 20 MultiGraSCCo de, 10 en, 8 fr, 20 MedDeID nl): every document returned
+  identical spans (label, start, end), and the largest confidence-score difference was
+  2.4e-5. That is a sample, not a full-corpus run.
 * **Excluded:** n2c2/i2b2 2014 and BRONCO (data-use agreements), GraSCCo_PHI (the same
   texts as MultiGraSCCo-de), SPARCLING-DE (license only from its dataset card),
   MultiClinNER (registration).
