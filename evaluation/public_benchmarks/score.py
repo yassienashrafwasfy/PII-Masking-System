@@ -16,7 +16,7 @@ import subprocess
 from collections import Counter
 from pathlib import Path
 
-from . import loaders, scoring
+from . import compare, loaders, scoring
 
 ROOT = Path(__file__).resolve().parents[2]
 HEADLINE = ("merged", "recall"), ("merged", "f1")
@@ -52,6 +52,7 @@ def provenance(data: Path) -> dict:
 def score(data: Path, predictions: Path, rounds: int) -> dict:
     documents = {(d.dataset, d.language, d.doc_id): d for d in loaders.load_all(data)}
     results: dict = {"provenance": provenance(data), "configs": {}}
+    triples: dict[str, dict[str, dict[str, compare.Triple]]] = {}
     for file in sorted(predictions.glob("*.json")):
         run = json.loads(file.read_text())
         by_group: dict[str, list[Counter]] = {}
@@ -69,6 +70,13 @@ def score(data: Path, predictions: Path, rounds: int) -> dict:
             )
             group = f"{doc.dataset}-{doc.language}"
             by_group.setdefault(group, []).append(counts)
+            triples.setdefault(run["config"], {}).setdefault(group, {})[
+                row["doc_id"]
+            ] = (
+                counts["merged_tp"],
+                counts["merged_fp"],
+                counts["merged_fn"],
+            )
             unmapped.update(missing)
             locales[f"{group}:{row['locale']}"] += 1
             seconds.setdefault(group, []).append(row["seconds"])
@@ -84,6 +92,7 @@ def score(data: Path, predictions: Path, rounds: int) -> dict:
             "resolved_locales": dict(locales),
             "unmapped_platform_labels": dict(unmapped),
         }
+    results["comparison"] = compare.compare(triples, rounds)
     return results
 
 

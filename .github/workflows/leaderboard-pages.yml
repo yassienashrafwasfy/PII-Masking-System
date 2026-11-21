@@ -1,0 +1,49 @@
+# Publishes the public-benchmark leaderboard to GitHub Pages.
+#
+# The page is rendered from the committed results file by
+# evaluation/public_benchmarks/site.py (standard library only), so this job needs
+# no dependencies and never runs a model. Only aggregates are published.
+name: leaderboard-pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "evaluation/public_benchmarks/results/**"
+      - "evaluation/public_benchmarks/site.py"
+      - "evaluation/public_benchmarks/report.py"
+      - "evaluation/public_benchmarks/compare.py"
+      - ".github/workflows/leaderboard-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Render the leaderboard from the newest results file
+        run: |
+          latest=$(ls evaluation/public_benchmarks/results/*.json | sort | tail -n 1)
+          PYTHONPATH=evaluation python -m public_benchmarks.site --results "$latest" --out _site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
