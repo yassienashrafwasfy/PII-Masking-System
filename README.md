@@ -57,8 +57,13 @@ One public HTTP endpoint (`POST /v1/mask`) fronts every model. The caller never 
 | **Berts** | int8 ONNX MedRoBERTa / BERT / CamemBERT + shared rules | PDF, text | Wired for production, staging approval required |
 | **mDeBERTa** | mDeBERTa-v3 (36 labels, PII + clinical) + shared rules | PDF, text, CSV, JSON | Demo only |
 
-All models run on CPU through ONNX Runtime. How each one scores on three open
-de-identification benchmarks is in [Public benchmark results](docs/benchmarks.md).
+All models run on CPU through ONNX Runtime.
+
+<!-- benchmark-winner:start -->
+**Best overall on the public benchmarks: mDeBERTa** (mean F1 0.65 over five benchmarks, clear win), see [Public benchmark results](docs/benchmarks.md).
+<!-- benchmark-winner:end -->
+
+Ranks for every benchmark and metric are on the [live leaderboard](https://yassienashrafwasfy.github.io/PII-Masking-System/).
 
 ## Quick start
 

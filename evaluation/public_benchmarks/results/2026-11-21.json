@@ -1,0 +1,4100 @@
+{
+  "comparison": {
+    "groups": {
+      "meddeid-nl": {
+        "berts": {
+          "f1": 0.6096069868995633,
+          "first_share": 0.999,
+          "recall": 0.5557324840764332
+        },
+        "mdeberta": {
+          "f1": 0.5048213272830403,
+          "first_share": 0.0,
+          "recall": 0.4251592356687898
+        },
+        "mdeberta-model-only": {
+          "f1": 0.47528957528957533,
+          "first_share": null,
+          "recall": 0.3920382165605096
+        },
+        "octo": {
+          "f1": 0.5685121107266436,
+          "first_share": 0.001,
+          "recall": 0.5232484076433122
+        },
+        "synthify": {
+          "f1": 0.5382971143569647,
+          "first_share": 0.0,
+          "recall": 0.48121019108280255
+        }
+      },
+      "meddocan-es": {
+        "berts": {
+          "f1": 0.4276559033768795,
+          "first_share": null,
+          "recall": 0.358767576509512
+        },
+        "mdeberta": {
+          "f1": 0.7929222520107239,
+          "first_share": 1.0,
+          "recall": 0.7644747725392886
+        },
+        "mdeberta-model-only": {
+          "f1": 0.7695783132530121,
+          "first_share": null,
+          "recall": 0.7396608767576509
+        },
+        "octo": {
+          "f1": 0.7129409330712735,
+          "first_share": null,
+          "recall": 0.7125723738626965
+        },
+        "synthify": {
+          "f1": 0.6163691478612328,
+          "first_share": 0.0,
+          "recall": 0.5676178660049628
+        }
+      },
+      "multigrascco-de": {
+        "berts": {
+          "f1": 0.4695575996495839,
+          "first_share": null,
+          "recall": 0.48771610555050043
+        },
+        "mdeberta": {
+          "f1": 0.6426395939086293,
+          "first_share": 1.0,
+          "recall": 0.5759781619654231
+        },
+        "mdeberta-model-only": {
+          "f1": 0.5559105431309903,
+          "first_share": null,
+          "recall": 0.4749772520473157
+        },
+        "octo": {
+          "f1": 0.5899008966493628,
+          "first_share": null,
+          "recall": 0.5686988171064604
+        },
+        "synthify": {
+          "f1": 0.5611510791366906,
+          "first_share": 0.0,
+          "recall": 0.5677888989990901
+        }
+      },
+      "multigrascco-en": {
+        "berts": {
+          "f1": 0.72961768770152,
+          "first_share": 0.746,
+          "recall": 0.7160940325497287
+        },
+        "mdeberta": {
+          "f1": 0.6676470588235294,
+          "first_share": 0.0,
+          "recall": 0.6157323688969258
+        },
+        "mdeberta-model-only": {
+          "f1": 0.5648293963254594,
+          "first_share": null,
+          "recall": 0.4864376130198915
+        },
+        "octo": {
+          "f1": 0.6355658198614319,
+          "first_share": null,
+          "recall": 0.6220614828209765
+        },
+        "synthify": {
+          "f1": 0.7198135198135199,
+          "first_share": 0.254,
+          "recall": 0.6980108499095841
+        }
+      },
+      "multigrascco-fr": {
+        "berts": {
+          "f1": 0.6930320150659134,
+          "first_share": 0.983,
+          "recall": 0.6559714795008913
+        },
+        "mdeberta": {
+          "f1": 0.6550724637681159,
+          "first_share": 0.017,
+          "recall": 0.6042780748663101
+        },
+        "mdeberta-model-only": {
+          "f1": 0.5590955806783144,
+          "first_share": null,
+          "recall": 0.48484848484848486
+        },
+        "octo": {
+          "f1": 0.6193961573650504,
+          "first_share": null,
+          "recall": 0.6033868092691622
+        },
+        "synthify": {
+          "f1": 0.6271186440677966,
+          "first_share": 0.0,
+          "recall": 0.6265597147950089
+        }
+      }
+    },
+    "overall": {
+      "berts": {
+        "ci95_f1": [
+          0.570703239760179,
+          0.5995280116432986
+        ],
+        "ci95_recall": [
+          0.5390632419385496,
+          0.5703569323786534
+        ],
+        "first_share": 0.0,
+        "mean_f1": 0.585894038538692,
+        "mean_recall": 0.5548563356374132
+      },
+      "mdeberta": {
+        "ci95_f1": [
+          0.6376335286371375,
+          0.6657988363761678
+        ],
+        "ci95_recall": [
+          0.5804438979571911,
+          0.6131751260918327
+        ],
+        "first_share": 1.0,
+        "mean_f1": 0.6526205391588078,
+        "mean_recall": 0.5971245227873475
+      },
+      "mdeberta-model-only": {
+        "ci95_f1": [
+          0.5679520870921045,
+          0.6006169383518543
+        ],
+        "ci95_recall": [
+          0.496600157069729,
+          0.5335964533561486
+        ],
+        "first_share": null,
+        "mean_f1": 0.5849406817354703,
+        "mean_recall": 0.5155924886467705
+      },
+      "octo": {
+        "ci95_f1": [
+          0.6118542421349705,
+          0.6382776913993548
+        ],
+        "ci95_recall": [
+          0.5906172570360111,
+          0.6201166311475199
+        ],
+        "first_share": 0.0,
+        "mean_f1": 0.6252631835347524,
+        "mean_recall": 0.6059935781405216
+      },
+      "synthify": {
+        "ci95_f1": [
+          0.5999275113154107,
+          0.6234029975790493
+        ],
+        "ci95_recall": [
+          0.5751996144946242,
+          0.6012387010909486
+        ],
+        "first_share": 0.0,
+        "mean_f1": 0.6125499010472409,
+        "mean_recall": 0.5882375041582897
+      }
+    },
+    "rounds": 1000,
+    "seed": 0
+  },
+  "configs": {
+    "berts": {
+      "groups": {
+        "meddeid-nl": {
+          "char_precision": 0.9495287419178434,
+          "char_recall": 0.7552064677889782,
+          "ci95": {
+            "char_recall": [
+              0.7367937414628088,
+              0.7710115881703025
+            ],
+            "merged_f1": [
+              0.5906292749658003,
+              0.6276540652511652
+            ],
+            "merged_recall": [
+              0.5365121707235745,
+              0.5749525616698292
+            ]
+          },
+          "core_pii_char_recall": 0.795019101221895,
+          "documents": 300,
+          "exact": {
+            "f1": 0.6063096111518709,
+            "precision": 0.6422132421510724,
+            "recall": 0.5742078932740411
+          },
+          "gold_spans": 3598,
+          "merged": {
+            "f1": 0.6096069868995633,
+            "precision": 0.6750483558994197,
+            "recall": 0.5557324840764332
+          },
+          "non_pii_redaction_rate": 0.005275918073634196,
+          "overlap_precision": 0.935965184954927,
+          "overlap_recall": 0.7651473040578098,
+          "per_type": {
+            "Address_Location:Caregiver": {
+              "char_recall": 0.7626373626373626,
+              "exact_typed_recall": 0.04,
+              "n": 50,
+              "overlap_recall": 0.76
+            },
+            "Address_Location:Other": {
+              "char_recall": 0.7245762711864406,
+              "exact_typed_recall": 0.0,
+              "n": 20,
+              "overlap_recall": 0.65
+            },
+            "Address_Location:Patient": {
+              "char_recall": 0.9562206282463517,
+              "exact_typed_recall": 0.5338345864661654,
+              "n": 133,
+              "overlap_recall": 0.9924812030075187
+            },
+            "Age_Birthdate": {
+              "char_recall": 0.9440113394755493,
+              "exact_typed_recall": 0.8203883495145631,
+              "n": 412,
+              "overlap_recall": 0.9563106796116505
+            },
+            "Contactdetails": {
+              "char_recall": 0.9654164637116415,
+              "exact_typed_recall": 0.8387096774193549,
+              "n": 341,
+              "overlap_recall": 0.9002932551319648
+            },
+            "Date": {
+              "char_recall": 0.8058434261455862,
+              "exact_typed_recall": 0.5979703356752537,
+              "n": 1281,
+              "overlap_recall": 0.7556596409055425
+            },
+            "ID:Caregiver": {
+              "char_recall": 0.5088235294117647,
+              "exact_typed_recall": 0.08450704225352113,
+              "n": 71,
+              "overlap_recall": 0.5633802816901409
+            },
+            "ID:Patient": {
+              "char_recall": 0.4130019120458891,
+              "exact_typed_recall": 0.12562814070351758,
+              "n": 199,
+              "overlap_recall": 0.4723618090452261
+            },
+            "Name:Caregiver": {
+              "char_recall": 0.8228547153780799,
+              "exact_typed_recall": 0.24568965517241378,
+              "n": 232,
+              "overlap_recall": 0.7543103448275862
+            },
+            "Name:Other": {
+              "char_recall": 0.9272334293948127,
+              "exact_typed_recall": 0.7899159663865546,
+              "n": 119,
+              "overlap_recall": 0.865546218487395
+            },
+            "Name:Patient": {
+              "char_recall": 0.8879504504504504,
+              "exact_typed_recall": 0.7664473684210527,
+              "n": 304,
+              "overlap_recall": 0.8421052631578947
+            },
+            "Organization:Healthcare": {
+              "char_recall": 0.5722401351143866,
+              "exact_typed_recall": 0.2029520295202952,
+              "n": 271,
+              "overlap_recall": 0.6789667896678967
+            },
+            "Organization:Other": {
+              "char_recall": 0.6471794871794871,
+              "exact_typed_recall": 0.13725490196078433,
+              "n": 51,
+              "overlap_recall": 0.7843137254901961
+            },
+            "Profession": {
+              "char_recall": 0.056958624395486296,
+              "exact_typed_recall": 0.0,
+              "n": 114,
+              "overlap_recall": 0.07894736842105263
+            }
+          },
+          "seconds_per_document": 0.5335833333333333,
+          "typed": {
+            "f1": 0.5797967722653915,
+            "precision": 0.6047381546134664,
+            "recall": 0.5568312284730195
+          }
+        },
+        "meddocan-es": {
+          "char_precision": 0.9182769398016035,
+          "char_recall": 0.5822605938410105,
+          "ci95": {
+            "char_recall": [
+              0.5690999410625579,
+              0.5950841552408521
+            ],
+            "merged_f1": [
+              0.41649022294183585,
+              0.43821495914519176
+            ],
+            "merged_recall": [
+              0.3484172077922078,
+              0.3686315789473684
+            ]
+          },
+          "documents": 250,
+          "exact": {
+            "f1": 0.3947505468180398,
+            "precision": 0.48096446700507617,
+            "recall": 0.3347465112170995
+          },
+          "gold_spans": 5661,
+          "merged": {
+            "f1": 0.4276559033768795,
+            "precision": 0.5292861500915192,
+            "recall": 0.358767576509512
+          },
+          "non_pii_redaction_rate": 0.005765274526382793,
+          "overlap_precision": 0.883756345177665,
+          "overlap_recall": 0.5594417947359124,
+          "per_type": {
+            "CALLE": {
+              "char_recall": 0.6122768148051609,
+              "exact_typed_recall": 0.03389830508474576,
+              "n": 413,
+              "overlap_recall": 0.8498789346246973
+            },
+            "CENTRO_SALUD": {
+              "char_recall": 0.323943661971831,
+              "exact_typed_recall": 0.0,
+              "n": 6,
+              "overlap_recall": 0.3333333333333333
+            },
+            "CORREO_ELECTRONICO": {
+              "char_recall": 0.9915811088295687,
+              "exact_typed_recall": 0.9919678714859438,
+              "n": 249,
+              "overlap_recall": 0.9959839357429718
+            },
+            "EDAD_SUJETO_ASISTENCIA": {
+              "char_recall": 0.40599275600921964,
+              "exact_typed_recall": 0.21814671814671815,
+              "n": 518,
+              "overlap_recall": 0.6563706563706564
+            },
+            "FAMILIARES_SUJETO_ASISTENCIA": {
+              "char_recall": 0.023494860499265784,
+              "exact_typed_recall": 0.0,
+              "n": 81,
+              "overlap_recall": 0.04938271604938271
+            },
+            "FECHAS": {
+              "char_recall": 0.8841344275107463,
+              "exact_typed_recall": 0.8723404255319149,
+              "n": 611,
+              "overlap_recall": 0.9165302782324058
+            },
+            "HOSPITAL": {
+              "char_recall": 0.44535906897530514,
+              "exact_typed_recall": 0.11538461538461539,
+              "n": 130,
+              "overlap_recall": 0.6923076923076923
+            },
+            "ID_ASEGURAMIENTO": {
+              "char_recall": 0.3031712473572939,
+              "exact_typed_recall": 0.020202020202020204,
+              "n": 198,
+              "overlap_recall": 0.398989898989899
+            },
+            "ID_CONTACTO_ASISTENCIAL": {
+              "char_recall": 0.7119205298013245,
+              "exact_typed_recall": 0.0,
+              "n": 39,
+              "overlap_recall": 0.6923076923076923
+            },
+            "ID_SUJETO_ASISTENCIA": {
+              "char_recall": 0.10075949367088607,
+              "exact_typed_recall": 0.0,
+              "n": 283,
+              "overlap_recall": 0.0989399293286219
+            },
+            "ID_TITULACION_PERSONAL_SANITARIO": {
+              "char_recall": 0.994573260976813,
+              "exact_typed_recall": 0.07692307692307693,
+              "n": 234,
+              "overlap_recall": 0.9957264957264957
+            },
+            "INSTITUCION": {
+              "char_recall": 0.2015748031496063,
+              "exact_typed_recall": 0.04477611940298507,
+              "n": 67,
+              "overlap_recall": 0.34328358208955223
+            },
+            "NOMBRE_PERSONAL_SANITARIO": {
+              "char_recall": 0.747524247064829,
+              "exact_typed_recall": 0.35129740518962077,
+              "n": 501,
+              "overlap_recall": 0.8762475049900199
+            },
+            "NOMBRE_SUJETO_ASISTENCIA": {
+              "char_recall": 0.6806130903065452,
+              "exact_typed_recall": 0.5378486055776892,
+              "n": 502,
+              "overlap_recall": 0.6055776892430279
+            },
+            "NUMERO_FAX": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.8571428571428571,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "NUMERO_TELEFONO": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.9615384615384616,
+              "n": 26,
+              "overlap_recall": 1.0
+            },
+            "OTROS_SUJETO_ASISTENCIA": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 7,
+              "overlap_recall": 0.0
+            },
+            "PAIS": {
+              "char_recall": 0.043536804308797125,
+              "exact_typed_recall": 0.005509641873278237,
+              "n": 363,
+              "overlap_recall": 0.03581267217630854
+            },
+            "PROFESION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 9,
+              "overlap_recall": 0.0
+            },
+            "SEXO_SUJETO_ASISTENCIA": {
+              "char_recall": 0.13403508771929826,
+              "exact_typed_recall": 0.0,
+              "n": 461,
+              "overlap_recall": 0.0824295010845987
+            },
+            "TERRITORIO": {
+              "char_recall": 0.364000641128386,
+              "exact_typed_recall": 0.03347280334728033,
+              "n": 956,
+              "overlap_recall": 0.3713389121338912
+            }
+          },
+          "seconds_per_document": 2.805828,
+          "typed": {
+            "f1": 0.30701200252684774,
+            "precision": 0.37061514997458056,
+            "recall": 0.26204169662113586
+          }
+        },
+        "multigrascco-de": {
+          "char_precision": 0.6647520905481882,
+          "char_recall": 0.6671187590065271,
+          "ci95": {
+            "char_recall": [
+              0.6193186645144847,
+              0.7075857464741717
+            ],
+            "merged_f1": [
+              0.4316546762589928,
+              0.5018281535648994
+            ],
+            "merged_recall": [
+              0.44064748201438847,
+              0.5308641975308642
+            ]
+          },
+          "documents": 63,
+          "exact": {
+            "f1": 0.49859353023909986,
+            "precision": 0.503909026297086,
+            "recall": 0.4933890048712596
+          },
+          "gold_spans": 1437,
+          "merged": {
+            "f1": 0.4695575996495839,
+            "precision": 0.4527027027027027,
+            "recall": 0.48771610555050043
+          },
+          "non_pii_redaction_rate": 0.02077434010457831,
+          "overlap_precision": 0.6929637526652452,
+          "overlap_recall": 0.6791927627000696,
+          "per_type": {
+            "AGE": {
+              "char_recall": 0.42857142857142855,
+              "exact_typed_recall": 0.13043478260869565,
+              "n": 23,
+              "overlap_recall": 0.6086956521739131
+            },
+            "CONTACT_EMAIL": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_FAX": {
+              "char_recall": 0.9902912621359223,
+              "exact_typed_recall": 0.8571428571428571,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_PHONE": {
+              "char_recall": 0.9603960396039604,
+              "exact_typed_recall": 0.7777777777777778,
+              "n": 18,
+              "overlap_recall": 1.0
+            },
+            "DATE": {
+              "char_recall": 0.8907141227469769,
+              "exact_typed_recall": 0.670028818443804,
+              "n": 694,
+              "overlap_recall": 0.8386167146974063
+            },
+            "ID": {
+              "char_recall": 0.4469914040114613,
+              "exact_typed_recall": 0.0,
+              "n": 58,
+              "overlap_recall": 0.3275862068965517
+            },
+            "LOCATION_CITY": {
+              "char_recall": 0.5378486055776892,
+              "exact_typed_recall": 0.15254237288135594,
+              "n": 59,
+              "overlap_recall": 0.5423728813559322
+            },
+            "LOCATION_COUNTRY": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "LOCATION_HOSPITAL": {
+              "char_recall": 0.2518050541516246,
+              "exact_typed_recall": 0.05555555555555555,
+              "n": 36,
+              "overlap_recall": 0.3611111111111111
+            },
+            "LOCATION_ORGANIZATION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "LOCATION_STREET": {
+              "char_recall": 0.5461538461538461,
+              "exact_typed_recall": 0.08333333333333333,
+              "n": 36,
+              "overlap_recall": 0.6388888888888888
+            },
+            "LOCATION_ZIP": {
+              "char_recall": 0.8225806451612904,
+              "exact_typed_recall": 0.07894736842105263,
+              "n": 38,
+              "overlap_recall": 0.8421052631578947
+            },
+            "NAME_DOCTOR": {
+              "char_recall": 0.7801418439716312,
+              "exact_typed_recall": 0.49673202614379086,
+              "n": 153,
+              "overlap_recall": 0.8366013071895425
+            },
+            "NAME_EXT": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            },
+            "NAME_PATIENT": {
+              "char_recall": 0.5864386072083079,
+              "exact_typed_recall": 0.20606060606060606,
+              "n": 165,
+              "overlap_recall": 0.509090909090909
+            },
+            "NAME_RELATIVE": {
+              "char_recall": 0.35714285714285715,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_TITLE": {
+              "char_recall": 0.09102564102564102,
+              "exact_typed_recall": 0.0,
+              "n": 139,
+              "overlap_recall": 0.1510791366906475
+            },
+            "NAME_USERNAME": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            },
+            "PROFESSION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "UNKNOWN": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            }
+          },
+          "seconds_per_document": 3.9189206349206347,
+          "typed": {
+            "f1": 0.4597014925373134,
+            "precision": 0.4447653429602888,
+            "recall": 0.4756756756756757
+          }
+        },
+        "multigrascco-en": {
+          "char_precision": 0.9473871945782059,
+          "char_recall": 0.8021745696164301,
+          "ci95": {
+            "char_recall": [
+              0.7649989324603231,
+              0.8362614751503641
+            ],
+            "merged_f1": [
+              0.6904138292299633,
+              0.7641255605381166
+            ],
+            "merged_recall": [
+              0.6730987514188422,
+              0.7549371633752244
+            ]
+          },
+          "documents": 63,
+          "exact": {
+            "f1": 0.7128491620111732,
+            "precision": 0.7674418604651163,
+            "recall": 0.6655076495132128
+          },
+          "gold_spans": 1438,
+          "merged": {
+            "f1": 0.72961768770152,
+            "precision": 0.7436619718309859,
+            "recall": 0.7160940325497287
+          },
+          "non_pii_redaction_rate": 0.002909743695966306,
+          "overlap_precision": 0.9454691259021651,
+          "overlap_recall": 0.8379694019471489,
+          "per_type": {
+            "AGE": {
+              "char_recall": 0.59375,
+              "exact_typed_recall": 0.28,
+              "n": 25,
+              "overlap_recall": 0.88
+            },
+            "CONTACT_EMAIL": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_FAX": {
+              "char_recall": 0.7096774193548387,
+              "exact_typed_recall": 0.7142857142857143,
+              "n": 7,
+              "overlap_recall": 0.7142857142857143
+            },
+            "CONTACT_PHONE": {
+              "char_recall": 0.6597938144329897,
+              "exact_typed_recall": 0.6666666666666666,
+              "n": 18,
+              "overlap_recall": 0.6666666666666666
+            },
+            "DATE": {
+              "char_recall": 0.9652192242833052,
+              "exact_typed_recall": 0.8645533141210374,
+              "n": 694,
+              "overlap_recall": 0.952449567723343
+            },
+            "ID": {
+              "char_recall": 0.30952380952380953,
+              "exact_typed_recall": 0.034482758620689655,
+              "n": 58,
+              "overlap_recall": 0.3620689655172414
+            },
+            "LOCATION_CITY": {
+              "char_recall": 0.660952380952381,
+              "exact_typed_recall": 0.15254237288135594,
+              "n": 59,
+              "overlap_recall": 0.6440677966101694
+            },
+            "LOCATION_COUNTRY": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "LOCATION_HOSPITAL": {
+              "char_recall": 0.8103448275862069,
+              "exact_typed_recall": 0.4722222222222222,
+              "n": 36,
+              "overlap_recall": 0.9444444444444444
+            },
+            "LOCATION_ORGANIZATION": {
+              "char_recall": 0.4909090909090909,
+              "exact_typed_recall": 0.5,
+              "n": 2,
+              "overlap_recall": 0.5
+            },
+            "LOCATION_STREET": {
+              "char_recall": 0.8893129770992366,
+              "exact_typed_recall": 0.2222222222222222,
+              "n": 36,
+              "overlap_recall": 0.9166666666666666
+            },
+            "LOCATION_ZIP": {
+              "char_recall": 0.8792270531400966,
+              "exact_typed_recall": 0.07894736842105263,
+              "n": 38,
+              "overlap_recall": 0.9210526315789473
+            },
+            "NAME_DOCTOR": {
+              "char_recall": 0.995850622406639,
+              "exact_typed_recall": 0.8627450980392157,
+              "n": 153,
+              "overlap_recall": 1.0
+            },
+            "NAME_EXT": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_PATIENT": {
+              "char_recall": 0.9352251696483652,
+              "exact_typed_recall": 0.7515151515151515,
+              "n": 165,
+              "overlap_recall": 0.9090909090909091
+            },
+            "NAME_RELATIVE": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_TITLE": {
+              "char_recall": 0.13037723362011913,
+              "exact_typed_recall": 0.0,
+              "n": 139,
+              "overlap_recall": 0.26618705035971224
+            },
+            "NAME_USERNAME": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            },
+            "PROFESSION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            }
+          },
+          "seconds_per_document": 2.2821587301587303,
+          "typed": {
+            "f1": 0.737220447284345,
+            "precision": 0.7647058823529411,
+            "recall": 0.7116422513492675
+          }
+        },
+        "multigrascco-fr": {
+          "char_precision": 0.9455349737351396,
+          "char_recall": 0.7216204810803207,
+          "ci95": {
+            "char_recall": [
+              0.6910282258064516,
+              0.7551616543849167
+            ],
+            "merged_f1": [
+              0.6506147540983607,
+              0.7302752293577982
+            ],
+            "merged_recall": [
+              0.6087360594795539,
+              0.6985413290113452
+            ]
+          },
+          "documents": 63,
+          "exact": {
+            "f1": 0.7154150197628458,
+            "precision": 0.827996340347667,
+            "recall": 0.6297842727905358
+          },
+          "gold_spans": 1437,
+          "merged": {
+            "f1": 0.6930320150659134,
+            "precision": 0.7345309381237525,
+            "recall": 0.6559714795008913
+          },
+          "non_pii_redaction_rate": 0.002628348809905006,
+          "overlap_precision": 0.9661482159194876,
+          "overlap_recall": 0.7724425887265136,
+          "per_type": {
+            "AGE": {
+              "char_recall": 0.4298245614035088,
+              "exact_typed_recall": 0.24,
+              "n": 25,
+              "overlap_recall": 0.88
+            },
+            "CONTACT_EMAIL": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_FAX": {
+              "char_recall": 0.9302325581395349,
+              "exact_typed_recall": 0.8571428571428571,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_PHONE": {
+              "char_recall": 0.9554455445544554,
+              "exact_typed_recall": 0.8888888888888888,
+              "n": 18,
+              "overlap_recall": 1.0
+            },
+            "DATE": {
+              "char_recall": 0.917889810678579,
+              "exact_typed_recall": 0.8054755043227666,
+              "n": 694,
+              "overlap_recall": 0.8631123919308358
+            },
+            "ID": {
+              "char_recall": 0.09111111111111111,
+              "exact_typed_recall": 0.0,
+              "n": 58,
+              "overlap_recall": 0.15517241379310345
+            },
+            "LOCATION_CITY": {
+              "char_recall": 0.6975,
+              "exact_typed_recall": 0.0,
+              "n": 59,
+              "overlap_recall": 0.6779661016949152
+            },
+            "LOCATION_COUNTRY": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "LOCATION_HOSPITAL": {
+              "char_recall": 0.8651863600317209,
+              "exact_typed_recall": 0.6666666666666666,
+              "n": 36,
+              "overlap_recall": 0.9722222222222222
+            },
+            "LOCATION_ORGANIZATION": {
+              "char_recall": 0.9137931034482759,
+              "exact_typed_recall": 0.5,
+              "n": 2,
+              "overlap_recall": 1.0
+            },
+            "LOCATION_STREET": {
+              "char_recall": 0.9582577132486388,
+              "exact_typed_recall": 0.1388888888888889,
+              "n": 36,
+              "overlap_recall": 1.0
+            },
+            "LOCATION_ZIP": {
+              "char_recall": 0.9507389162561576,
+              "exact_typed_recall": 0.07894736842105263,
+              "n": 38,
+              "overlap_recall": 0.9473684210526315
+            },
+            "NAME_DOCTOR": {
+              "char_recall": 0.9826224328593997,
+              "exact_typed_recall": 0.9019607843137255,
+              "n": 153,
+              "overlap_recall": 0.9738562091503268
+            },
+            "NAME_EXT": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_PATIENT": {
+              "char_recall": 0.9217282404508453,
+              "exact_typed_recall": 0.8242424242424242,
+              "n": 165,
+              "overlap_recall": 0.9090909090909091
+            },
+            "NAME_RELATIVE": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_TITLE": {
+              "char_recall": 0.02526799387442573,
+              "exact_typed_recall": 0.0,
+              "n": 139,
+              "overlap_recall": 0.02877697841726619
+            },
+            "NAME_USERNAME": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            },
+            "PROFESSION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            }
+          },
+          "seconds_per_document": 3.209904761904762,
+          "typed": {
+            "f1": 0.7525167785234899,
+            "precision": 0.8252069917203312,
+            "recall": 0.6915959907478797
+          }
+        }
+      },
+      "resolved_locales": {
+        "meddeid-nl:nl_BE": 300,
+        "meddocan-es:es_ES": 250,
+        "multigrascco-de:de_DE": 63,
+        "multigrascco-en:en": 63,
+        "multigrascco-fr:fr_FR": 63
+      },
+      "unmapped_platform_labels": {}
+    },
+    "mdeberta": {
+      "groups": {
+        "meddeid-nl": {
+          "char_precision": 0.9588527724665392,
+          "char_recall": 0.6415084685053472,
+          "ci95": {
+            "char_recall": [
+              0.6220857921617402,
+              0.66108819179575
+            ],
+            "merged_f1": [
+              0.4868708971553611,
+              0.5244510057206127
+            ],
+            "merged_recall": [
+              0.4053970223325062,
+              0.44509803921568625
+            ]
+          },
+          "core_pii_char_recall": 0.6831821760811875,
+          "documents": 300,
+          "exact": {
+            "f1": 0.5346630207495576,
+            "precision": 0.6345933562428407,
+            "recall": 0.46192329071706506
+          },
+          "gold_spans": 3598,
+          "merged": {
+            "f1": 0.5048213272830403,
+            "precision": 0.6212191717077711,
+            "recall": 0.4251592356687898
+          },
+          "non_pii_redaction_rate": 0.003618156690395408,
+          "overlap_precision": 0.9419625811378388,
+          "overlap_recall": 0.6095052807115064,
+          "per_type": {
+            "Address_Location:Caregiver": {
+              "char_recall": 0.6351648351648351,
+              "exact_typed_recall": 0.18,
+              "n": 50,
+              "overlap_recall": 0.68
+            },
+            "Address_Location:Other": {
+              "char_recall": 0.461864406779661,
+              "exact_typed_recall": 0.15,
+              "n": 20,
+              "overlap_recall": 0.5
+            },
+            "Address_Location:Patient": {
+              "char_recall": 0.9176354192431363,
+              "exact_typed_recall": 0.6390977443609023,
+              "n": 133,
+              "overlap_recall": 1.0
+            },
+            "Age_Birthdate": {
+              "char_recall": 0.708008504606662,
+              "exact_typed_recall": 0.5631067961165048,
+              "n": 412,
+              "overlap_recall": 0.6868932038834952
+            },
+            "Contactdetails": {
+              "char_recall": 0.939113492450073,
+              "exact_typed_recall": 0.7536656891495601,
+              "n": 341,
+              "overlap_recall": 0.8211143695014663
+            },
+            "Date": {
+              "char_recall": 0.5673617180671744,
+              "exact_typed_recall": 0.3263075722092115,
+              "n": 1281,
+              "overlap_recall": 0.46916471506635443
+            },
+            "ID:Caregiver": {
+              "char_recall": 0.6823529411764706,
+              "exact_typed_recall": 0.43661971830985913,
+              "n": 71,
+              "overlap_recall": 0.647887323943662
+            },
+            "ID:Patient": {
+              "char_recall": 0.5162523900573613,
+              "exact_typed_recall": 0.5025125628140703,
+              "n": 199,
+              "overlap_recall": 0.6331658291457286
+            },
+            "Name:Caregiver": {
+              "char_recall": 0.7383177570093458,
+              "exact_typed_recall": 0.2413793103448276,
+              "n": 232,
+              "overlap_recall": 0.6637931034482759
+            },
+            "Name:Other": {
+              "char_recall": 0.9373198847262247,
+              "exact_typed_recall": 0.8319327731092437,
+              "n": 119,
+              "overlap_recall": 0.8487394957983193
+            },
+            "Name:Patient": {
+              "char_recall": 0.7747747747747747,
+              "exact_typed_recall": 0.6381578947368421,
+              "n": 304,
+              "overlap_recall": 0.7171052631578947
+            },
+            "Organization:Healthcare": {
+              "char_recall": 0.4243820052203286,
+              "exact_typed_recall": 0.14391143911439114,
+              "n": 271,
+              "overlap_recall": 0.6273062730627307
+            },
+            "Organization:Other": {
+              "char_recall": 0.48102564102564105,
+              "exact_typed_recall": 0.19607843137254902,
+              "n": 51,
+              "overlap_recall": 0.7254901960784313
+            },
+            "Profession": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 114,
+              "overlap_recall": 0.0
+            }
+          },
+          "seconds_per_document": 1.6841266666666668,
+          "typed": {
+            "f1": 0.49387886597938147,
+            "precision": 0.5627753303964758,
+            "recall": 0.4400114810562572
+          }
+        },
+        "meddocan-es": {
+          "char_precision": 0.986866278387992,
+          "char_recall": 0.8701511313308863,
+          "ci95": {
+            "char_recall": [
+              0.8565981570981822,
+              0.8838524933649952
+            ],
+            "merged_f1": [
+              0.78125,
+              0.8035228878982276
+            ],
+            "merged_recall": [
+              0.7494904198940073,
+              0.7777777777777778
+            ]
+          },
+          "documents": 250,
+          "exact": {
+            "f1": 0.7162585159270851,
+            "precision": 0.7479330897904249,
+            "recall": 0.6871577459812754
+          },
+          "gold_spans": 5661,
+          "merged": {
+            "f1": 0.7929222520107239,
+            "precision": 0.8235687235464468,
+            "recall": 0.7644747725392886
+          },
+          "non_pii_redaction_rate": 0.0012884151917955562,
+          "overlap_precision": 0.9834647183233993,
+          "overlap_recall": 0.8586822116233881,
+          "per_type": {
+            "CALLE": {
+              "char_recall": 0.7628046396455103,
+              "exact_typed_recall": 0.1791767554479419,
+              "n": 413,
+              "overlap_recall": 0.9249394673123487
+            },
+            "CENTRO_SALUD": {
+              "char_recall": 0.8943661971830986,
+              "exact_typed_recall": 0.16666666666666666,
+              "n": 6,
+              "overlap_recall": 1.0
+            },
+            "CORREO_ELECTRONICO": {
+              "char_recall": 0.999794661190965,
+              "exact_typed_recall": 0.9959839357429718,
+              "n": 249,
+              "overlap_recall": 1.0
+            },
+            "EDAD_SUJETO_ASISTENCIA": {
+              "char_recall": 0.9107672044781034,
+              "exact_typed_recall": 0.9227799227799228,
+              "n": 518,
+              "overlap_recall": 0.9285714285714286
+            },
+            "FAMILIARES_SUJETO_ASISTENCIA": {
+              "char_recall": 0.06167400881057269,
+              "exact_typed_recall": 0.0,
+              "n": 81,
+              "overlap_recall": 0.08641975308641975
+            },
+            "FECHAS": {
+              "char_recall": 0.818483782727628,
+              "exact_typed_recall": 0.8314238952536824,
+              "n": 611,
+              "overlap_recall": 0.8690671031096563
+            },
+            "HOSPITAL": {
+              "char_recall": 0.8597785977859779,
+              "exact_typed_recall": 0.5076923076923077,
+              "n": 130,
+              "overlap_recall": 0.9615384615384616
+            },
+            "ID_ASEGURAMIENTO": {
+              "char_recall": 0.9361522198731501,
+              "exact_typed_recall": 0.2676767676767677,
+              "n": 198,
+              "overlap_recall": 0.9949494949494949
+            },
+            "ID_CONTACTO_ASISTENCIAL": {
+              "char_recall": 0.9536423841059603,
+              "exact_typed_recall": 0.9487179487179487,
+              "n": 39,
+              "overlap_recall": 0.9487179487179487
+            },
+            "ID_SUJETO_ASISTENCIA": {
+              "char_recall": 0.9336708860759494,
+              "exact_typed_recall": 0.8904593639575972,
+              "n": 283,
+              "overlap_recall": 0.9434628975265018
+            },
+            "ID_TITULACION_PERSONAL_SANITARIO": {
+              "char_recall": 0.9773063640848545,
+              "exact_typed_recall": 0.8162393162393162,
+              "n": 234,
+              "overlap_recall": 0.9572649572649573
+            },
+            "INSTITUCION": {
+              "char_recall": 0.2566929133858268,
+              "exact_typed_recall": 0.16417910447761194,
+              "n": 67,
+              "overlap_recall": 0.3283582089552239
+            },
+            "NOMBRE_PERSONAL_SANITARIO": {
+              "char_recall": 0.9940786115364982,
+              "exact_typed_recall": 0.8902195608782435,
+              "n": 501,
+              "overlap_recall": 1.0
+            },
+            "NOMBRE_SUJETO_ASISTENCIA": {
+              "char_recall": 0.9968931234465617,
+              "exact_typed_recall": 0.9860557768924303,
+              "n": 502,
+              "overlap_recall": 0.99800796812749
+            },
+            "NUMERO_FAX": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.7142857142857143,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "NUMERO_TELEFONO": {
+              "char_recall": 0.9829787234042553,
+              "exact_typed_recall": 0.7692307692307693,
+              "n": 26,
+              "overlap_recall": 1.0
+            },
+            "OTROS_SUJETO_ASISTENCIA": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 7,
+              "overlap_recall": 0.0
+            },
+            "PAIS": {
+              "char_recall": 0.7930879712746858,
+              "exact_typed_recall": 0.7327823691460055,
+              "n": 363,
+              "overlap_recall": 0.7878787878787878
+            },
+            "PROFESION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 9,
+              "overlap_recall": 0.0
+            },
+            "SEXO_SUJETO_ASISTENCIA": {
+              "char_recall": 0.4589473684210526,
+              "exact_typed_recall": 0.2386117136659436,
+              "n": 461,
+              "overlap_recall": 0.2603036876355748
+            },
+            "TERRITORIO": {
+              "char_recall": 0.9131271037025164,
+              "exact_typed_recall": 0.5313807531380753,
+              "n": 956,
+              "overlap_recall": 0.9330543933054394
+            }
+          },
+          "seconds_per_document": 5.872396,
+          "typed": {
+            "f1": 0.6930856932695845,
+            "precision": 0.7095256024096386,
+            "recall": 0.6773903666427031
+          }
+        },
+        "multigrascco-de": {
+          "char_precision": 0.9723756906077348,
+          "char_recall": 0.7608714079850809,
+          "ci95": {
+            "char_recall": [
+              0.725424780820855,
+              0.79678435272667
+            ],
+            "merged_f1": [
+              0.6032482598607889,
+              0.6844281120808453
+            ],
+            "merged_recall": [
+              0.5335144927536232,
+              0.6222222222222222
+            ]
+          },
+          "documents": 63,
+          "exact": {
+            "f1": 0.6424828698105604,
+            "precision": 0.7634099616858238,
+            "recall": 0.5546276965901183
+          },
+          "gold_spans": 1437,
+          "merged": {
+            "f1": 0.6426395939086293,
+            "precision": 0.7267508610792193,
+            "recall": 0.5759781619654231
+          },
+          "non_pii_redaction_rate": 0.0013347081699842452,
+          "overlap_precision": 0.9798850574712644,
+          "overlap_recall": 0.6882393876130828,
+          "per_type": {
+            "AGE": {
+              "char_recall": 0.02857142857142857,
+              "exact_typed_recall": 0.0,
+              "n": 23,
+              "overlap_recall": 0.043478260869565216
+            },
+            "CONTACT_EMAIL": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_FAX": {
+              "char_recall": 0.9514563106796117,
+              "exact_typed_recall": 0.8571428571428571,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_PHONE": {
+              "char_recall": 0.8168316831683168,
+              "exact_typed_recall": 0.6111111111111112,
+              "n": 18,
+              "overlap_recall": 0.8333333333333334
+            },
+            "DATE": {
+              "char_recall": 0.8307095596623317,
+              "exact_typed_recall": 0.6815561959654178,
+              "n": 694,
+              "overlap_recall": 0.7449567723342939
+            },
+            "ID": {
+              "char_recall": 0.7106017191977078,
+              "exact_typed_recall": 0.39655172413793105,
+              "n": 58,
+              "overlap_recall": 0.5
+            },
+            "LOCATION_CITY": {
+              "char_recall": 0.8306772908366534,
+              "exact_typed_recall": 0.13559322033898305,
+              "n": 59,
+              "overlap_recall": 0.8135593220338984
+            },
+            "LOCATION_COUNTRY": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "LOCATION_HOSPITAL": {
+              "char_recall": 0.5415162454873647,
+              "exact_typed_recall": 0.2777777777777778,
+              "n": 36,
+              "overlap_recall": 0.75
+            },
+            "LOCATION_ORGANIZATION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "LOCATION_STREET": {
+              "char_recall": 0.8557692307692307,
+              "exact_typed_recall": 0.25,
+              "n": 36,
+              "overlap_recall": 0.8611111111111112
+            },
+            "LOCATION_ZIP": {
+              "char_recall": 0.8548387096774194,
+              "exact_typed_recall": 0.13157894736842105,
+              "n": 38,
+              "overlap_recall": 0.8947368421052632
+            },
+            "NAME_DOCTOR": {
+              "char_recall": 0.9165302782324058,
+              "exact_typed_recall": 0.7254901960784313,
+              "n": 153,
+              "overlap_recall": 0.8758169934640523
+            },
+            "NAME_EXT": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            },
+            "NAME_PATIENT": {
+              "char_recall": 0.8955406230910201,
+              "exact_typed_recall": 0.7333333333333333,
+              "n": 165,
+              "overlap_recall": 0.8545454545454545
+            },
+            "NAME_RELATIVE": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_TITLE": {
+              "char_recall": 0.014102564102564103,
+              "exact_typed_recall": 0.0,
+              "n": 139,
+              "overlap_recall": 0.014388489208633094
+            },
+            "NAME_USERNAME": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "PROFESSION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "UNKNOWN": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            }
+          },
+          "seconds_per_document": 8.865873015873015,
+          "typed": {
+            "f1": 0.6618460229689493,
+            "precision": 0.7367424242424242,
+            "recall": 0.6007722007722007
+          }
+        },
+        "multigrascco-en": {
+          "char_precision": 0.9719846652904748,
+          "char_recall": 0.746602234974328,
+          "ci95": {
+            "char_recall": [
+              0.7171731549355918,
+              0.7765256725656694
+            ],
+            "merged_f1": [
+              0.6326194398682042,
+              0.7011494252873564
+            ],
+            "merged_recall": [
+              0.5754640839386602,
+              0.6560457516339869
+            ]
+          },
+          "documents": 63,
+          "exact": {
+            "f1": 0.6627951993805653,
+            "precision": 0.7475982532751092,
+            "recall": 0.5952712100139083
+          },
+          "gold_spans": 1438,
+          "merged": {
+            "f1": 0.6676470588235294,
+            "precision": 0.7291220556745182,
+            "recall": 0.6157323688969258
+          },
+          "non_pii_redaction_rate": 0.0014055541582210123,
+          "overlap_precision": 0.9764192139737992,
+          "overlap_recall": 0.7336578581363005,
+          "per_type": {
+            "AGE": {
+              "char_recall": 0.59375,
+              "exact_typed_recall": 0.88,
+              "n": 25,
+              "overlap_recall": 0.88
+            },
+            "CONTACT_EMAIL": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_FAX": {
+              "char_recall": 0.9247311827956989,
+              "exact_typed_recall": 0.7142857142857143,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_PHONE": {
+              "char_recall": 0.8711340206185567,
+              "exact_typed_recall": 0.6111111111111112,
+              "n": 18,
+              "overlap_recall": 0.8888888888888888
+            },
+            "DATE": {
+              "char_recall": 0.843381112984823,
+              "exact_typed_recall": 0.69164265129683,
+              "n": 694,
+              "overlap_recall": 0.7579250720461095
+            },
+            "ID": {
+              "char_recall": 0.551948051948052,
+              "exact_typed_recall": 0.43103448275862066,
+              "n": 58,
+              "overlap_recall": 0.5
+            },
+            "LOCATION_CITY": {
+              "char_recall": 0.9352380952380952,
+              "exact_typed_recall": 0.23728813559322035,
+              "n": 59,
+              "overlap_recall": 0.9322033898305084
+            },
+            "LOCATION_COUNTRY": {
+              "char_recall": 0.16,
+              "exact_typed_recall": 0.5,
+              "n": 2,
+              "overlap_recall": 0.5
+            },
+            "LOCATION_HOSPITAL": {
+              "char_recall": 0.6870689655172414,
+              "exact_typed_recall": 0.1388888888888889,
+              "n": 36,
+              "overlap_recall": 0.9166666666666666
+            },
+            "LOCATION_ORGANIZATION": {
+              "char_recall": 0.4909090909090909,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.5
+            },
+            "LOCATION_STREET": {
+              "char_recall": 0.8721374045801527,
+              "exact_typed_recall": 0.19444444444444445,
+              "n": 36,
+              "overlap_recall": 0.9166666666666666
+            },
+            "LOCATION_ZIP": {
+              "char_recall": 0.9130434782608695,
+              "exact_typed_recall": 0.05263157894736842,
+              "n": 38,
+              "overlap_recall": 1.0
+            },
+            "NAME_DOCTOR": {
+              "char_recall": 0.9953319502074689,
+              "exact_typed_recall": 0.8823529411764706,
+              "n": 153,
+              "overlap_recall": 1.0
+            },
+            "NAME_EXT": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_PATIENT": {
+              "char_recall": 0.8352868599629858,
+              "exact_typed_recall": 0.7333333333333333,
+              "n": 165,
+              "overlap_recall": 0.8242424242424242
+            },
+            "NAME_RELATIVE": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_TITLE": {
+              "char_recall": 0.017207147584381206,
+              "exact_typed_recall": 0.0,
+              "n": 139,
+              "overlap_recall": 0.014388489208633094
+            },
+            "NAME_USERNAME": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            },
+            "PROFESSION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            }
+          },
+          "seconds_per_document": 8.752174603174604,
+          "typed": {
+            "f1": 0.6750609260763606,
+            "precision": 0.7133047210300429,
+            "recall": 0.6407093292212799
+          }
+        },
+        "multigrascco-fr": {
+          "char_precision": 0.9674655787863335,
+          "char_recall": 0.6671824447882966,
+          "ci95": {
+            "char_recall": [
+              0.6361137743688079,
+              0.7015850028159949
+            ],
+            "merged_f1": [
+              0.6161616161616161,
+              0.6942307692307691
+            ],
+            "merged_recall": [
+              0.5576171875,
+              0.6506514657980456
+            ]
+          },
+          "documents": 63,
+          "exact": {
+            "f1": 0.6617071260767423,
+            "precision": 0.756490599820949,
+            "recall": 0.5880306193458594
+          },
+          "gold_spans": 1437,
+          "merged": {
+            "f1": 0.6550724637681159,
+            "precision": 0.7151898734177216,
+            "recall": 0.6042780748663101
+          },
+          "non_pii_redaction_rate": 0.0014186857366492332,
+          "overlap_precision": 0.9686660698299016,
+          "overlap_recall": 0.7265135699373695,
+          "per_type": {
+            "AGE": {
+              "char_recall": 0.37719298245614036,
+              "exact_typed_recall": 0.8,
+              "n": 25,
+              "overlap_recall": 0.88
+            },
+            "CONTACT_EMAIL": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_FAX": {
+              "char_recall": 0.9767441860465116,
+              "exact_typed_recall": 0.8571428571428571,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_PHONE": {
+              "char_recall": 0.905940594059406,
+              "exact_typed_recall": 0.8333333333333334,
+              "n": 18,
+              "overlap_recall": 0.9444444444444444
+            },
+            "DATE": {
+              "char_recall": 0.8464156562433525,
+              "exact_typed_recall": 0.6974063400576369,
+              "n": 694,
+              "overlap_recall": 0.7694524495677233
+            },
+            "ID": {
+              "char_recall": 0.5266666666666666,
+              "exact_typed_recall": 0.41379310344827586,
+              "n": 58,
+              "overlap_recall": 0.4482758620689655
+            },
+            "LOCATION_CITY": {
+              "char_recall": 0.85,
+              "exact_typed_recall": 0.2711864406779661,
+              "n": 59,
+              "overlap_recall": 0.9152542372881356
+            },
+            "LOCATION_COUNTRY": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "LOCATION_HOSPITAL": {
+              "char_recall": 0.5820777160983347,
+              "exact_typed_recall": 0.3055555555555556,
+              "n": 36,
+              "overlap_recall": 0.9166666666666666
+            },
+            "LOCATION_ORGANIZATION": {
+              "char_recall": 0.46551724137931033,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 1.0
+            },
+            "LOCATION_STREET": {
+              "char_recall": 0.778584392014519,
+              "exact_typed_recall": 0.2777777777777778,
+              "n": 36,
+              "overlap_recall": 0.8333333333333334
+            },
+            "LOCATION_ZIP": {
+              "char_recall": 0.8669950738916257,
+              "exact_typed_recall": 0.0,
+              "n": 38,
+              "overlap_recall": 0.9210526315789473
+            },
+            "NAME_DOCTOR": {
+              "char_recall": 0.9778830963665087,
+              "exact_typed_recall": 0.8300653594771242,
+              "n": 153,
+              "overlap_recall": 0.9673202614379085
+            },
+            "NAME_EXT": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_PATIENT": {
+              "char_recall": 0.8058860363180964,
+              "exact_typed_recall": 0.6545454545454545,
+              "n": 165,
+              "overlap_recall": 0.7515151515151515
+            },
+            "NAME_RELATIVE": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_TITLE": {
+              "char_recall": 0.02909647779479326,
+              "exact_typed_recall": 0.0,
+              "n": 139,
+              "overlap_recall": 0.06474820143884892
+            },
+            "NAME_USERNAME": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            },
+            "PROFESSION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            }
+          },
+          "seconds_per_document": 11.943539682539683,
+          "typed": {
+            "f1": 0.681836988001655,
+            "precision": 0.7357142857142858,
+            "recall": 0.6353122590593677
+          }
+        }
+      },
+      "resolved_locales": {
+        "meddeid-nl:nl_BE": 300,
+        "meddocan-es:es_ES": 250,
+        "multigrascco-de:de_DE": 63,
+        "multigrascco-en:en": 63,
+        "multigrascco-fr:fr_FR": 63
+      },
+      "unmapped_platform_labels": {}
+    },
+    "mdeberta-model-only": {
+      "groups": {
+        "meddeid-nl": {
+          "char_precision": 0.9579645139522883,
+          "char_recall": 0.617458936703679,
+          "ci95": {
+            "char_recall": [
+              0.5974345324105762,
+              0.6383416791642307
+            ],
+            "merged_f1": [
+              0.45554008354883624,
+              0.494598310744451
+            ],
+            "merged_recall": [
+              0.37120500782472615,
+              0.4122890799108564
+            ]
+          },
+          "core_pii_char_recall": 0.6557697354991106,
+          "documents": 300,
+          "exact": {
+            "f1": 0.5087131367292226,
+            "precision": 0.640506329113924,
+            "recall": 0.4219010561423013
+          },
+          "gold_spans": 3598,
+          "merged": {
+            "f1": 0.47528957528957533,
+            "precision": 0.6034313725490196,
+            "recall": 0.3920382165605096
+          },
+          "non_pii_redaction_rate": 0.0035609925047664845,
+          "overlap_precision": 0.939662447257384,
+          "overlap_recall": 0.5783768760422457,
+          "per_type": {
+            "Address_Location:Caregiver": {
+              "char_recall": 0.6351648351648351,
+              "exact_typed_recall": 0.18,
+              "n": 50,
+              "overlap_recall": 0.68
+            },
+            "Address_Location:Other": {
+              "char_recall": 0.461864406779661,
+              "exact_typed_recall": 0.15,
+              "n": 20,
+              "overlap_recall": 0.5
+            },
+            "Address_Location:Patient": {
+              "char_recall": 0.9166460549097205,
+              "exact_typed_recall": 0.6390977443609023,
+              "n": 133,
+              "overlap_recall": 1.0
+            },
+            "Age_Birthdate": {
+              "char_recall": 0.6523742026931254,
+              "exact_typed_recall": 0.5,
+              "n": 412,
+              "overlap_recall": 0.6213592233009708
+            },
+            "Contactdetails": {
+              "char_recall": 0.939113492450073,
+              "exact_typed_recall": 0.7448680351906158,
+              "n": 341,
+              "overlap_recall": 0.8211143695014663
+            },
+            "Date": {
+              "char_recall": 0.4767136970907729,
+              "exact_typed_recall": 0.23575331772053085,
+              "n": 1281,
+              "overlap_recall": 0.4028103044496487
+            },
+            "ID:Caregiver": {
+              "char_recall": 0.6823529411764706,
+              "exact_typed_recall": 0.43661971830985913,
+              "n": 71,
+              "overlap_recall": 0.647887323943662
+            },
+            "ID:Patient": {
+              "char_recall": 0.5076481835564054,
+              "exact_typed_recall": 0.47738693467336685,
+              "n": 199,
+              "overlap_recall": 0.6331658291457286
+            },
+            "Name:Caregiver": {
+              "char_recall": 0.7383177570093458,
+              "exact_typed_recall": 0.2413793103448276,
+              "n": 232,
+              "overlap_recall": 0.6637931034482759
+            },
+            "Name:Other": {
+              "char_recall": 0.9373198847262247,
+              "exact_typed_recall": 0.8319327731092437,
+              "n": 119,
+              "overlap_recall": 0.8487394957983193
+            },
+            "Name:Patient": {
+              "char_recall": 0.7747747747747747,
+              "exact_typed_recall": 0.6381578947368421,
+              "n": 304,
+              "overlap_recall": 0.7171052631578947
+            },
+            "Organization:Healthcare": {
+              "char_recall": 0.4190081375710118,
+              "exact_typed_recall": 0.14391143911439114,
+              "n": 271,
+              "overlap_recall": 0.6273062730627307
+            },
+            "Organization:Other": {
+              "char_recall": 0.48102564102564105,
+              "exact_typed_recall": 0.19607843137254902,
+              "n": 51,
+              "overlap_recall": 0.7254901960784313
+            },
+            "Profession": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 114,
+              "overlap_recall": 0.0
+            }
+          },
+          "seconds_per_document": 1.3040333333333332,
+          "typed": {
+            "f1": 0.4702482148928936,
+            "precision": 0.5767306088407006,
+            "recall": 0.3969575200918484
+          }
+        },
+        "meddocan-es": {
+          "char_precision": 0.9869297846677081,
+          "char_recall": 0.8601216633062779,
+          "ci95": {
+            "char_recall": [
+              0.8458240087466047,
+              0.8735510705032047
+            ],
+            "merged_f1": [
+              0.7581909979589645,
+              0.7803418803418805
+            ],
+            "merged_recall": [
+              0.7248881659211062,
+              0.7533528918692373
+            ]
+          },
+          "documents": 250,
+          "exact": {
+            "f1": 0.6943669827105409,
+            "precision": 0.7327839905826957,
+            "recall": 0.6597774244833068
+          },
+          "gold_spans": 5661,
+          "merged": {
+            "f1": 0.7695783132530121,
+            "precision": 0.8020179372197309,
+            "recall": 0.7396608767576509
+          },
+          "non_pii_redaction_rate": 0.0012673250621679504,
+          "overlap_precision": 0.9833235236413577,
+          "overlap_recall": 0.8526762056173821,
+          "per_type": {
+            "CALLE": {
+              "char_recall": 0.7628046396455103,
+              "exact_typed_recall": 0.1791767554479419,
+              "n": 413,
+              "overlap_recall": 0.9249394673123487
+            },
+            "CENTRO_SALUD": {
+              "char_recall": 0.8943661971830986,
+              "exact_typed_recall": 0.16666666666666666,
+              "n": 6,
+              "overlap_recall": 1.0
+            },
+            "CORREO_ELECTRONICO": {
+              "char_recall": 0.9866529774127311,
+              "exact_typed_recall": 0.9116465863453815,
+              "n": 249,
+              "overlap_recall": 1.0
+            },
+            "EDAD_SUJETO_ASISTENCIA": {
+              "char_recall": 0.9107672044781034,
+              "exact_typed_recall": 0.9227799227799228,
+              "n": 518,
+              "overlap_recall": 0.9285714285714286
+            },
+            "FAMILIARES_SUJETO_ASISTENCIA": {
+              "char_recall": 0.06167400881057269,
+              "exact_typed_recall": 0.0,
+              "n": 81,
+              "overlap_recall": 0.08641975308641975
+            },
+            "FECHAS": {
+              "char_recall": 0.8030480656506448,
+              "exact_typed_recall": 0.806873977086743,
+              "n": 611,
+              "overlap_recall": 0.8543371522094927
+            },
+            "HOSPITAL": {
+              "char_recall": 0.8597785977859779,
+              "exact_typed_recall": 0.5076923076923077,
+              "n": 130,
+              "overlap_recall": 0.9615384615384616
+            },
+            "ID_ASEGURAMIENTO": {
+              "char_recall": 0.9522198731501057,
+              "exact_typed_recall": 0.30808080808080807,
+              "n": 198,
+              "overlap_recall": 0.9949494949494949
+            },
+            "ID_CONTACTO_ASISTENCIAL": {
+              "char_recall": 0.9536423841059603,
+              "exact_typed_recall": 0.9487179487179487,
+              "n": 39,
+              "overlap_recall": 0.9487179487179487
+            },
+            "ID_SUJETO_ASISTENCIA": {
+              "char_recall": 0.9336708860759494,
+              "exact_typed_recall": 0.901060070671378,
+              "n": 283,
+              "overlap_recall": 0.9434628975265018
+            },
+            "ID_TITULACION_PERSONAL_SANITARIO": {
+              "char_recall": 0.7597434632461766,
+              "exact_typed_recall": 0.19230769230769232,
+              "n": 234,
+              "overlap_recall": 0.8632478632478633
+            },
+            "INSTITUCION": {
+              "char_recall": 0.21811023622047243,
+              "exact_typed_recall": 0.1044776119402985,
+              "n": 67,
+              "overlap_recall": 0.2835820895522388
+            },
+            "NOMBRE_PERSONAL_SANITARIO": {
+              "char_recall": 0.9954058192955589,
+              "exact_typed_recall": 0.8902195608782435,
+              "n": 501,
+              "overlap_recall": 1.0
+            },
+            "NOMBRE_SUJETO_ASISTENCIA": {
+              "char_recall": 0.9968931234465617,
+              "exact_typed_recall": 0.9860557768924303,
+              "n": 502,
+              "overlap_recall": 0.99800796812749
+            },
+            "NUMERO_FAX": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.7142857142857143,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "NUMERO_TELEFONO": {
+              "char_recall": 0.9829787234042553,
+              "exact_typed_recall": 0.7692307692307693,
+              "n": 26,
+              "overlap_recall": 1.0
+            },
+            "OTROS_SUJETO_ASISTENCIA": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 7,
+              "overlap_recall": 0.0
+            },
+            "PAIS": {
+              "char_recall": 0.7930879712746858,
+              "exact_typed_recall": 0.7327823691460055,
+              "n": 363,
+              "overlap_recall": 0.7878787878787878
+            },
+            "PROFESION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 9,
+              "overlap_recall": 0.0
+            },
+            "SEXO_SUJETO_ASISTENCIA": {
+              "char_recall": 0.4589473684210526,
+              "exact_typed_recall": 0.2386117136659436,
+              "n": 461,
+              "overlap_recall": 0.2603036876355748
+            },
+            "TERRITORIO": {
+              "char_recall": 0.9131271037025164,
+              "exact_typed_recall": 0.5313807531380753,
+              "n": 956,
+              "overlap_recall": 0.9330543933054394
+            }
+          },
+          "seconds_per_document": 4.82824,
+          "typed": {
+            "f1": 0.670334794367248,
+            "precision": 0.6966466369451444,
+            "recall": 0.6459381739755572
+          }
+        },
+        "multigrascco-de": {
+          "char_precision": 0.9758935993349959,
+          "char_recall": 0.6966177841824193,
+          "ci95": {
+            "char_recall": [
+              0.6517715247265589,
+              0.7423915177694875
+            ],
+            "merged_f1": [
+              0.5076828518746158,
+              0.6043317485472794
+            ],
+            "merged_recall": [
+              0.4259763851044505,
+              0.5288808664259927
+            ]
+          },
+          "documents": 63,
+          "exact": {
+            "f1": 0.5755764304013664,
+            "precision": 0.7447513812154696,
+            "recall": 0.46903270702853167
+          },
+          "gold_spans": 1437,
+          "merged": {
+            "f1": 0.5559105431309903,
+            "precision": 0.6700898587933247,
+            "recall": 0.4749772520473157
+          },
+          "non_pii_redaction_rate": 0.0010625323863011835,
+          "overlap_precision": 0.9812154696132597,
+          "overlap_recall": 0.6200417536534447,
+          "per_type": {
+            "AGE": {
+              "char_recall": 0.02857142857142857,
+              "exact_typed_recall": 0.0,
+              "n": 23,
+              "overlap_recall": 0.043478260869565216
+            },
+            "CONTACT_EMAIL": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_FAX": {
+              "char_recall": 0.9514563106796117,
+              "exact_typed_recall": 0.8571428571428571,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_PHONE": {
+              "char_recall": 0.7178217821782178,
+              "exact_typed_recall": 0.5,
+              "n": 18,
+              "overlap_recall": 0.7222222222222222
+            },
+            "DATE": {
+              "char_recall": 0.6646132785763176,
+              "exact_typed_recall": 0.5086455331412104,
+              "n": 694,
+              "overlap_recall": 0.6080691642651297
+            },
+            "ID": {
+              "char_recall": 0.6819484240687679,
+              "exact_typed_recall": 0.41379310344827586,
+              "n": 58,
+              "overlap_recall": 0.4827586206896552
+            },
+            "LOCATION_CITY": {
+              "char_recall": 0.8306772908366534,
+              "exact_typed_recall": 0.13559322033898305,
+              "n": 59,
+              "overlap_recall": 0.8135593220338984
+            },
+            "LOCATION_COUNTRY": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "LOCATION_HOSPITAL": {
+              "char_recall": 0.5415162454873647,
+              "exact_typed_recall": 0.2777777777777778,
+              "n": 36,
+              "overlap_recall": 0.75
+            },
+            "LOCATION_ORGANIZATION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "LOCATION_STREET": {
+              "char_recall": 0.8557692307692307,
+              "exact_typed_recall": 0.25,
+              "n": 36,
+              "overlap_recall": 0.8611111111111112
+            },
+            "LOCATION_ZIP": {
+              "char_recall": 0.8548387096774194,
+              "exact_typed_recall": 0.07894736842105263,
+              "n": 38,
+              "overlap_recall": 0.8947368421052632
+            },
+            "NAME_DOCTOR": {
+              "char_recall": 0.9165302782324058,
+              "exact_typed_recall": 0.7254901960784313,
+              "n": 153,
+              "overlap_recall": 0.8758169934640523
+            },
+            "NAME_EXT": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            },
+            "NAME_PATIENT": {
+              "char_recall": 0.8955406230910201,
+              "exact_typed_recall": 0.7333333333333333,
+              "n": 165,
+              "overlap_recall": 0.8545454545454545
+            },
+            "NAME_RELATIVE": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_TITLE": {
+              "char_recall": 0.014102564102564103,
+              "exact_typed_recall": 0.0,
+              "n": 139,
+              "overlap_recall": 0.014388489208633094
+            },
+            "NAME_USERNAME": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "PROFESSION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "UNKNOWN": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            }
+          },
+          "seconds_per_document": 7.220587301587302,
+          "typed": {
+            "f1": 0.5948158253751705,
+            "precision": 0.7234513274336283,
+            "recall": 0.505019305019305
+          }
+        },
+        "multigrascco-en": {
+          "char_precision": 0.9698868007473349,
+          "char_recall": 0.6663394744790093,
+          "ci95": {
+            "char_recall": [
+              0.629954176380738,
+              0.7052032139792496
+            ],
+            "merged_f1": [
+              0.5229077580940745,
+              0.6068682726806766
+            ],
+            "merged_recall": [
+              0.43929712460063897,
+              0.5339981867633726
+            ]
+          },
+          "documents": 63,
+          "exact": {
+            "f1": 0.5686604886267902,
+            "precision": 0.7211538461538461,
+            "recall": 0.4694019471488178
+          },
+          "gold_spans": 1438,
+          "merged": {
+            "f1": 0.5648293963254594,
+            "precision": 0.6733416770963705,
+            "recall": 0.4864376130198915
+          },
+          "non_pii_redaction_rate": 0.0013513046994826573,
+          "overlap_precision": 0.9818376068376068,
+          "overlap_recall": 0.6390820584144645,
+          "per_type": {
+            "AGE": {
+              "char_recall": 0.375,
+              "exact_typed_recall": 0.08,
+              "n": 25,
+              "overlap_recall": 0.48
+            },
+            "CONTACT_EMAIL": {
+              "char_recall": 0.6,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_FAX": {
+              "char_recall": 0.8709677419354839,
+              "exact_typed_recall": 0.7142857142857143,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_PHONE": {
+              "char_recall": 0.8711340206185567,
+              "exact_typed_recall": 0.5,
+              "n": 18,
+              "overlap_recall": 0.8888888888888888
+            },
+            "DATE": {
+              "char_recall": 0.6300590219224284,
+              "exact_typed_recall": 0.44668587896253603,
+              "n": 694,
+              "overlap_recall": 0.5778097982708934
+            },
+            "ID": {
+              "char_recall": 0.5238095238095238,
+              "exact_typed_recall": 0.41379310344827586,
+              "n": 58,
+              "overlap_recall": 0.4827586206896552
+            },
+            "LOCATION_CITY": {
+              "char_recall": 0.9352380952380952,
+              "exact_typed_recall": 0.23728813559322035,
+              "n": 59,
+              "overlap_recall": 0.9322033898305084
+            },
+            "LOCATION_COUNTRY": {
+              "char_recall": 0.16,
+              "exact_typed_recall": 0.5,
+              "n": 2,
+              "overlap_recall": 0.5
+            },
+            "LOCATION_HOSPITAL": {
+              "char_recall": 0.6870689655172414,
+              "exact_typed_recall": 0.1388888888888889,
+              "n": 36,
+              "overlap_recall": 0.9166666666666666
+            },
+            "LOCATION_ORGANIZATION": {
+              "char_recall": 0.4909090909090909,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.5
+            },
+            "LOCATION_STREET": {
+              "char_recall": 0.8721374045801527,
+              "exact_typed_recall": 0.19444444444444445,
+              "n": 36,
+              "overlap_recall": 0.9166666666666666
+            },
+            "LOCATION_ZIP": {
+              "char_recall": 0.9130434782608695,
+              "exact_typed_recall": 0.05263157894736842,
+              "n": 38,
+              "overlap_recall": 1.0
+            },
+            "NAME_DOCTOR": {
+              "char_recall": 0.9953319502074689,
+              "exact_typed_recall": 0.8823529411764706,
+              "n": 153,
+              "overlap_recall": 1.0
+            },
+            "NAME_EXT": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_PATIENT": {
+              "char_recall": 0.8352868599629858,
+              "exact_typed_recall": 0.7333333333333333,
+              "n": 165,
+              "overlap_recall": 0.8242424242424242
+            },
+            "NAME_RELATIVE": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_TITLE": {
+              "char_recall": 0.017207147584381206,
+              "exact_typed_recall": 0.0,
+              "n": 139,
+              "overlap_recall": 0.014388489208633094
+            },
+            "NAME_USERNAME": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            },
+            "PROFESSION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            }
+          },
+          "seconds_per_document": 7.3874603174603175,
+          "typed": {
+            "f1": 0.5700223713646533,
+            "precision": 0.6791044776119403,
+            "recall": 0.49113338473400153
+          }
+        },
+        "multigrascco-fr": {
+          "char_precision": 0.9641601451740955,
+          "char_recall": 0.5979040652693769,
+          "ci95": {
+            "char_recall": [
+              0.5608426635238657,
+              0.6349444861841556
+            ],
+            "merged_f1": [
+              0.5121212121212121,
+              0.6061922868006517
+            ],
+            "merged_recall": [
+              0.4300986842105263,
+              0.5412221144519883
+            ]
+          },
+          "documents": 63,
+          "exact": {
+            "f1": 0.5771981489272191,
+            "precision": 0.7297872340425532,
+            "recall": 0.47738343771746694
+          },
+          "gold_spans": 1437,
+          "merged": {
+            "f1": 0.5590955806783144,
+            "precision": 0.6601941747572816,
+            "recall": 0.48484848484848486
+          },
+          "non_pii_redaction_rate": 0.0014053438645177357,
+          "overlap_precision": 0.9691489361702128,
+          "overlap_recall": 0.6374391092553932,
+          "per_type": {
+            "AGE": {
+              "char_recall": 0.17543859649122806,
+              "exact_typed_recall": 0.0,
+              "n": 25,
+              "overlap_recall": 0.4
+            },
+            "CONTACT_EMAIL": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_FAX": {
+              "char_recall": 0.9767441860465116,
+              "exact_typed_recall": 0.8571428571428571,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_PHONE": {
+              "char_recall": 0.8564356435643564,
+              "exact_typed_recall": 0.7777777777777778,
+              "n": 18,
+              "overlap_recall": 0.8888888888888888
+            },
+            "DATE": {
+              "char_recall": 0.6464582003828973,
+              "exact_typed_recall": 0.4956772334293948,
+              "n": 694,
+              "overlap_recall": 0.6066282420749279
+            },
+            "ID": {
+              "char_recall": 0.5044444444444445,
+              "exact_typed_recall": 0.41379310344827586,
+              "n": 58,
+              "overlap_recall": 0.43103448275862066
+            },
+            "LOCATION_CITY": {
+              "char_recall": 0.85,
+              "exact_typed_recall": 0.2711864406779661,
+              "n": 59,
+              "overlap_recall": 0.9152542372881356
+            },
+            "LOCATION_COUNTRY": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "LOCATION_HOSPITAL": {
+              "char_recall": 0.5820777160983347,
+              "exact_typed_recall": 0.3055555555555556,
+              "n": 36,
+              "overlap_recall": 0.9166666666666666
+            },
+            "LOCATION_ORGANIZATION": {
+              "char_recall": 0.46551724137931033,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 1.0
+            },
+            "LOCATION_STREET": {
+              "char_recall": 0.7749546279491834,
+              "exact_typed_recall": 0.2777777777777778,
+              "n": 36,
+              "overlap_recall": 0.8055555555555556
+            },
+            "LOCATION_ZIP": {
+              "char_recall": 0.8669950738916257,
+              "exact_typed_recall": 0.0,
+              "n": 38,
+              "overlap_recall": 0.9210526315789473
+            },
+            "NAME_DOCTOR": {
+              "char_recall": 0.9778830963665087,
+              "exact_typed_recall": 0.8300653594771242,
+              "n": 153,
+              "overlap_recall": 0.9673202614379085
+            },
+            "NAME_EXT": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_PATIENT": {
+              "char_recall": 0.8058860363180964,
+              "exact_typed_recall": 0.6545454545454545,
+              "n": 165,
+              "overlap_recall": 0.7515151515151515
+            },
+            "NAME_RELATIVE": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_TITLE": {
+              "char_recall": 0.02909647779479326,
+              "exact_typed_recall": 0.0,
+              "n": 139,
+              "overlap_recall": 0.06474820143884892
+            },
+            "NAME_USERNAME": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            },
+            "PROFESSION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            }
+          },
+          "seconds_per_document": 9.835746031746032,
+          "typed": {
+            "f1": 0.5943523083818916,
+            "precision": 0.7098501070663812,
+            "recall": 0.5111796453353894
+          }
+        }
+      },
+      "resolved_locales": {
+        "meddeid-nl:nl_BE": 300,
+        "meddocan-es:es_ES": 250,
+        "multigrascco-de:de_DE": 63,
+        "multigrascco-en:en": 63,
+        "multigrascco-fr:fr_FR": 63
+      },
+      "unmapped_platform_labels": {}
+    },
+    "octo": {
+      "groups": {
+        "meddeid-nl": {
+          "char_precision": 0.9285564947283534,
+          "char_recall": 0.7953998874277235,
+          "ci95": {
+            "char_recall": [
+              0.7807098495996807,
+              0.8099449228143666
+            ],
+            "merged_f1": [
+              0.5518330117523242,
+              0.5853741496598639
+            ],
+            "merged_recall": [
+              0.5059834305001534,
+              0.5415879017013232
+            ]
+          },
+          "core_pii_char_recall": 0.8564346329940801,
+          "documents": 300,
+          "exact": {
+            "f1": 0.6102142647490462,
+            "precision": 0.6464552238805971,
+            "recall": 0.5778210116731517
+          },
+          "gold_spans": 3598,
+          "merged": {
+            "f1": 0.5685121107266436,
+            "precision": 0.6223484848484848,
+            "recall": 0.5232484076433122
+          },
+          "non_pii_redaction_rate": 0.008043337177905034,
+          "overlap_precision": 0.9328358208955224,
+          "overlap_recall": 0.7709838799332963,
+          "per_type": {
+            "Address_Location:Caregiver": {
+              "char_recall": 0.865934065934066,
+              "exact_typed_recall": 0.44,
+              "n": 50,
+              "overlap_recall": 0.82
+            },
+            "Address_Location:Other": {
+              "char_recall": 0.7330508474576272,
+              "exact_typed_recall": 0.6,
+              "n": 20,
+              "overlap_recall": 0.7
+            },
+            "Address_Location:Patient": {
+              "char_recall": 0.9970319069997526,
+              "exact_typed_recall": 0.8270676691729323,
+              "n": 133,
+              "overlap_recall": 0.9924812030075187
+            },
+            "Age_Birthdate": {
+              "char_recall": 0.7097802976612332,
+              "exact_typed_recall": 0.4684466019417476,
+              "n": 412,
+              "overlap_recall": 0.9878640776699029
+            },
+            "Contactdetails": {
+              "char_recall": 0.971748660496834,
+              "exact_typed_recall": 0.7976539589442815,
+              "n": 341,
+              "overlap_recall": 0.9178885630498533
+            },
+            "Date": {
+              "char_recall": 0.7708827568984892,
+              "exact_typed_recall": 0.555815768930523,
+              "n": 1281,
+              "overlap_recall": 0.7166276346604216
+            },
+            "ID:Caregiver": {
+              "char_recall": 0.4764705882352941,
+              "exact_typed_recall": 0.30985915492957744,
+              "n": 71,
+              "overlap_recall": 0.4225352112676056
+            },
+            "ID:Patient": {
+              "char_recall": 0.2844168260038241,
+              "exact_typed_recall": 0.24623115577889448,
+              "n": 199,
+              "overlap_recall": 0.3316582914572864
+            },
+            "Name:Caregiver": {
+              "char_recall": 0.7081563296516568,
+              "exact_typed_recall": 0.30603448275862066,
+              "n": 232,
+              "overlap_recall": 0.6767241379310345
+            },
+            "Name:Other": {
+              "char_recall": 0.9762247838616714,
+              "exact_typed_recall": 0.8403361344537815,
+              "n": 119,
+              "overlap_recall": 0.9243697478991597
+            },
+            "Name:Patient": {
+              "char_recall": 0.977759009009009,
+              "exact_typed_recall": 0.881578947368421,
+              "n": 304,
+              "overlap_recall": 0.9342105263157895
+            },
+            "Organization:Healthcare": {
+              "char_recall": 0.8932903423921388,
+              "exact_typed_recall": 0.4132841328413284,
+              "n": 271,
+              "overlap_recall": 0.8597785977859779
+            },
+            "Organization:Other": {
+              "char_recall": 0.7866666666666666,
+              "exact_typed_recall": 0.49019607843137253,
+              "n": 51,
+              "overlap_recall": 0.8235294117647058
+            },
+            "Profession": {
+              "char_recall": 0.17463729177861365,
+              "exact_typed_recall": 0.0,
+              "n": 114,
+              "overlap_recall": 0.23684210526315788
+            }
+          },
+          "seconds_per_document": 0.9530299999999999,
+          "typed": {
+            "f1": 0.5748502994011976,
+            "precision": 0.5851917930419268,
+            "recall": 0.5648679678530425
+          }
+        },
+        "meddocan-es": {
+          "char_precision": 0.9778300173919691,
+          "char_recall": 0.8816798497303072,
+          "ci95": {
+            "char_recall": [
+              0.8712283566350307,
+              0.8917339270804342
+            ],
+            "merged_f1": [
+              0.7010500308832612,
+              0.723674617227372
+            ],
+            "merged_recall": [
+              0.699522722556547,
+              0.7238353875078337
+            ]
+          },
+          "documents": 250,
+          "exact": {
+            "f1": 0.6699765300595776,
+            "precision": 0.6850655344286506,
+            "recall": 0.6555378908320085
+          },
+          "gold_spans": 5661,
+          "merged": {
+            "f1": 0.7129409330712735,
+            "precision": 0.7133098737321466,
+            "recall": 0.7125723738626965
+          },
+          "non_pii_redaction_rate": 0.0022240500334566146,
+          "overlap_precision": 0.9702787520767953,
+          "overlap_recall": 0.9167991520932698,
+          "per_type": {
+            "CALLE": {
+              "char_recall": 0.8381337156262219,
+              "exact_typed_recall": 0.2469733656174334,
+              "n": 413,
+              "overlap_recall": 0.9346246973365617
+            },
+            "CENTRO_SALUD": {
+              "char_recall": 0.6619718309859155,
+              "exact_typed_recall": 0.3333333333333333,
+              "n": 6,
+              "overlap_recall": 0.8333333333333334
+            },
+            "CORREO_ELECTRONICO": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.9959839357429718,
+              "n": 249,
+              "overlap_recall": 1.0
+            },
+            "EDAD_SUJETO_ASISTENCIA": {
+              "char_recall": 0.3065525189331577,
+              "exact_typed_recall": 0.04247104247104247,
+              "n": 518,
+              "overlap_recall": 0.9285714285714286
+            },
+            "FAMILIARES_SUJETO_ASISTENCIA": {
+              "char_recall": 0.12041116005873716,
+              "exact_typed_recall": 0.0,
+              "n": 81,
+              "overlap_recall": 0.14814814814814814
+            },
+            "FECHAS": {
+              "char_recall": 0.9878858929269245,
+              "exact_typed_recall": 0.8903436988543372,
+              "n": 611,
+              "overlap_recall": 0.9869067103109657
+            },
+            "HOSPITAL": {
+              "char_recall": 0.963383479988646,
+              "exact_typed_recall": 0.6692307692307692,
+              "n": 130,
+              "overlap_recall": 0.9615384615384616
+            },
+            "ID_ASEGURAMIENTO": {
+              "char_recall": 0.9797040169133192,
+              "exact_typed_recall": 0.2222222222222222,
+              "n": 198,
+              "overlap_recall": 0.98989898989899
+            },
+            "ID_CONTACTO_ASISTENCIAL": {
+              "char_recall": 0.9238410596026491,
+              "exact_typed_recall": 0.8974358974358975,
+              "n": 39,
+              "overlap_recall": 0.9230769230769231
+            },
+            "ID_SUJETO_ASISTENCIA": {
+              "char_recall": 0.8946835443037975,
+              "exact_typed_recall": 0.7879858657243817,
+              "n": 283,
+              "overlap_recall": 0.8975265017667845
+            },
+            "ID_TITULACION_PERSONAL_SANITARIO": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.9102564102564102,
+              "n": 234,
+              "overlap_recall": 1.0
+            },
+            "INSTITUCION": {
+              "char_recall": 0.39291338582677166,
+              "exact_typed_recall": 0.1791044776119403,
+              "n": 67,
+              "overlap_recall": 0.44776119402985076
+            },
+            "NOMBRE_PERSONAL_SANITARIO": {
+              "char_recall": 0.9993874425727411,
+              "exact_typed_recall": 0.9780439121756487,
+              "n": 501,
+              "overlap_recall": 1.0
+            },
+            "NOMBRE_SUJETO_ASISTENCIA": {
+              "char_recall": 0.9983429991714996,
+              "exact_typed_recall": 0.9561752988047809,
+              "n": 502,
+              "overlap_recall": 0.99800796812749
+            },
+            "NUMERO_FAX": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.7142857142857143,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "NUMERO_TELEFONO": {
+              "char_recall": 0.9744680851063829,
+              "exact_typed_recall": 0.7692307692307693,
+              "n": 26,
+              "overlap_recall": 0.9615384615384616
+            },
+            "OTROS_SUJETO_ASISTENCIA": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 7,
+              "overlap_recall": 0.0
+            },
+            "PAIS": {
+              "char_recall": 0.783213644524237,
+              "exact_typed_recall": 0.07162534435261708,
+              "n": 363,
+              "overlap_recall": 0.7741046831955923
+            },
+            "PROFESION": {
+              "char_recall": 0.05405405405405406,
+              "exact_typed_recall": 0.0,
+              "n": 9,
+              "overlap_recall": 0.1111111111111111
+            },
+            "SEXO_SUJETO_ASISTENCIA": {
+              "char_recall": 0.7319298245614035,
+              "exact_typed_recall": 0.8156182212581344,
+              "n": 461,
+              "overlap_recall": 0.8329718004338394
+            },
+            "TERRITORIO": {
+              "char_recall": 0.9160121814393333,
+              "exact_typed_recall": 0.4769874476987448,
+              "n": 956,
+              "overlap_recall": 0.9194560669456067
+            }
+          },
+          "seconds_per_document": 2.9963960000000003,
+          "typed": {
+            "f1": 0.6118944323933477,
+            "precision": 0.6154545454545455,
+            "recall": 0.6083752695902228
+          }
+        },
+        "multigrascco-de": {
+          "char_precision": 0.8900482244629548,
+          "char_recall": 0.8604730016105789,
+          "ci95": {
+            "char_recall": [
+              0.8363343187315238,
+              0.882134530696831
+            ],
+            "merged_f1": [
+              0.5499215891270257,
+              0.6238615664845173
+            ],
+            "merged_recall": [
+              0.5285433070866141,
+              0.6050632911392405
+            ]
+          },
+          "documents": 63,
+          "exact": {
+            "f1": 0.5982842223051101,
+            "precision": 0.6446945337620579,
+            "recall": 0.5581071677105081
+          },
+          "gold_spans": 1437,
+          "merged": {
+            "f1": 0.5899008966493628,
+            "precision": 0.6127450980392157,
+            "recall": 0.5686988171064604
+          },
+          "non_pii_redaction_rate": 0.006563623706510759,
+          "overlap_precision": 0.9091639871382636,
+          "overlap_recall": 0.7863604732080723,
+          "per_type": {
+            "AGE": {
+              "char_recall": 0.5571428571428572,
+              "exact_typed_recall": 0.43478260869565216,
+              "n": 23,
+              "overlap_recall": 0.782608695652174
+            },
+            "CONTACT_EMAIL": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_FAX": {
+              "char_recall": 0.9902912621359223,
+              "exact_typed_recall": 0.8571428571428571,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_PHONE": {
+              "char_recall": 0.995049504950495,
+              "exact_typed_recall": 0.7222222222222222,
+              "n": 18,
+              "overlap_recall": 1.0
+            },
+            "DATE": {
+              "char_recall": 0.8961898243212412,
+              "exact_typed_recall": 0.7579250720461095,
+              "n": 694,
+              "overlap_recall": 0.8256484149855908
+            },
+            "ID": {
+              "char_recall": 0.6991404011461319,
+              "exact_typed_recall": 0.3620689655172414,
+              "n": 58,
+              "overlap_recall": 0.4827586206896552
+            },
+            "LOCATION_CITY": {
+              "char_recall": 0.9661354581673307,
+              "exact_typed_recall": 0.11864406779661017,
+              "n": 59,
+              "overlap_recall": 0.9491525423728814
+            },
+            "LOCATION_COUNTRY": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "LOCATION_HOSPITAL": {
+              "char_recall": 0.8962093862815884,
+              "exact_typed_recall": 0.4722222222222222,
+              "n": 36,
+              "overlap_recall": 0.8888888888888888
+            },
+            "LOCATION_ORGANIZATION": {
+              "char_recall": 0.9117647058823529,
+              "exact_typed_recall": 0.5,
+              "n": 2,
+              "overlap_recall": 0.5
+            },
+            "LOCATION_STREET": {
+              "char_recall": 0.9115384615384615,
+              "exact_typed_recall": 0.2222222222222222,
+              "n": 36,
+              "overlap_recall": 0.9722222222222222
+            },
+            "LOCATION_ZIP": {
+              "char_recall": 0.978494623655914,
+              "exact_typed_recall": 0.05263157894736842,
+              "n": 38,
+              "overlap_recall": 1.0
+            },
+            "NAME_DOCTOR": {
+              "char_recall": 0.9476268412438625,
+              "exact_typed_recall": 0.6993464052287581,
+              "n": 153,
+              "overlap_recall": 0.934640522875817
+            },
+            "NAME_EXT": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_PATIENT": {
+              "char_recall": 0.9700671960904093,
+              "exact_typed_recall": 0.41818181818181815,
+              "n": 165,
+              "overlap_recall": 0.9515151515151515
+            },
+            "NAME_RELATIVE": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_TITLE": {
+              "char_recall": 0.12051282051282051,
+              "exact_typed_recall": 0.0,
+              "n": 139,
+              "overlap_recall": 0.1366906474820144
+            },
+            "NAME_USERNAME": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "PROFESSION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "UNKNOWN": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            }
+          },
+          "seconds_per_document": 5.078730158730158,
+          "typed": {
+            "f1": 0.621941594317285,
+            "precision": 0.6359967715899919,
+            "recall": 0.6084942084942085
+          }
+        },
+        "multigrascco-en": {
+          "char_precision": 0.9126700680272108,
+          "char_recall": 0.8104047115675023,
+          "ci95": {
+            "char_recall": [
+              0.7816446181599519,
+              0.8375923645320197
+            ],
+            "merged_f1": [
+              0.598503740648379,
+              0.6716072255673924
+            ],
+            "merged_recall": [
+              0.5853413654618473,
+              0.6606822262118492
+            ]
+          },
+          "documents": 63,
+          "exact": {
+            "f1": 0.6820175438596492,
+            "precision": 0.7187981510015409,
+            "recall": 0.6488178025034771
+          },
+          "gold_spans": 1438,
+          "merged": {
+            "f1": 0.6355658198614319,
+            "precision": 0.6496694995278565,
+            "recall": 0.6220614828209765
+          },
+          "non_pii_redaction_rate": 0.005064926738571858,
+          "overlap_precision": 0.9052388289676425,
+          "overlap_recall": 0.7990264255910987,
+          "per_type": {
+            "AGE": {
+              "char_recall": 0.4479166666666667,
+              "exact_typed_recall": 0.8,
+              "n": 25,
+              "overlap_recall": 0.88
+            },
+            "CONTACT_EMAIL": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_FAX": {
+              "char_recall": 0.978494623655914,
+              "exact_typed_recall": 0.8571428571428571,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_PHONE": {
+              "char_recall": 0.9329896907216495,
+              "exact_typed_recall": 0.6666666666666666,
+              "n": 18,
+              "overlap_recall": 0.9444444444444444
+            },
+            "DATE": {
+              "char_recall": 0.9112563237774031,
+              "exact_typed_recall": 0.7824207492795389,
+              "n": 694,
+              "overlap_recall": 0.8515850144092219
+            },
+            "ID": {
+              "char_recall": 0.37445887445887444,
+              "exact_typed_recall": 0.25862068965517243,
+              "n": 58,
+              "overlap_recall": 0.3620689655172414
+            },
+            "LOCATION_CITY": {
+              "char_recall": 0.9123809523809524,
+              "exact_typed_recall": 0.13559322033898305,
+              "n": 59,
+              "overlap_recall": 0.8983050847457628
+            },
+            "LOCATION_COUNTRY": {
+              "char_recall": 0.16,
+              "exact_typed_recall": 0.5,
+              "n": 2,
+              "overlap_recall": 0.5
+            },
+            "LOCATION_HOSPITAL": {
+              "char_recall": 0.9172413793103448,
+              "exact_typed_recall": 0.5,
+              "n": 36,
+              "overlap_recall": 0.9444444444444444
+            },
+            "LOCATION_ORGANIZATION": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 1.0
+            },
+            "LOCATION_STREET": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.3611111111111111,
+              "n": 36,
+              "overlap_recall": 1.0
+            },
+            "LOCATION_ZIP": {
+              "char_recall": 0.9420289855072463,
+              "exact_typed_recall": 0.10526315789473684,
+              "n": 38,
+              "overlap_recall": 1.0
+            },
+            "NAME_DOCTOR": {
+              "char_recall": 0.9875518672199171,
+              "exact_typed_recall": 0.8627450980392157,
+              "n": 153,
+              "overlap_recall": 0.9934640522875817
+            },
+            "NAME_EXT": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_PATIENT": {
+              "char_recall": 0.9888957433682912,
+              "exact_typed_recall": 0.8363636363636363,
+              "n": 165,
+              "overlap_recall": 1.0
+            },
+            "NAME_RELATIVE": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_TITLE": {
+              "char_recall": 0.02514890800794176,
+              "exact_typed_recall": 0.0,
+              "n": 139,
+              "overlap_recall": 0.050359712230215826
+            },
+            "NAME_USERNAME": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            },
+            "PROFESSION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            }
+          },
+          "seconds_per_document": 4.865666666666666,
+          "typed": {
+            "f1": 0.7020376778162245,
+            "precision": 0.7001533742331288,
+            "recall": 0.7039321511179646
+          }
+        },
+        "multigrascco-fr": {
+          "char_precision": 0.9082011474856564,
+          "char_recall": 0.7570685047123364,
+          "ci95": {
+            "char_recall": [
+              0.7297075142133023,
+              0.7843570786982658
+            ],
+            "merged_f1": [
+              0.583927722301474,
+              0.6568839015968926
+            ],
+            "merged_recall": [
+              0.5662172878667724,
+              0.6432606941081518
+            ]
+          },
+          "documents": 63,
+          "exact": {
+            "f1": 0.6535608308605342,
+            "precision": 0.6997617156473391,
+            "recall": 0.6130828114126653
+          },
+          "gold_spans": 1437,
+          "merged": {
+            "f1": 0.6193961573650504,
+            "precision": 0.6362781954887218,
+            "recall": 0.6033868092691622
+          },
+          "non_pii_redaction_rate": 0.004838652293023091,
+          "overlap_precision": 0.9237490071485306,
+          "overlap_recall": 0.8002783576896312,
+          "per_type": {
+            "AGE": {
+              "char_recall": 0.4298245614035088,
+              "exact_typed_recall": 0.8,
+              "n": 25,
+              "overlap_recall": 0.92
+            },
+            "CONTACT_EMAIL": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_FAX": {
+              "char_recall": 0.9302325581395349,
+              "exact_typed_recall": 0.8571428571428571,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_PHONE": {
+              "char_recall": 0.9702970297029703,
+              "exact_typed_recall": 0.8888888888888888,
+              "n": 18,
+              "overlap_recall": 1.0
+            },
+            "DATE": {
+              "char_recall": 0.9085300999787279,
+              "exact_typed_recall": 0.7795389048991355,
+              "n": 694,
+              "overlap_recall": 0.8429394812680115
+            },
+            "ID": {
+              "char_recall": 0.44,
+              "exact_typed_recall": 0.25862068965517243,
+              "n": 58,
+              "overlap_recall": 0.43103448275862066
+            },
+            "LOCATION_CITY": {
+              "char_recall": 0.925,
+              "exact_typed_recall": 0.1016949152542373,
+              "n": 59,
+              "overlap_recall": 0.9152542372881356
+            },
+            "LOCATION_COUNTRY": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 2,
+              "overlap_recall": 1.0
+            },
+            "LOCATION_HOSPITAL": {
+              "char_recall": 0.9119746233148295,
+              "exact_typed_recall": 0.6388888888888888,
+              "n": 36,
+              "overlap_recall": 0.9722222222222222
+            },
+            "LOCATION_ORGANIZATION": {
+              "char_recall": 0.9827586206896551,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 1.0
+            },
+            "LOCATION_STREET": {
+              "char_recall": 0.9945553539019963,
+              "exact_typed_recall": 0.3611111111111111,
+              "n": 36,
+              "overlap_recall": 1.0
+            },
+            "LOCATION_ZIP": {
+              "char_recall": 0.9901477832512315,
+              "exact_typed_recall": 0.0,
+              "n": 38,
+              "overlap_recall": 1.0
+            },
+            "NAME_DOCTOR": {
+              "char_recall": 0.9731437598736177,
+              "exact_typed_recall": 0.8366013071895425,
+              "n": 153,
+              "overlap_recall": 0.9738562091503268
+            },
+            "NAME_EXT": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_PATIENT": {
+              "char_recall": 0.9536631183469004,
+              "exact_typed_recall": 0.5818181818181818,
+              "n": 165,
+              "overlap_recall": 0.9575757575757575
+            },
+            "NAME_RELATIVE": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_TITLE": {
+              "char_recall": 0.08269525267993874,
+              "exact_typed_recall": 0.0,
+              "n": 139,
+              "overlap_recall": 0.1079136690647482
+            },
+            "NAME_USERNAME": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            },
+            "PROFESSION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            }
+          },
+          "seconds_per_document": 5.85015873015873,
+          "typed": {
+            "f1": 0.6807843137254902,
+            "precision": 0.6927374301675978,
+            "recall": 0.669236700077101
+          }
+        }
+      },
+      "resolved_locales": {
+        "meddeid-nl:nl_BE": 300,
+        "meddocan-es:es_ES": 250,
+        "multigrascco-de:de_DE": 63,
+        "multigrascco-en:en": 63,
+        "multigrascco-fr:fr_FR": 63
+      },
+      "unmapped_platform_labels": {}
+    },
+    "synthify": {
+      "groups": {
+        "meddeid-nl": {
+          "char_precision": 0.912606367250386,
+          "char_recall": 0.7106636647392929,
+          "ci95": {
+            "char_recall": [
+              0.6954630357845065,
+              0.7268805102232226
+            ],
+            "merged_f1": [
+              0.5217713544561793,
+              0.554670528602462
+            ],
+            "merged_recall": [
+              0.46434181589695256,
+              0.4988814317673378
+            ]
+          },
+          "core_pii_char_recall": 0.7656527951940743,
+          "documents": 300,
+          "exact": {
+            "f1": 0.5616903146206045,
+            "precision": 0.6309771309771309,
+            "recall": 0.5061145080600333
+          },
+          "gold_spans": 3598,
+          "merged": {
+            "f1": 0.5382971143569647,
+            "precision": 0.610751818916734,
+            "recall": 0.48121019108280255
+          },
+          "non_pii_redaction_rate": 0.008944513751349243,
+          "overlap_precision": 0.8776853776853777,
+          "overlap_recall": 0.6845469705391884,
+          "per_type": {
+            "Address_Location:Caregiver": {
+              "char_recall": 0.9560439560439561,
+              "exact_typed_recall": 0.64,
+              "n": 50,
+              "overlap_recall": 0.98
+            },
+            "Address_Location:Other": {
+              "char_recall": 0.9491525423728814,
+              "exact_typed_recall": 0.7,
+              "n": 20,
+              "overlap_recall": 1.0
+            },
+            "Address_Location:Patient": {
+              "char_recall": 0.9876329458323028,
+              "exact_typed_recall": 0.9022556390977443,
+              "n": 133,
+              "overlap_recall": 1.0
+            },
+            "Age_Birthdate": {
+              "char_recall": 0.7462792345854005,
+              "exact_typed_recall": 0.3883495145631068,
+              "n": 412,
+              "overlap_recall": 0.9514563106796117
+            },
+            "Contactdetails": {
+              "char_recall": 0.9361909400876766,
+              "exact_typed_recall": 0.5982404692082112,
+              "n": 341,
+              "overlap_recall": 0.9618768328445748
+            },
+            "Date": {
+              "char_recall": 0.49444375078037206,
+              "exact_typed_recall": 0.36846213895394225,
+              "n": 1281,
+              "overlap_recall": 0.46291959406713507
+            },
+            "ID:Caregiver": {
+              "char_recall": 0.47941176470588237,
+              "exact_typed_recall": 0.30985915492957744,
+              "n": 71,
+              "overlap_recall": 0.4084507042253521
+            },
+            "ID:Patient": {
+              "char_recall": 0.4306883365200765,
+              "exact_typed_recall": 0.32160804020100503,
+              "n": 199,
+              "overlap_recall": 0.39195979899497485
+            },
+            "Name:Caregiver": {
+              "char_recall": 0.8555649957519117,
+              "exact_typed_recall": 0.3448275862068966,
+              "n": 232,
+              "overlap_recall": 0.7887931034482759
+            },
+            "Name:Other": {
+              "char_recall": 0.9632564841498559,
+              "exact_typed_recall": 0.8991596638655462,
+              "n": 119,
+              "overlap_recall": 0.9327731092436975
+            },
+            "Name:Patient": {
+              "char_recall": 0.9755067567567568,
+              "exact_typed_recall": 0.9210526315789473,
+              "n": 304,
+              "overlap_recall": 0.944078947368421
+            },
+            "Organization:Healthcare": {
+              "char_recall": 0.7265469061876247,
+              "exact_typed_recall": 0.36531365313653136,
+              "n": 271,
+              "overlap_recall": 0.8302583025830258
+            },
+            "Organization:Other": {
+              "char_recall": 0.42256410256410254,
+              "exact_typed_recall": 0.11764705882352941,
+              "n": 51,
+              "overlap_recall": 0.6078431372549019
+            },
+            "Profession": {
+              "char_recall": 0.015045674368619023,
+              "exact_typed_recall": 0.0,
+              "n": 114,
+              "overlap_recall": 0.03508771929824561
+            }
+          },
+          "seconds_per_document": 1.8507766666666665,
+          "typed": {
+            "f1": 0.5212749254200032,
+            "precision": 0.5753899480069324,
+            "recall": 0.4764638346727899
+          }
+        },
+        "meddocan-es": {
+          "char_precision": 0.9568475627702687,
+          "char_recall": 0.7283082596632718,
+          "ci95": {
+            "char_recall": [
+              0.7134061668702213,
+              0.7431029056960033
+            ],
+            "merged_f1": [
+              0.6045045045045045,
+              0.6282138794084187
+            ],
+            "merged_recall": [
+              0.5547248182762201,
+              0.5800629590766002
+            ]
+          },
+          "documents": 250,
+          "exact": {
+            "f1": 0.5956504228755538,
+            "precision": 0.6925778506204636,
+            "recall": 0.5225225225225225
+          },
+          "gold_spans": 5661,
+          "merged": {
+            "f1": 0.6163691478612328,
+            "precision": 0.6742815033161386,
+            "recall": 0.5676178660049628
+          },
+          "non_pii_redaction_rate": 0.00365434427911061,
+          "overlap_precision": 0.9185202528681807,
+          "overlap_recall": 0.7654124712948243,
+          "per_type": {
+            "CALLE": {
+              "char_recall": 0.48234067509448714,
+              "exact_typed_recall": 0.1162227602905569,
+              "n": 413,
+              "overlap_recall": 0.549636803874092
+            },
+            "CENTRO_SALUD": {
+              "char_recall": 0.3591549295774648,
+              "exact_typed_recall": 0.16666666666666666,
+              "n": 6,
+              "overlap_recall": 0.5
+            },
+            "CORREO_ELECTRONICO": {
+              "char_recall": 0.9595482546201232,
+              "exact_typed_recall": 0.8714859437751004,
+              "n": 249,
+              "overlap_recall": 0.9839357429718876
+            },
+            "EDAD_SUJETO_ASISTENCIA": {
+              "char_recall": 0.32532104050049393,
+              "exact_typed_recall": 0.04247104247104247,
+              "n": 518,
+              "overlap_recall": 0.974903474903475
+            },
+            "FAMILIARES_SUJETO_ASISTENCIA": {
+              "char_recall": 0.042584434654919234,
+              "exact_typed_recall": 0.0,
+              "n": 81,
+              "overlap_recall": 0.09876543209876543
+            },
+            "FECHAS": {
+              "char_recall": 0.960336068776866,
+              "exact_typed_recall": 0.9509001636661211,
+              "n": 611,
+              "overlap_recall": 0.9590834697217676
+            },
+            "HOSPITAL": {
+              "char_recall": 0.7592960544990065,
+              "exact_typed_recall": 0.5307692307692308,
+              "n": 130,
+              "overlap_recall": 0.8153846153846154
+            },
+            "ID_ASEGURAMIENTO": {
+              "char_recall": 0.9847780126849894,
+              "exact_typed_recall": 0.9747474747474747,
+              "n": 198,
+              "overlap_recall": 0.9848484848484849
+            },
+            "ID_CONTACTO_ASISTENCIAL": {
+              "char_recall": 0.22847682119205298,
+              "exact_typed_recall": 0.15384615384615385,
+              "n": 39,
+              "overlap_recall": 0.1794871794871795
+            },
+            "ID_SUJETO_ASISTENCIA": {
+              "char_recall": 0.06835443037974684,
+              "exact_typed_recall": 0.01060070671378092,
+              "n": 283,
+              "overlap_recall": 0.0706713780918728
+            },
+            "ID_TITULACION_PERSONAL_SANITARIO": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.02564102564102564,
+              "n": 234,
+              "overlap_recall": 1.0
+            },
+            "INSTITUCION": {
+              "char_recall": 0.18661417322834645,
+              "exact_typed_recall": 0.05970149253731343,
+              "n": 67,
+              "overlap_recall": 0.2537313432835821
+            },
+            "NOMBRE_PERSONAL_SANITARIO": {
+              "char_recall": 0.9417049515058703,
+              "exact_typed_recall": 0.906187624750499,
+              "n": 501,
+              "overlap_recall": 0.9461077844311377
+            },
+            "NOMBRE_SUJETO_ASISTENCIA": {
+              "char_recall": 0.9987572493786246,
+              "exact_typed_recall": 0.9661354581673307,
+              "n": 502,
+              "overlap_recall": 0.99800796812749
+            },
+            "NUMERO_FAX": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.8571428571428571,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "NUMERO_TELEFONO": {
+              "char_recall": 0.9234042553191489,
+              "exact_typed_recall": 0.8076923076923077,
+              "n": 26,
+              "overlap_recall": 0.9230769230769231
+            },
+            "OTROS_SUJETO_ASISTENCIA": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 7,
+              "overlap_recall": 0.0
+            },
+            "PAIS": {
+              "char_recall": 0.058797127468581685,
+              "exact_typed_recall": 0.0027548209366391185,
+              "n": 363,
+              "overlap_recall": 0.05509641873278237
+            },
+            "PROFESION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 9,
+              "overlap_recall": 0.0
+            },
+            "SEXO_SUJETO_ASISTENCIA": {
+              "char_recall": 0.7171929824561404,
+              "exact_typed_recall": 0.6767895878524945,
+              "n": 461,
+              "overlap_recall": 0.8221258134490239
+            },
+            "TERRITORIO": {
+              "char_recall": 0.7935566597211091,
+              "exact_typed_recall": 0.21234309623430964,
+              "n": 956,
+              "overlap_recall": 0.8106694560669456
+            }
+          },
+          "seconds_per_document": 7.125556,
+          "typed": {
+            "f1": 0.5346333536461507,
+            "precision": 0.6146660439047175,
+            "recall": 0.47304097771387493
+          }
+        },
+        "multigrascco-de": {
+          "char_precision": 0.7992329646806993,
+          "char_recall": 0.7595998982792236,
+          "ci95": {
+            "char_recall": [
+              0.7267980461512549,
+              0.7930216206714713
+            ],
+            "merged_f1": [
+              0.5266698702546851,
+              0.5965202982601491
+            ],
+            "merged_recall": [
+              0.5288753799392097,
+              0.6097337006427915
+            ]
+          },
+          "documents": 63,
+          "exact": {
+            "f1": 0.5738934733683421,
+            "precision": 0.6224572823433686,
+            "recall": 0.5323590814196242
+          },
+          "gold_spans": 1437,
+          "merged": {
+            "f1": 0.5611510791366906,
+            "precision": 0.5546666666666666,
+            "recall": 0.5677888989990901
+          },
+          "non_pii_redaction_rate": 0.011782070943664846,
+          "overlap_precision": 0.7469487388120423,
+          "overlap_recall": 0.7042449547668754,
+          "per_type": {
+            "AGE": {
+              "char_recall": 0.9714285714285714,
+              "exact_typed_recall": 0.34782608695652173,
+              "n": 23,
+              "overlap_recall": 0.9565217391304348
+            },
+            "CONTACT_EMAIL": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_FAX": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_PHONE": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.9444444444444444,
+              "n": 18,
+              "overlap_recall": 1.0
+            },
+            "DATE": {
+              "char_recall": 0.7677389915582934,
+              "exact_typed_recall": 0.6426512968299711,
+              "n": 694,
+              "overlap_recall": 0.7305475504322767
+            },
+            "ID": {
+              "char_recall": 0.5816618911174785,
+              "exact_typed_recall": 0.20689655172413793,
+              "n": 58,
+              "overlap_recall": 0.5862068965517241
+            },
+            "LOCATION_CITY": {
+              "char_recall": 0.9302788844621513,
+              "exact_typed_recall": 0.23728813559322035,
+              "n": 59,
+              "overlap_recall": 0.9491525423728814
+            },
+            "LOCATION_COUNTRY": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "LOCATION_HOSPITAL": {
+              "char_recall": 0.7518050541516246,
+              "exact_typed_recall": 0.4722222222222222,
+              "n": 36,
+              "overlap_recall": 0.8888888888888888
+            },
+            "LOCATION_ORGANIZATION": {
+              "char_recall": 0.29411764705882354,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.5
+            },
+            "LOCATION_STREET": {
+              "char_recall": 0.9692307692307692,
+              "exact_typed_recall": 0.027777777777777776,
+              "n": 36,
+              "overlap_recall": 0.9722222222222222
+            },
+            "LOCATION_ZIP": {
+              "char_recall": 0.9731182795698925,
+              "exact_typed_recall": 0.0,
+              "n": 38,
+              "overlap_recall": 0.9736842105263158
+            },
+            "NAME_DOCTOR": {
+              "char_recall": 0.9323513366066557,
+              "exact_typed_recall": 0.7450980392156863,
+              "n": 153,
+              "overlap_recall": 0.9281045751633987
+            },
+            "NAME_EXT": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            },
+            "NAME_PATIENT": {
+              "char_recall": 0.7697006719609041,
+              "exact_typed_recall": 0.6,
+              "n": 165,
+              "overlap_recall": 0.6909090909090909
+            },
+            "NAME_RELATIVE": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_TITLE": {
+              "char_recall": 0.007692307692307693,
+              "exact_typed_recall": 0.0,
+              "n": 139,
+              "overlap_recall": 0.02158273381294964
+            },
+            "NAME_USERNAME": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "PROFESSION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "UNKNOWN": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            }
+          },
+          "seconds_per_document": 12.876809523809523,
+          "typed": {
+            "f1": 0.5816890292028414,
+            "precision": 0.5948345439870864,
+            "recall": 0.5691119691119692
+          }
+        },
+        "multigrascco-en": {
+          "char_precision": 0.9414522058823529,
+          "char_recall": 0.7734068257324072,
+          "ci95": {
+            "char_recall": [
+              0.7429616087751371,
+              0.8046156373193167
+            ],
+            "merged_f1": [
+              0.6904645476772616,
+              0.7450800915331808
+            ],
+            "merged_recall": [
+              0.6646499567847882,
+              0.7279929577464789
+            ]
+          },
+          "documents": 63,
+          "exact": {
+            "f1": 0.7008945935433682,
+            "precision": 0.795233892321271,
+            "recall": 0.6265646731571627
+          },
+          "gold_spans": 1438,
+          "merged": {
+            "f1": 0.7198135198135199,
+            "precision": 0.7430221366698749,
+            "recall": 0.6980108499095841
+          },
+          "non_pii_redaction_rate": 0.003141536837848368,
+          "overlap_precision": 0.912621359223301,
+          "overlap_recall": 0.7760778859527121,
+          "per_type": {
+            "AGE": {
+              "char_recall": 0.8333333333333334,
+              "exact_typed_recall": 0.4,
+              "n": 25,
+              "overlap_recall": 0.96
+            },
+            "CONTACT_EMAIL": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_FAX": {
+              "char_recall": 0.978494623655914,
+              "exact_typed_recall": 0.8571428571428571,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_PHONE": {
+              "char_recall": 0.9896907216494846,
+              "exact_typed_recall": 0.8888888888888888,
+              "n": 18,
+              "overlap_recall": 1.0
+            },
+            "DATE": {
+              "char_recall": 0.9036677908937606,
+              "exact_typed_recall": 0.8270893371757925,
+              "n": 694,
+              "overlap_recall": 0.8688760806916427
+            },
+            "ID": {
+              "char_recall": 0.45021645021645024,
+              "exact_typed_recall": 0.2413793103448276,
+              "n": 58,
+              "overlap_recall": 0.5689655172413793
+            },
+            "LOCATION_CITY": {
+              "char_recall": 0.9352380952380952,
+              "exact_typed_recall": 0.2542372881355932,
+              "n": 59,
+              "overlap_recall": 0.9322033898305084
+            },
+            "LOCATION_COUNTRY": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "LOCATION_HOSPITAL": {
+              "char_recall": 0.8396551724137931,
+              "exact_typed_recall": 0.5555555555555556,
+              "n": 36,
+              "overlap_recall": 0.8888888888888888
+            },
+            "LOCATION_ORGANIZATION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "LOCATION_STREET": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.027777777777777776,
+              "n": 36,
+              "overlap_recall": 1.0
+            },
+            "LOCATION_ZIP": {
+              "char_recall": 0.9758454106280193,
+              "exact_typed_recall": 0.0,
+              "n": 38,
+              "overlap_recall": 0.9736842105263158
+            },
+            "NAME_DOCTOR": {
+              "char_recall": 0.9595435684647303,
+              "exact_typed_recall": 0.803921568627451,
+              "n": 153,
+              "overlap_recall": 0.9477124183006536
+            },
+            "NAME_EXT": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            },
+            "NAME_PATIENT": {
+              "char_recall": 0.7908698334361505,
+              "exact_typed_recall": 0.6363636363636364,
+              "n": 165,
+              "overlap_recall": 0.7212121212121212
+            },
+            "NAME_RELATIVE": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_TITLE": {
+              "char_recall": 0.009265387160820648,
+              "exact_typed_recall": 0.0,
+              "n": 139,
+              "overlap_recall": 0.03597122302158273
+            },
+            "NAME_USERNAME": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            },
+            "PROFESSION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            }
+          },
+          "seconds_per_document": 8.427825396825396,
+          "typed": {
+            "f1": 0.728995057660626,
+            "precision": 0.7824933687002652,
+            "recall": 0.6823438704703161
+          }
+        },
+        "multigrascco-fr": {
+          "char_precision": 0.8667089525190287,
+          "char_recall": 0.6727387818258546,
+          "ci95": {
+            "char_recall": [
+              0.6426478794642857,
+              0.702966791758125
+            ],
+            "merged_f1": [
+              0.5926966292134831,
+              0.6563517915309446
+            ],
+            "merged_recall": [
+              0.5877437325905293,
+              0.6608527131782945
+            ]
+          },
+          "documents": 63,
+          "exact": {
+            "f1": 0.6408797876374668,
+            "precision": 0.7041666666666667,
+            "recall": 0.5880306193458594
+          },
+          "gold_spans": 1437,
+          "merged": {
+            "f1": 0.6271186440677966,
+            "precision": 0.6276785714285714,
+            "recall": 0.6265597147950089
+          },
+          "non_pii_redaction_rate": 0.0065419646351442704,
+          "overlap_precision": 0.7991666666666667,
+          "overlap_recall": 0.7258176757132916,
+          "per_type": {
+            "AGE": {
+              "char_recall": 0.49122807017543857,
+              "exact_typed_recall": 0.8,
+              "n": 25,
+              "overlap_recall": 0.96
+            },
+            "CONTACT_EMAIL": {
+              "char_recall": 0.8125,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_FAX": {
+              "char_recall": 0.9767441860465116,
+              "exact_typed_recall": 0.8571428571428571,
+              "n": 7,
+              "overlap_recall": 1.0
+            },
+            "CONTACT_PHONE": {
+              "char_recall": 0.9702970297029703,
+              "exact_typed_recall": 0.8888888888888888,
+              "n": 18,
+              "overlap_recall": 1.0
+            },
+            "DATE": {
+              "char_recall": 0.8198255690278664,
+              "exact_typed_recall": 0.7435158501440923,
+              "n": 694,
+              "overlap_recall": 0.770893371757925
+            },
+            "ID": {
+              "char_recall": 0.3488888888888889,
+              "exact_typed_recall": 0.13793103448275862,
+              "n": 58,
+              "overlap_recall": 0.46551724137931033
+            },
+            "LOCATION_CITY": {
+              "char_recall": 0.94,
+              "exact_typed_recall": 0.22033898305084745,
+              "n": 59,
+              "overlap_recall": 0.9152542372881356
+            },
+            "LOCATION_COUNTRY": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.0
+            },
+            "LOCATION_HOSPITAL": {
+              "char_recall": 0.7716098334655036,
+              "exact_typed_recall": 0.5833333333333334,
+              "n": 36,
+              "overlap_recall": 0.9722222222222222
+            },
+            "LOCATION_ORGANIZATION": {
+              "char_recall": 0.06896551724137931,
+              "exact_typed_recall": 0.0,
+              "n": 2,
+              "overlap_recall": 0.5
+            },
+            "LOCATION_STREET": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.027777777777777776,
+              "n": 36,
+              "overlap_recall": 1.0
+            },
+            "LOCATION_ZIP": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 0.0,
+              "n": 38,
+              "overlap_recall": 1.0
+            },
+            "NAME_DOCTOR": {
+              "char_recall": 0.9652448657187994,
+              "exact_typed_recall": 0.8366013071895425,
+              "n": 153,
+              "overlap_recall": 0.954248366013072
+            },
+            "NAME_EXT": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            },
+            "NAME_PATIENT": {
+              "char_recall": 0.7695679398872887,
+              "exact_typed_recall": 0.5757575757575758,
+              "n": 165,
+              "overlap_recall": 0.703030303030303
+            },
+            "NAME_RELATIVE": {
+              "char_recall": 1.0,
+              "exact_typed_recall": 1.0,
+              "n": 1,
+              "overlap_recall": 1.0
+            },
+            "NAME_TITLE": {
+              "char_recall": 0.009188361408882083,
+              "exact_typed_recall": 0.0,
+              "n": 139,
+              "overlap_recall": 0.02877697841726619
+            },
+            "NAME_USERNAME": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            },
+            "PROFESSION": {
+              "char_recall": 0.0,
+              "exact_typed_recall": 0.0,
+              "n": 1,
+              "overlap_recall": 0.0
+            }
+          },
+          "seconds_per_document": 15.033650793650795,
+          "typed": {
+            "f1": 0.658682634730539,
+            "precision": 0.6829470198675497,
+            "recall": 0.6360832690824981
+          }
+        }
+      },
+      "resolved_locales": {
+        "meddeid-nl:nl_BE": 300,
+        "meddocan-es:es_ES": 250,
+        "multigrascco-de:de_DE": 63,
+        "multigrascco-en:en": 63,
+        "multigrascco-fr:fr_FR": 63
+      },
+      "unmapped_platform_labels": {}
+    }
+  },
+  "provenance": {
+    "dataset_sha256": {
+      "meddeid-nl/data/test.jsonl": "f1fc1a0447d1c447d742a1d32c1bb18393840665cc44d591eccc95e8cf3f5d01",
+      "meddocan/meddocan.zip": "d0e4708b58689bc1440ede6f89e017e58d667827d927827622d73810cd68eac3",
+      "multigrascco/MultiGraSCCo_annotations_v2.zip": "b77cff1116f5746d28fce7133929fa7e9730954e00e6ad9f01d47907ce01e98a"
+    },
+    "git_commit": "fe6c82d5f10d01ca777882388432abbaec0918d7"
+  }
+}

@@ -3,7 +3,35 @@
 How the four teams do on three open de-identification benchmarks, run on 2026-11-21 with
 the detector each team ships, on CPU. The harness, label maps and definitions are in
 [`evaluation/public_benchmarks/`](../evaluation/public_benchmarks/README.md); this page is
-the results and how to read them.
+the results and how to read them. The ranked, sortable version of these tables is the
+[live leaderboard](https://yassienashrafwasfy.github.io/PII-Masking-System/).
+
+<!-- benchmark-winner:start -->
+## Winner: mDeBERTa
+
+**mDeBERTa** has the best mean F1 across the five benchmarks (0.653, 95% interval 0.638-0.666) and comes first in 100% of document resamples: a **clear** result.
+
+| Rank | Team | Mean F1 (95% interval) | Mean recall | Comes first |
+| ---: | --- | --- | ---: | ---: |
+| 1 | mDeBERTa | 0.653 (0.638-0.666) | 0.597 | 100% |
+| 2 | Octo | 0.625 (0.612-0.638) | 0.606 | 0% |
+| 3 | Synthify | 0.613 (0.600-0.623) | 0.588 | 0% |
+| 4 | Berts | 0.586 (0.571-0.600) | 0.555 | 0% |
+
+Recall alone favours **Octo** (0.606 against 0.597): it masks slightly more of the sensitive spans but also over-masks more, which F1 charges for.
+
+**Best for each benchmark**, among the teams built for that language:
+
+| Benchmark | Best | F1 | Result |
+| --- | --- | ---: | --- |
+| MEDDOCAN (Spanish) | mDeBERTa | 0.793 | clear |
+| MultiGraSCCo (German) | mDeBERTa | 0.643 | clear |
+| MultiGraSCCo (English) | Berts | 0.730 | narrow, Synthify close behind |
+| MultiGraSCCo (French) | Berts | 0.693 | clear |
+| MedDeID (Dutch) | Berts | 0.610 | clear |
+
+How the winner is calculated: mean type-agnostic F1 over all five benchmarks (every team is scored on every language), with a paired bootstrap over documents for the interval and for how often each team comes first; a win is *clear* at 95% or more. Per benchmark, only teams built for the language compete (Berts: en, fr, nl; Octo: nl). Computed by `evaluation/public_benchmarks/report.py` from the results file, not edited by hand. Zero-shot results with this project's own scorer; they do not show how a team does on your documents.
+<!-- benchmark-winner:end -->
 
 ## Setup
 
@@ -17,8 +45,9 @@ the results and how to read them.
   (ADR 005), and these are the numbers that path produces. `s/doc` is wall time per
   document on that session, covering the platform's text extraction, language detection and span detection (masking and rendering of the output file are not included).
 * **Commits:** predictions came from `c4b890f` (`run.json` in each kernel records it);
-  the scorer is `061f062`, whose label maps differ from `c4b890f` in two ways that change
-  no type-agnostic number (see "Scoring changes" below).
+  the scorer is `fe6c82d`, whose label maps differ from `c4b890f` in two ways that change
+  no type-agnostic number (see "Scoring changes" below). The calculated numbers, with
+  intervals, are in `evaluation/public_benchmarks/results/2026-11-21.json`.
 * **Data (all CC BY 4.0, test splits, never committed here):**
   MEDDOCAN `meddocan.zip` sha256 `d0e4708b…`; MultiGraSCCo v2 `*_PHI.json` annotations
   `b77cff11…`; MedDeID Dutch synthetic `test.jsonl` `f1fc1a04…` (Hub revision `45c601bc`).
