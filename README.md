@@ -57,7 +57,8 @@ One public HTTP endpoint (`POST /v1/mask`) fronts every model. The caller never 
 | **Berts** | int8 ONNX MedRoBERTa / BERT / CamemBERT + shared rules | PDF, text | Wired for production, staging approval required |
 | **mDeBERTa** | mDeBERTa-v3 (36 labels, PII + clinical) + shared rules | PDF, text, CSV, JSON | Demo only |
 
-All models run on CPU through ONNX Runtime.
+All models run on CPU through ONNX Runtime. How each one scores on three open
+de-identification benchmarks is in [Public benchmark results](docs/benchmarks.md).
 
 ## Quick start
 
@@ -96,6 +97,7 @@ Prefer clicking? Import the [Postman collection](postman/README.md). Full header
 | [Team onboarding](docs/team-onboarding.md) | How to add or improve a model |
 | [API contracts](contracts/masking-api/) | The versioned HTTP contract |
 | [Security and secrets](docs/security-and-secrets.md) | Handling credentials and data |
+| [Public benchmark results](docs/benchmarks.md) | How the four models score on open benchmarks, and how to read it |
 | [Decision records](docs/decisions/) | Why things are the way they are |
 
 ## Contributing and security
