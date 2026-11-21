@@ -161,3 +161,9 @@ def test_an_unmapped_gold_tag_stops_the_load(tmp_path: Path) -> None:
     path.write_text(json.dumps(row) + "\n")
     with pytest.raises(ValueError, match="no mapping"):
         loaders.load_meddeid(path)
+
+
+def test_meddocan_kinship_words_are_not_typed_as_names() -> None:
+    # MEDDOCAN's FAMILIARES spans are "madre", "familia", ...: charging a team a typed
+    # miss for not calling them a NAME would understate every team's typed score.
+    assert labels.MEDDOCAN["FAMILIARES_SUJETO_ASISTENCIA"][0] == labels.OTHER

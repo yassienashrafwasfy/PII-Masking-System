@@ -39,10 +39,30 @@ arbitration layers, which is what a model card describes). The environment of ea
 read from its service in `compose.yaml`. No locale is passed: the document language is
 detected, as for a gateway request, and recorded in the results.
 
-`kaggle_kernel.py` is the template of the CPU kernel the published numbers were run in:
-it clones this repository at a commit, installs the locked environment, downloads the
-weights and data, and uploads aggregates only. Fill in `CONFIG` and `COMMIT` and push it
-with `kaggle kernels push` (private kernel, internet on, no accelerator).
+`kaggle_kernel.py` is the template of the CPU kernel the published numbers were run in
+(one kernel per configuration, 4 vCPU, no accelerator). It clones this repository at a
+commit, installs the locked environment, downloads the pinned datasets, and writes
+aggregates and offset-only predictions to `/kaggle/working/result`. To run it:
+
+1. Replace `__CONFIG__` and `__COMMIT__` in a copy named `run.py`.
+2. Add a `kernel-metadata.json` beside it: `"kernel_type": "script"`, `"is_private": true`,
+   `"enable_internet": true`, `"enable_gpu": false`, and `model_sources` listing the
+   Kaggle variations the team needs. Kaggle refuses to download a model in a
+   non-interactive session unless it is attached here:
+
+   | Configuration | `model_sources` (each `.../onnx/<variation>/1`) |
+   | --- | --- |
+   | octo | `octo-xlmr-fp32` |
+   | synthify | `synthify-gliner-fp32` |
+   | berts | `berts-nl-medroberta-int8`, `berts-en-bert-int8`, `berts-fr-camembert-int8` |
+   | mdeberta, mdeberta-model-only | `mdeberta-medical-onnx` |
+
+   The handle prefix is `yassienwasfy/pii-masking-system/onnx/`.
+3. `kaggle kernels push -p <folder>`, then `kaggle kernels output <id> -p <out>`.
+
+Each result folder carries `run.json` with the commit the predictions came from. Score
+them again locally with `score.py`; its results file records the scorer's own commit, so
+a prediction commit and a scorer commit can differ and both are stated.
 
 ## What is scored
 
@@ -73,6 +93,9 @@ false positive for doing what the platform asks of it.
   score is not a ranking against that system.
 * MEDDOCAN is case-report prose with injected PHI, and MultiGraSCCo is a few dozen letters,
   so small per-type counts are noisy (see the intervals).
-* The monolingual teams are scored on every language so the table is complete; a score
-  outside a team's language is an out-of-scope reading, not a defect.
+* Every team is scored on every language so the tables are complete, but a team is only
+  built for some of them: Octo is declared Belgian-Dutch, and Berts has nl/en/fr
+  checkpoints and falls back to Dutch for any other language (so Spanish and German are
+  out of scope for it). A score outside a team's languages is marked in the published
+  tables and is not a defect.
 * Scores here are aggregates; no benchmark text or per-document spans are published.

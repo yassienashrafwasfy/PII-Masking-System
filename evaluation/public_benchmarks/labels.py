@@ -45,8 +45,8 @@ CLINICAL_LABELS = frozenset(
 )
 
 # Labels the regex arbitration emits only to win an overlap against a false positive
-# (a weight is not a number to mask); the platform does not mask them, so neither do we.
-ARBITRATION_ONLY = frozenset({"HEIGHT", "WEIGHT"})
+# (a weight or a BMI is not a number to mask); the platform does not mask them, so neither do we.
+ARBITRATION_ONLY = frozenset({"HEIGHT", "WEIGHT", "BMI"})
 
 # gold tag -> (coarse category, predicted categories that count as the right type)
 Mapping = dict[str, tuple[str, frozenset[str]]]
@@ -59,7 +59,8 @@ def _only(category: str) -> tuple[str, frozenset[str]]:
 MEDDOCAN: Mapping = {
     "NOMBRE_SUJETO_ASISTENCIA": _only(NAME),
     "NOMBRE_PERSONAL_SANITARIO": _only(NAME),
-    "FAMILIARES_SUJETO_ASISTENCIA": _only(NAME),
+    # kinship words ("madre", "familia"), not names: no team has a label for them
+    "FAMILIARES_SUJETO_ASISTENCIA": _only(OTHER),
     "FECHAS": _only(DATE),
     "EDAD_SUJETO_ASISTENCIA": _only(AGE),
     "TERRITORIO": _only(ADDRESS),

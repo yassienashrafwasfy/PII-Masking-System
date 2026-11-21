@@ -32,7 +32,7 @@ try:
     sh(f"git clone -q https://github.com/yassienashrafwasfy/PII-Masking-System {REPO}")
     sh(f"git checkout -q {COMMIT}", REPO)
     sh("uv sync --locked --no-dev --no-install-project", REPO)
-    sh("uv pip install -q pyyaml kagglehub", REPO)
+    sh("uv pip install -q --python .venv/bin/python pyyaml kagglehub", REPO)
     py = ".venv/bin/python"
     sh(f"{py} scripts/fetch_models.py --team {TEAM}", REPO)
     sh(f"{py} -m evaluation.public_benchmarks.fetch_data --out {DATA}", REPO)
